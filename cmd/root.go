@@ -7,6 +7,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	cfgFile string
+	workDir string
+)
+
 var rootCmd = &cobra.Command{
 	Use:   "apkhub",
 	Short: "ApkHub CLI - A tool for managing APK repositories",
@@ -24,4 +29,8 @@ func Execute() {
 
 func init() {
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
+	
+	// Global flags
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is ./apkhub.yaml)")
+	rootCmd.PersistentFlags().StringVarP(&workDir, "work-dir", "w", ".", "working directory for relative paths")
 }

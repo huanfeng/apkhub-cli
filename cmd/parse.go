@@ -3,6 +3,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 
 	"github.com/apkhub/apkhub-cli/pkg/apk"
 	"github.com/spf13/cobra"
@@ -16,8 +17,20 @@ var parseCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		apkPath := args[0]
 		
-		parser := apk.NewParser()
-		apkInfo, err := parser.ParseAPK(apkPath)
+		// Convert to absolute path
+		absPath, err := filepath.Abs(apkPath)
+		if err != nil {
+			return fmt.Errorf("failed to resolve APK path: %w", err)
+		}
+		
+		// Get absolute work directory
+		absWorkDir, err := filepath.Abs(workDir)
+		if err != nil {
+			return fmt.Errorf("failed to resolve work directory: %w", err)
+		}
+		
+		parser := apk.NewParser(absWorkDir)
+		apkInfo, err := parser.ParseAPK(absPath)
 		if err != nil {
 			return fmt.Errorf("failed to parse APK: %w", err)
 		}
