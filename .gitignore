@@ -38,3 +38,8 @@ testdata/
 # Output files
 package.json
 index.json
+
+# ApkHub repos
+apks
+infos
+apkhub_manifest.json

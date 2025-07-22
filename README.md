@@ -79,11 +79,39 @@ The generated `package.json` follows this structure:
 }
 ```
 
-## Development
+## Requirements
 
-Requirements:
-- Go 1.21+
-- aapt2 (Android Asset Packaging Tool) for APK parsing
+### Basic Requirements
+- Go 1.21+ (for building from source)
+
+### APK Parsing
+
+The tool uses two methods for parsing APK files:
+
+1. **Primary**: Built-in Go library (github.com/shogo82148/androidbinary)
+2. **Fallback**: aapt/aapt2 command line tool (recommended for better compatibility)
+
+#### Installing aapt2
+
+**Ubuntu/Debian:**
+```bash
+sudo apt-get install aapt
+# or for newer versions
+sudo apt-get install google-android-build-tools-installer
+```
+
+**macOS:**
+```bash
+# Install Android SDK command-line tools
+brew install --cask android-commandlinetools
+# aapt2 will be in: ~/Library/Android/sdk/build-tools/*/aapt2
+```
+
+**Manual Installation:**
+1. Download Android SDK Build Tools from https://developer.android.com/studio#command-tools
+2. Extract and add the build-tools directory to your PATH
+
+## Development
 
 ### Build
 

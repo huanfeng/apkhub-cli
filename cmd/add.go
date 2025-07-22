@@ -74,8 +74,10 @@ var addCmd = &cobra.Command{
 		fmt.Printf("Size: %.2f MB\n", float64(apkInfo.Size)/(1024*1024))
 		fmt.Printf("Min SDK: %d, Target SDK: %d\n", apkInfo.MinSDK, apkInfo.TargetSDK)
 		fmt.Printf("SHA256: %s\n", apkInfo.SHA256)
-		if apkInfo.SignatureInfo != nil {
+		if apkInfo.SignatureInfo != nil && len(apkInfo.SignatureInfo.SHA256) >= 16 {
 			fmt.Printf("Signature SHA256: %s...\n", apkInfo.SignatureInfo.SHA256[:16])
+		} else if apkInfo.SignatureInfo != nil {
+			fmt.Printf("Signature: (extraction failed)\n")
 		}
 		if len(apkInfo.ABIs) > 0 {
 			fmt.Printf("ABIs: %s\n", strings.Join(apkInfo.ABIs, ", "))

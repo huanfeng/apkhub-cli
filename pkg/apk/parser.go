@@ -34,7 +34,8 @@ func (p *Parser) ParseAPK(apkPath string) (*APKInfo, error) {
 	// Open APK file
 	pkg, err := apk.OpenFile(apkPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open APK: %w", err)
+		// Try with aapt as fallback
+		return p.parseWithAAPTFallback(apkPath, err)
 	}
 	defer pkg.Close()
 
@@ -230,4 +231,54 @@ func IsAPKFile(path string) bool {
 	default:
 		return false
 	}
+}
+
+// parseWithAAPTFallback uses aapt command as fallback when androidbinary fails
+func (p *Parser) parseWithAAPTFallback(apkPath string, originalErr error) (*APKInfo, error) {
+	fmt.Printf("Warning: androidbinary failed to parse APK, trying aapt fallback...\n")
+	
+	// Try parsing with aapt
+	basicInfo, aaptErr := TryParseWithAAPT(apkPath)
+	if aaptErr != nil {
+		return nil, fmt.Errorf("both parsers failed - androidbinary: %v, aapt: %v", originalErr, aaptErr)
+	}
+	
+	// Get file info
+	fileInfo, err := os.Stat(apkPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to stat APK file: %w", err)
+	}
+	
+	// Calculate hashes
+	hashes, err := p.calculateHashes(apkPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to calculate hashes: %w", err)
+	}
+	
+	// Build APK info from aapt data
+	info := &APKInfo{
+		PackageID:    basicInfo.PackageID,
+		AppName:      map[string]string{"default": basicInfo.AppName},
+		Version:      basicInfo.VersionName,
+		VersionCode:  basicInfo.VersionCode,
+		MinSDK:       basicInfo.MinSDK,
+		TargetSDK:    basicInfo.TargetSDK,
+		Size:         fileInfo.Size(),
+		SHA256:       hashes["sha256"],
+		SignatureInfo: &models.SignatureInfo{}, // Empty signature for aapt fallback
+		Permissions:  basicInfo.Permissions,
+		Features:     basicInfo.Features,
+		ABIs:         basicInfo.ABIs,
+		ReleaseDate:  fileInfo.ModTime(),
+	}
+	
+	// Calculate relative path if within work directory
+	relPath, err := filepath.Rel(p.workDir, apkPath)
+	if err == nil && !strings.HasPrefix(relPath, "..") {
+		info.FilePath = relPath
+	} else {
+		info.FilePath = filepath.Base(apkPath)
+	}
+	
+	return info, nil
 }
