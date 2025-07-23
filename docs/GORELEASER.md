@@ -24,6 +24,8 @@ go install github.com/goreleaser/goreleaser@latest
 ### 或使用二进制文件
 访问 https://github.com/goreleaser/goreleaser/releases 下载对应平台的二进制文件。
 
+**注意**: 请确保安装 GoReleaser v2.x 版本，我们的配置文件使用 v2 格式。
+
 ## 本地使用
 
 ### 1. 测试构建（不发布）
