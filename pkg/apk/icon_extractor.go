@@ -10,9 +10,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/chai2010/webp"
 	"github.com/nfnt/resize"
 	"github.com/shogo82148/androidbinary/apk"
+	"golang.org/x/image/webp"
 )
 
 const (

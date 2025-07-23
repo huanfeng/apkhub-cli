@@ -3,11 +3,11 @@ module github.com/apkhub/apkhub-cli
 go 1.22.2
 
 require (
-	github.com/chai2010/webp v1.4.0
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/shogo82148/androidbinary v1.0.5
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
+	golang.org/x/image v0.15.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
