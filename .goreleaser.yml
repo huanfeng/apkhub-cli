@@ -1,0 +1,50 @@
+version: 2
+
+# 在构建前执行的命令
+before:
+  hooks:
+    - go mod tidy
+
+# 构建配置
+builds:
+  - id: apkhub
+    main: .
+    binary: apkhub
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    # 自动注入版本信息
+    ldflags:
+      - -s -w
+      - -X github.com/apkhub/apkhub-cli/internal/version.Version={{.Version}}
+      - -X github.com/apkhub/apkhub-cli/internal/version.Commit={{.Commit}}
+      - -X github.com/apkhub/apkhub-cli/internal/version.BuildDate={{.Date}}
+
+# 打包配置
+archives:
+  - format: tar.gz
+    # 文件名格式：apkhub-v1.0.0-linux-amd64.tar.gz
+    name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+    # Windows 使用 zip
+    format_overrides:
+      - goos: windows
+        format: zip
+
+# 生成校验和文件
+checksum:
+  name_template: 'SHA256SUMS.txt'
+
+# GitHub Release 配置
+release:
+  # 自动生成 release notes
+  generate_release_notes: true
+  # Release 标题
+  name_template: "ApkHub CLI {{.Version}}"
+  # 不创建草稿
+  draft: false

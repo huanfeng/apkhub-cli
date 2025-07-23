@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/apkhub/apkhub-cli/internal/version"
 	"github.com/spf13/cobra"
 )
 
@@ -17,7 +18,7 @@ var rootCmd = &cobra.Command{
 	Short: "ApkHub CLI - A tool for managing APK repositories",
 	Long: `ApkHub CLI is a command-line tool for managing distributed APK repositories.
 It supports parsing APK files, generating repository indexes, and maintaining APK collections.`,
-	Version: "0.1.0",
+	Version: version.Short(),
 }
 
 func Execute() {
