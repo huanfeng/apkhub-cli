@@ -71,7 +71,7 @@ func (r *Repository) Initialize() error {
 
 // GenerateNormalizedFileName generates a normalized filename for an APK
 func (r *Repository) GenerateNormalizedFileName(info *apk.APKInfo) string {
-	// Format: packageid_versioncode_signature[8]_variant.apk
+	// Format: packageid_versioncode_signature[8]_variant.ext
 	// Example: com.example.app_100_a1b2c3d4.apk
 	
 	filename := fmt.Sprintf("%s_%d", info.PackageID, info.VersionCode)
@@ -87,6 +87,18 @@ func (r *Repository) GenerateNormalizedFileName(info *apk.APKInfo) string {
 		// Use first ABI as variant indicator
 		abi := strings.ReplaceAll(info.ABIs[0], "-", "")
 		filename = fmt.Sprintf("%s_%s", filename, abi)
+	}
+	
+	// Check for XAPK features
+	for _, feature := range info.Features {
+		if feature == "split_apk" || feature == "has_obb" {
+			// Check original file extension
+			if strings.HasSuffix(strings.ToLower(info.FilePath), ".xapk") {
+				return filename + ".xapk"
+			} else if strings.HasSuffix(strings.ToLower(info.FilePath), ".apkm") {
+				return filename + ".apkm"
+			}
+		}
 	}
 	
 	return filename + ".apk"

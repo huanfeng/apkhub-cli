@@ -31,6 +31,11 @@ func NewParser(workDir string) *Parser {
 
 // ParseAPK parses an APK file and extracts its information
 func (p *Parser) ParseAPK(apkPath string) (*APKInfo, error) {
+	// Check if it's XAPK/APKM
+	if IsXAPKFile(apkPath) {
+		return p.parseXAPK(apkPath)
+	}
+	
 	// Open APK file
 	pkg, err := apk.OpenFile(apkPath)
 	if err != nil {
@@ -281,4 +286,27 @@ func (p *Parser) parseWithAAPTFallback(apkPath string, originalErr error) (*APKI
 	}
 	
 	return info, nil
+}
+
+// parseXAPK handles XAPK/APKM file parsing
+func (p *Parser) parseXAPK(xapkPath string) (*APKInfo, error) {
+	xapkParser := NewXAPKParser(p.workDir)
+	xapkInfo, err := xapkParser.ParseXAPK(xapkPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse XAPK: %w", err)
+	}
+	
+	// Convert XAPKInfo to APKInfo
+	apkInfo := xapkInfo.APKInfo
+	
+	// Add XAPK specific markers
+	if len(xapkInfo.APKFiles) > 1 {
+		// Add feature to indicate it's a split APK
+		apkInfo.Features = append(apkInfo.Features, "split_apk")
+	}
+	if len(xapkInfo.OBBFiles) > 0 {
+		apkInfo.Features = append(apkInfo.Features, "has_obb")
+	}
+	
+	return apkInfo, nil
 }

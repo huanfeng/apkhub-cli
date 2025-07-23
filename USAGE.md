@@ -123,6 +123,73 @@ python3 -m http.server 8000
 0 * * * * cd /path/to/repo && /path/to/apkhub scan /incoming/apks
 ```
 
+## 新增命令
+
+### 1. 查看仓库统计
+
+```bash
+# 显示仓库详细统计信息
+./apkhub stats
+```
+
+显示内容包括：
+- 包和 APK 数量统计
+- SDK 版本分布
+- 架构 (ABI) 分布
+- 签名分析
+- 最大的 APK 文件
+
+### 2. 列出仓库内容
+
+```bash
+# 列出所有包
+./apkhub list
+
+# 按大小排序
+./apkhub list --sort size
+
+# 显示所有版本
+./apkhub list -v
+
+# 查看特定包详情
+./apkhub list -p com.example.app
+```
+
+### 3. 清理仓库
+
+```bash
+# 预览清理（不实际删除）
+./apkhub clean --dry-run
+
+# 保留最新 3 个版本
+./apkhub clean --keep 3
+
+# 自动确认删除
+./apkhub clean -y
+
+# 只清理孤立文件
+./apkhub clean --orphans
+```
+
+### 4. 导出数据
+
+```bash
+# 导出为 JSON（默认）
+./apkhub export
+
+# 导出为 CSV
+./apkhub export -f csv -o packages.csv
+
+# 导出为 Markdown
+./apkhub export -f md -o README.md
+
+# 导出为 F-Droid 格式
+./apkhub export -f fdroid -o index-v1.json
+
+# 自定义 CSV 字段
+./apkhub export -f csv --fields package_id,version,size_mb,sha256
+```
+
 ## 客户端访问
 
 客户端应该：
