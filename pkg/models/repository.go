@@ -30,6 +30,7 @@ type APKInfo struct {
 	FileName      string                `json:"file_name"`      // Normalized filename
 	FilePath      string                `json:"file_path"`      // Relative path in apks/
 	InfoPath      string                `json:"info_path"`      // Relative path in infos/
+	IconPath      string                `json:"icon_path,omitempty"` // Relative path to icon in infos/
 }
 
 // ManifestIndex is the main index file (apkhub_manifest.json)

@@ -166,7 +166,7 @@ var importCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(importCmd)
+	repoCmd.AddCommand(importCmd)
 	
 	importCmd.Flags().StringVarP(&importFormat, "format", "f", "apkhub", "Import format: apkhub, fdroid, json")
 	importCmd.Flags().BoolVarP(&downloadAPKs, "download", "d", false, "Download APK files if URLs are provided")

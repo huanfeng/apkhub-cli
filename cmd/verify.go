@@ -191,7 +191,7 @@ var verifyCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(verifyCmd)
+	repoCmd.AddCommand(verifyCmd)
 	
 	verifyCmd.Flags().BoolVar(&fixIssues, "fix", false, "Attempt to fix issues found during verification")
 }

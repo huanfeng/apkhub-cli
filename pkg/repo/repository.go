@@ -106,14 +106,8 @@ func (r *Repository) GenerateNormalizedFileName(info *apk.APKInfo) string {
 
 // SaveAPKInfo saves individual APK information to infos directory
 func (r *Repository) SaveAPKInfo(apkInfo *models.APKInfo) error {
-	// Create info filename based on package ID and version code
-	infoFileName := fmt.Sprintf("%s_%d.json", apkInfo.PackageID, apkInfo.VersionCode)
-	if apkInfo.SignatureInfo != nil && apkInfo.SignatureInfo.SHA256 != "" {
-		infoFileName = fmt.Sprintf("%s_%d_%s.json", 
-			apkInfo.PackageID, 
-			apkInfo.VersionCode,
-			apkInfo.SignatureInfo.SHA256[:8])
-	}
+	// Create info filename based on package ID only (without version)
+	infoFileName := fmt.Sprintf("%s.json", apkInfo.PackageID)
 	
 	infoPath := filepath.Join(r.layout.RootDir, r.layout.InfosDir, infoFileName)
 	apkInfo.InfoPath = filepath.Join(r.layout.InfosDir, infoFileName)
@@ -127,6 +121,30 @@ func (r *Repository) SaveAPKInfo(apkInfo *models.APKInfo) error {
 	// Write to file
 	if err := os.WriteFile(infoPath, data, 0644); err != nil {
 		return fmt.Errorf("failed to write APK info: %w", err)
+	}
+	
+	return nil
+}
+
+// SaveAPKInfoWithIcon saves APK info and icon from parsed APK data
+func (r *Repository) SaveAPKInfoWithIcon(parsedInfo *apk.APKInfo, apkInfo *models.APKInfo) error {
+	// Save APK info
+	if err := r.SaveAPKInfo(apkInfo); err != nil {
+		return err
+	}
+	
+	// Save icon if available
+	if parsedInfo.IconData != nil && len(parsedInfo.IconData) > 0 {
+		iconFileName := fmt.Sprintf("%s%s", apkInfo.PackageID, parsedInfo.IconExt)
+		iconPath := filepath.Join(r.layout.RootDir, r.layout.InfosDir, iconFileName)
+		
+		if err := os.WriteFile(iconPath, parsedInfo.IconData, 0644); err != nil {
+			// Icon save failure is non-fatal, just log warning
+			fmt.Printf("Warning: Failed to save icon for %s: %v\n", apkInfo.PackageID, err)
+		} else {
+			// Update icon path in APK info
+			apkInfo.IconPath = filepath.Join(r.layout.InfosDir, iconFileName)
+		}
 	}
 	
 	return nil

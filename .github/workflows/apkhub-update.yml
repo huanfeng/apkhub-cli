@@ -41,30 +41,30 @@ jobs:
     - name: Initialize repository
       run: |
         if [ ! -f apkhub.yaml ]; then
-          apkhub init
+          apkhub repo init
         fi
     
     - name: Scan for new APKs
       run: |
         mkdir -p incoming
-        apkhub scan incoming/
+        apkhub repo scan incoming/
     
     - name: Clean old versions
       run: |
         # Keep only latest 5 versions
-        apkhub clean --keep 5 -y
+        apkhub repo clean --keep 5 -y
     
     - name: Verify repository
       run: |
-        apkhub verify
+        apkhub repo verify
     
     - name: Generate statistics
       run: |
-        apkhub stats > STATS.txt
+        apkhub repo stats > STATS.txt
     
     - name: Export to markdown
       run: |
-        apkhub export -f md -o PACKAGES.md
+        apkhub repo export -f md -o PACKAGES.md
     
     - name: Commit changes
       run: |

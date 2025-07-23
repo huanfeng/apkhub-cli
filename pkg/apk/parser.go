@@ -66,6 +66,11 @@ func (p *Parser) ParseAPK(apkPath string) (*APKInfo, error) {
 		signatureInfo = nil
 	}
 
+	// Extract icon
+	iconExtractor := NewIconExtractor()
+	iconData, iconExt, iconErr := iconExtractor.ExtractIcon(apkPath)
+	// Icon extraction is non-fatal
+
 	// Build APK info
 	info := &APKInfo{
 		PackageID:    manifest.Package.MustString(),
@@ -81,6 +86,12 @@ func (p *Parser) ParseAPK(apkPath string) (*APKInfo, error) {
 		Features:     p.extractFeatures(&manifest),
 		ABIs:         p.extractABIs(apkPath),
 		ReleaseDate:  fileInfo.ModTime(),
+	}
+
+	// Add icon data if extraction was successful
+	if iconErr == nil && iconData != nil {
+		info.IconData = iconData
+		info.IconExt = iconExt
 	}
 
 	// Calculate relative path if within work directory
@@ -110,6 +121,8 @@ type APKInfo struct {
 	ABIs          []string
 	ReleaseDate   time.Time
 	FilePath      string
+	IconData      []byte // Icon data in PNG format
+	IconExt       string // Icon file extension (.png)
 }
 
 // calculateHashes calculates various hashes of the APK file
@@ -260,6 +273,11 @@ func (p *Parser) parseWithAAPTFallback(apkPath string, originalErr error) (*APKI
 		return nil, fmt.Errorf("failed to calculate hashes: %w", err)
 	}
 	
+	// Extract icon
+	iconExtractor := NewIconExtractor()
+	iconData, iconExt, iconErr := iconExtractor.ExtractIcon(apkPath)
+	// Icon extraction is non-fatal
+	
 	// Build APK info from aapt data
 	info := &APKInfo{
 		PackageID:    basicInfo.PackageID,
@@ -275,6 +293,12 @@ func (p *Parser) parseWithAAPTFallback(apkPath string, originalErr error) (*APKI
 		Features:     basicInfo.Features,
 		ABIs:         basicInfo.ABIs,
 		ReleaseDate:  fileInfo.ModTime(),
+	}
+	
+	// Add icon data if extraction was successful
+	if iconErr == nil && iconData != nil {
+		info.IconData = iconData
+		info.IconExt = iconExt
 	}
 	
 	// Calculate relative path if within work directory

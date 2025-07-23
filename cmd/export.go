@@ -76,7 +76,7 @@ var exportCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(exportCmd)
+	repoCmd.AddCommand(exportCmd)
 	
 	exportCmd.Flags().StringVarP(&exportFormat, "format", "f", "json", "Export format: json, csv, md, fdroid")
 	exportCmd.Flags().StringVarP(&exportOutput, "output", "o", "", "Output file path")

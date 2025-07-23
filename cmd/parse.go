@@ -47,5 +47,5 @@ var parseCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(parseCmd)
+	repoCmd.AddCommand(parseCmd)
 }

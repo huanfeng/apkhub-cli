@@ -253,5 +253,5 @@ func displayDistribution(distribution map[string]int) {
 }
 
 func init() {
-	rootCmd.AddCommand(statsCmd)
+	repoCmd.AddCommand(statsCmd)
 }

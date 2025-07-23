@@ -179,8 +179,8 @@ var scanCmd = &cobra.Command{
 				}
 			}
 			
-			// Save APK info
-			if err := repository.SaveAPKInfo(modelAPKInfo); err != nil {
+			// Save APK info with icon
+			if err := repository.SaveAPKInfoWithIcon(apkInfo, modelAPKInfo); err != nil {
 				errors = append(errors, fmt.Errorf("failed to save info for %s: %w", filename, err))
 				return nil
 			}
@@ -219,7 +219,7 @@ var scanCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(scanCmd)
+	repoCmd.AddCommand(scanCmd)
 	
 	scanCmd.Flags().StringVarP(&outputPath, "output", "o", "", "Legacy option (ignored, manifest is always apkhub_manifest.json)")
 	scanCmd.Flags().BoolP("recursive", "r", true, "Scan directories recursively")

@@ -187,7 +187,7 @@ var cleanCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(cleanCmd)
+	repoCmd.AddCommand(cleanCmd)
 	
 	cleanCmd.Flags().BoolVar(&dryRun, "dry-run", false, "Show what would be deleted without actually deleting")
 	cleanCmd.Flags().IntVarP(&keepVersions, "keep", "k", 0, "Number of versions to keep (overrides config)")

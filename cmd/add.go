@@ -143,9 +143,9 @@ var addCmd = &cobra.Command{
 			}
 		}
 		
-		// Save APK info
+		// Save APK info with icon
 		fmt.Printf("Saving APK information...\n")
-		if err := repository.SaveAPKInfo(modelAPKInfo); err != nil {
+		if err := repository.SaveAPKInfoWithIcon(apkInfo, modelAPKInfo); err != nil {
 			// Rollback: remove copied APK
 			os.Remove(targetPath)
 			return fmt.Errorf("failed to save APK info: %w", err)
@@ -166,7 +166,7 @@ var addCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(addCmd)
+	repoCmd.AddCommand(addCmd)
 	
 	addCmd.Flags().BoolVarP(&skipConfirm, "yes", "y", false, "Skip confirmation prompt")
 	addCmd.Flags().BoolVarP(&copyFile, "copy", "c", false, "Copy file instead of moving")

@@ -56,7 +56,7 @@ var listCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(listCmd)
+	repoCmd.AddCommand(listCmd)
 	
 	listCmd.Flags().StringVarP(&listPackageID, "package", "p", "", "Show details for specific package ID")
 	listCmd.Flags().BoolVarP(&showVersions, "versions", "v", false, "Show all versions for each package")

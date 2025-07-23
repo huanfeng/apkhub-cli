@@ -4,11 +4,20 @@ A command-line tool for managing distributed APK repositories.
 
 ## Features
 
+### Repository Management
 - Scan directories for APK/XAPK/APKM files
 - Parse APK metadata (package name, version, permissions, etc.)
-- Generate repository index files (package.json)
+- Extract and save app icons
+- Generate repository index files (apkhub_manifest.json)
 - Calculate SHA256 checksums
-- Support for batch processing
+- Support for batch processing and incremental updates
+
+### Client Features (NEW)
+- Manage multiple APK repository sources (buckets)
+- Search apps across all repositories
+- Download APKs with checksum verification
+- Install apps directly to Android devices via adb
+- Scoop-like command line experience
 
 ## Installation
 
@@ -26,29 +35,52 @@ go build -o apkhub
 
 ## Usage
 
-### Scan a directory for APK files
+### Repository Management
 
 ```bash
-# Scan current directory
-apkhub scan .
+# Initialize a repository
+apkhub repo init
 
-# Scan with custom output
-apkhub scan /path/to/apks -o index.json
+# Scan a directory for APK files
+apkhub repo scan /path/to/apks
 
-# Scan without recursive search
-apkhub scan /path/to/apks -r=false
+# Add a single APK
+apkhub repo add app.apk
+
+# View repository statistics
+apkhub repo stats
+
+# Clean old versions
+apkhub repo clean --keep 3
 ```
 
-### Parse a single APK
+### Client Features
 
 ```bash
-apkhub parse app.apk
+# Add a repository source
+apkhub bucket add main https://apk.example.com
+
+# Search for apps
+apkhub search chrome
+
+# View app details
+apkhub info com.android.chrome
+
+# Install an app
+apkhub install com.android.chrome
 ```
 
-### Generate repository index
+### Quick Start
 
 ```bash
-apkhub index /path/to/repo
+# 1. Add a repository
+apkhub bucket add myrepo https://myapks.com
+
+# 2. Search for an app
+apkhub search telegram
+
+# 3. Install it
+apkhub install org.telegram.messenger
 ```
 
 ## Package.json Format
