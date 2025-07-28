@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/apkhub/apkhub-cli/internal/config"
-	"github.com/apkhub/apkhub-cli/pkg/apk"
-	"github.com/apkhub/apkhub-cli/pkg/models"
-	"github.com/apkhub/apkhub-cli/pkg/repo"
+	"github.com/huanfeng/apkhub-cli/internal/config"
+	"github.com/huanfeng/apkhub-cli/pkg/apk"
+	"github.com/huanfeng/apkhub-cli/pkg/models"
+	"github.com/huanfeng/apkhub-cli/pkg/repo"
 	"github.com/spf13/cobra"
 )
 
@@ -26,35 +26,35 @@ var addCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		apkPath := args[0]
-		
+
 		// Load configuration
 		cfg, err := config.Load(cfgFile)
 		if err != nil {
 			return fmt.Errorf("failed to load configuration: %w", err)
 		}
-		
+
 		// Convert to absolute paths
 		absAPKPath, err := filepath.Abs(apkPath)
 		if err != nil {
 			return fmt.Errorf("invalid APK path: %w", err)
 		}
-		
+
 		// Check if file exists
 		if _, err := os.Stat(absAPKPath); err != nil {
 			return fmt.Errorf("APK file not found: %w", err)
 		}
-		
+
 		// Create repository instance
 		repository, err := repo.NewRepository(workDir, cfg)
 		if err != nil {
 			return fmt.Errorf("failed to create repository: %w", err)
 		}
-		
+
 		// Initialize repository structure
 		if err := repository.Initialize(); err != nil {
 			return fmt.Errorf("failed to initialize repository: %w", err)
 		}
-		
+
 		// Parse APK
 		fmt.Printf("Parsing APK: %s\n", absAPKPath)
 		parser := apk.NewParser(repository.GetRootDir())
@@ -62,10 +62,10 @@ var addCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("failed to parse APK: %w", err)
 		}
-		
+
 		// Generate normalized filename
 		normalizedName := repository.GenerateNormalizedFileName(apkInfo)
-		
+
 		// Display APK information
 		fmt.Println("\n=== APK Information ===")
 		fmt.Printf("Package ID: %s\n", apkInfo.PackageID)
@@ -85,7 +85,7 @@ var addCmd = &cobra.Command{
 		fmt.Printf("\nOriginal filename: %s\n", filepath.Base(absAPKPath))
 		fmt.Printf("New filename: %s\n", normalizedName)
 		fmt.Printf("Target location: %s\n", filepath.Join("apks", normalizedName))
-		
+
 		// Confirm addition
 		if !skipConfirm {
 			fmt.Print("\nAdd this APK to repository? [y/N]: ")
@@ -96,7 +96,7 @@ var addCmd = &cobra.Command{
 				return nil
 			}
 		}
-		
+
 		// Create APK info structure
 		modelAPKInfo := &models.APKInfo{
 			PackageID:     apkInfo.PackageID,
@@ -117,15 +117,15 @@ var addCmd = &cobra.Command{
 			FileName:      normalizedName,
 			FilePath:      filepath.Join("apks", normalizedName),
 		}
-		
+
 		// Copy or move APK to repository
 		targetPath := repository.GetAPKPath(normalizedName)
-		
+
 		// Check if target already exists
 		if _, err := os.Stat(targetPath); err == nil {
 			return fmt.Errorf("APK with same name already exists in repository: %s", normalizedName)
 		}
-		
+
 		fmt.Printf("\nCopying APK to repository...\n")
 		if copyFile {
 			if err := copyAPKFile(absAPKPath, targetPath); err != nil {
@@ -142,7 +142,7 @@ var addCmd = &cobra.Command{
 				os.Remove(absAPKPath)
 			}
 		}
-		
+
 		// Save APK info with icon
 		fmt.Printf("Saving APK information...\n")
 		if err := repository.SaveAPKInfoWithIcon(apkInfo, modelAPKInfo); err != nil {
@@ -150,24 +150,24 @@ var addCmd = &cobra.Command{
 			os.Remove(targetPath)
 			return fmt.Errorf("failed to save APK info: %w", err)
 		}
-		
+
 		// Update manifest
 		fmt.Printf("Updating repository manifest...\n")
 		if err := repository.UpdateManifest(); err != nil {
 			return fmt.Errorf("failed to update manifest: %w", err)
 		}
-		
+
 		fmt.Printf("\n✓ APK successfully added to repository!\n")
 		fmt.Printf("  Location: %s\n", modelAPKInfo.FilePath)
 		fmt.Printf("  Info: %s\n", modelAPKInfo.InfoPath)
-		
+
 		return nil
 	},
 }
 
 func init() {
 	repoCmd.AddCommand(addCmd)
-	
+
 	addCmd.Flags().BoolVarP(&skipConfirm, "yes", "y", false, "Skip confirmation prompt")
 	addCmd.Flags().BoolVarP(&copyFile, "copy", "c", false, "Copy file instead of moving")
 }
@@ -193,30 +193,30 @@ func copyAPKFile(src, dst string) error {
 	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
 		return fmt.Errorf("failed to create directory: %w", err)
 	}
-	
+
 	// Open source file
 	srcFile, err := os.Open(src)
 	if err != nil {
 		return fmt.Errorf("failed to open source file: %w", err)
 	}
 	defer srcFile.Close()
-	
+
 	// Create destination file
 	dstFile, err := os.Create(dst)
 	if err != nil {
 		return fmt.Errorf("failed to create destination file: %w", err)
 	}
 	defer dstFile.Close()
-	
+
 	// Copy content
 	if _, err := dstFile.ReadFrom(srcFile); err != nil {
 		return fmt.Errorf("failed to copy file content: %w", err)
 	}
-	
+
 	// Sync to ensure data is written
 	if err := dstFile.Sync(); err != nil {
 		return fmt.Errorf("failed to sync file: %w", err)
 	}
-	
+
 	return nil
 }

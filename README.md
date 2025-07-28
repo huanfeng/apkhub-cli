@@ -22,13 +22,13 @@ A command-line tool for managing distributed APK repositories.
 ## Installation
 
 ```bash
-go install github.com/apkhub/apkhub-cli@latest
+go install github.com/huanfeng/apkhub-cli@latest
 ```
 
 Or build from source:
 
 ```bash
-git clone https://github.com/apkhub/apkhub-cli.git
+git clone https://github.com/huanfeng/apkhub-cli.git
 cd apkhub-cli
 go build -o apkhub
 ```

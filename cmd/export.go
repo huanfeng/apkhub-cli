@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/apkhub/apkhub-cli/internal/config"
-	"github.com/apkhub/apkhub-cli/pkg/models"
-	"github.com/apkhub/apkhub-cli/pkg/repo"
+	"github.com/huanfeng/apkhub-cli/internal/config"
+	"github.com/huanfeng/apkhub-cli/pkg/models"
+	"github.com/huanfeng/apkhub-cli/pkg/repo"
 	"github.com/spf13/cobra"
 )
 
@@ -30,28 +30,28 @@ var exportCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("failed to load configuration: %w", err)
 		}
-		
+
 		// Create repository instance
 		repository, err := repo.NewRepository(workDir, cfg)
 		if err != nil {
 			return fmt.Errorf("failed to create repository: %w", err)
 		}
-		
+
 		// Load manifest
 		manifest, err := repository.BuildManifestFromInfos()
 		if err != nil {
 			return fmt.Errorf("failed to load manifest: %w", err)
 		}
-		
+
 		// Determine output file
 		if exportOutput == "" {
 			exportOutput = fmt.Sprintf("apkhub_export.%s", exportFormat)
 		}
-		
+
 		fmt.Printf("Exporting repository data...\n")
 		fmt.Printf("Format: %s\n", exportFormat)
 		fmt.Printf("Output: %s\n", exportOutput)
-		
+
 		// Export based on format
 		switch exportFormat {
 		case "json":
@@ -65,11 +65,11 @@ var exportCmd = &cobra.Command{
 		default:
 			return fmt.Errorf("unsupported export format: %s", exportFormat)
 		}
-		
+
 		if err != nil {
 			return fmt.Errorf("export failed: %w", err)
 		}
-		
+
 		fmt.Printf("\n✓ Export completed successfully!\n")
 		return nil
 	},
@@ -77,7 +77,7 @@ var exportCmd = &cobra.Command{
 
 func init() {
 	repoCmd.AddCommand(exportCmd)
-	
+
 	exportCmd.Flags().StringVarP(&exportFormat, "format", "f", "json", "Export format: json, csv, md, fdroid")
 	exportCmd.Flags().StringVarP(&exportOutput, "output", "o", "", "Output file path")
 	exportCmd.Flags().StringSliceVar(&exportFields, "fields", []string{}, "Fields to export (CSV only)")
@@ -90,18 +90,18 @@ func exportJSON(manifest *models.ManifestIndex, output string) error {
 			return fmt.Errorf("failed to create output directory: %w", err)
 		}
 	}
-	
+
 	// Marshal to JSON
 	data, err := json.MarshalIndent(manifest, "", "  ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal JSON: %w", err)
 	}
-	
+
 	// Write to file
 	if err := os.WriteFile(output, data, 0644); err != nil {
 		return fmt.Errorf("failed to write file: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -112,25 +112,25 @@ func exportCSV(manifest *models.ManifestIndex, output string) error {
 		return fmt.Errorf("failed to create file: %w", err)
 	}
 	defer file.Close()
-	
+
 	writer := csv.NewWriter(file)
 	defer writer.Flush()
-	
+
 	// Default fields if not specified
 	if len(exportFields) == 0 {
 		exportFields = []string{"package_id", "app_name", "version", "version_code", "size_mb", "min_sdk", "target_sdk", "sha256", "download_url"}
 	}
-	
+
 	// Write header
 	if err := writer.Write(exportFields); err != nil {
 		return fmt.Errorf("failed to write header: %w", err)
 	}
-	
+
 	// Write data
 	for packageID, pkg := range manifest.Packages {
 		for _, version := range pkg.Versions {
 			row := []string{}
-			
+
 			for _, field := range exportFields {
 				switch field {
 				case "package_id":
@@ -163,13 +163,13 @@ func exportCSV(manifest *models.ManifestIndex, output string) error {
 					row = append(row, "")
 				}
 			}
-			
+
 			if err := writer.Write(row); err != nil {
 				return fmt.Errorf("failed to write row: %w", err)
 			}
 		}
 	}
-	
+
 	return nil
 }
 
@@ -179,35 +179,35 @@ func exportMarkdown(manifest *models.ManifestIndex, output string) error {
 		return fmt.Errorf("failed to create file: %w", err)
 	}
 	defer file.Close()
-	
+
 	// Write header
 	fmt.Fprintf(file, "# %s\n\n", manifest.Name)
 	fmt.Fprintf(file, "%s\n\n", manifest.Description)
 	fmt.Fprintf(file, "Last Updated: %s\n\n", manifest.UpdatedAt.Format("2006-01-02 15:04:05"))
-	fmt.Fprintf(file, "Total Packages: %d | Total APKs: %d | Total Size: %.2f GB\n\n", 
-		len(manifest.Packages), 
+	fmt.Fprintf(file, "Total Packages: %d | Total APKs: %d | Total Size: %.2f GB\n\n",
+		len(manifest.Packages),
 		manifest.TotalAPKs,
 		float64(manifest.TotalSize)/(1024*1024*1024))
-	
+
 	// Write package list
 	fmt.Fprintf(file, "## Packages\n\n")
-	
+
 	for packageID, pkg := range manifest.Packages {
 		fmt.Fprintf(file, "### %s\n\n", packageID)
 		fmt.Fprintf(file, "**Name:** %s\n", getDefaultName(pkg.Name))
 		fmt.Fprintf(file, "**Versions:** %d\n", len(pkg.Versions))
 		fmt.Fprintf(file, "**Latest:** %s\n\n", pkg.Latest)
-		
+
 		// Version table
 		fmt.Fprintf(file, "| Version | Code | Size | Min SDK | SHA256 |\n")
 		fmt.Fprintf(file, "|---------|------|------|---------|--------|\n")
-		
+
 		for _, version := range pkg.Versions {
 			sha256Short := version.SHA256
 			if len(sha256Short) > 16 {
 				sha256Short = sha256Short[:16] + "..."
 			}
-			
+
 			fmt.Fprintf(file, "| %s | %d | %.1f MB | %d | %s |\n",
 				version.Version,
 				version.VersionCode,
@@ -216,10 +216,10 @@ func exportMarkdown(manifest *models.ManifestIndex, output string) error {
 				sha256Short,
 			)
 		}
-		
+
 		fmt.Fprintf(file, "\n")
 	}
-	
+
 	return nil
 }
 
@@ -230,15 +230,15 @@ func exportFDroid(manifest *models.ManifestIndex, output string) error {
 			"name":        manifest.Name,
 			"description": manifest.Description,
 			"timestamp":   manifest.UpdatedAt.Unix() * 1000, // F-Droid uses milliseconds
-			"version":     21, // F-Droid index version
+			"version":     21,                               // F-Droid index version
 		},
 		"apps":     []interface{}{},
 		"packages": map[string][]interface{}{},
 	}
-	
+
 	apps := []interface{}{}
 	packages := make(map[string][]interface{})
-	
+
 	for packageID, pkg := range manifest.Packages {
 		// Add app entry
 		app := map[string]interface{}{
@@ -248,43 +248,43 @@ func exportFDroid(manifest *models.ManifestIndex, output string) error {
 			"lastUpdated": manifest.UpdatedAt.Unix() * 1000,
 		}
 		apps = append(apps, app)
-		
+
 		// Add package versions
 		versions := []interface{}{}
 		for _, version := range pkg.Versions {
 			ver := map[string]interface{}{
-				"versionName": version.Version,
-				"versionCode": version.VersionCode,
-				"size":        version.Size,
-				"minSdkVersion": version.MinSDK,
+				"versionName":      version.Version,
+				"versionCode":      version.VersionCode,
+				"size":             version.Size,
+				"minSdkVersion":    version.MinSDK,
 				"targetSdkVersion": version.TargetSDK,
-				"hash":        version.SHA256,
-				"hashType":    "sha256",
-				"added":       version.ReleaseDate.Unix() * 1000,
+				"hash":             version.SHA256,
+				"hashType":         "sha256",
+				"added":            version.ReleaseDate.Unix() * 1000,
 			}
-			
+
 			if len(version.Permissions) > 0 {
 				ver["uses-permission"] = version.Permissions
 			}
-			
+
 			versions = append(versions, ver)
 		}
 		packages[packageID] = versions
 	}
-	
+
 	fdroidIndex["apps"] = apps
 	fdroidIndex["packages"] = packages
-	
+
 	// Marshal to JSON
 	data, err := json.MarshalIndent(fdroidIndex, "", "  ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal F-Droid index: %w", err)
 	}
-	
+
 	// Write to file
 	if err := os.WriteFile(output, data, 0644); err != nil {
 		return fmt.Errorf("failed to write file: %w", err)
 	}
-	
+
 	return nil
 }

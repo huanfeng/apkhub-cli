@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/apkhub/apkhub-cli/pkg/models"
+	"github.com/huanfeng/apkhub-cli/pkg/models"
 )
 
 // SearchResult represents a search result
@@ -37,15 +37,15 @@ func (s *SearchEngine) Search(query string, options SearchOptions) ([]SearchResu
 	if err != nil {
 		return nil, fmt.Errorf("failed to get manifest: %w", err)
 	}
-	
+
 	// Normalize query
 	query = strings.ToLower(strings.TrimSpace(query))
 	if query == "" {
 		return nil, fmt.Errorf("empty search query")
 	}
-	
+
 	var results []SearchResult
-	
+
 	// Search through packages
 	for pkgID, pkg := range manifest.Packages {
 		// Calculate relevance score
@@ -53,7 +53,7 @@ func (s *SearchEngine) Search(query string, options SearchOptions) ([]SearchResu
 		if score == 0 {
 			continue
 		}
-		
+
 		// Apply filters
 		if options.MinSDK > 0 || options.Category != "" {
 			// Get latest version info
@@ -68,10 +68,10 @@ func (s *SearchEngine) Search(query string, options SearchOptions) ([]SearchResu
 				continue
 			}
 		}
-		
+
 		// Get app name
 		appName := getDefaultName(pkg.Name)
-		
+
 		// Get latest version
 		latestVersion := ""
 		if pkg.Latest != "" {
@@ -79,14 +79,14 @@ func (s *SearchEngine) Search(query string, options SearchOptions) ([]SearchResu
 				latestVersion = version.Version
 			}
 		}
-		
+
 		// Get bucket name from version key
 		bucketName := ""
 		if pkg.Latest != "" && strings.Contains(pkg.Latest, "_") {
 			parts := strings.SplitN(pkg.Latest, "_", 2)
 			bucketName = parts[0]
 		}
-		
+
 		results = append(results, SearchResult{
 			PackageID:   pkgID,
 			AppName:     appName,
@@ -96,17 +96,17 @@ func (s *SearchEngine) Search(query string, options SearchOptions) ([]SearchResu
 			Score:       score,
 		})
 	}
-	
+
 	// Sort by score (descending)
 	sort.Slice(results, func(i, j int) bool {
 		return results[i].Score > results[j].Score
 	})
-	
+
 	// Apply limit
 	if options.Limit > 0 && len(results) > options.Limit {
 		results = results[:options.Limit]
 	}
-	
+
 	return results, nil
 }
 
@@ -121,17 +121,17 @@ type SearchOptions struct {
 // calculateScore calculates relevance score for a package
 func (s *SearchEngine) calculateScore(query string, pkgID string, pkg *models.AppPackage) float64 {
 	score := 0.0
-	
+
 	// Exact package ID match
 	if strings.EqualFold(pkgID, query) {
 		return 100.0
 	}
-	
+
 	// Package ID contains query
 	if strings.Contains(strings.ToLower(pkgID), query) {
 		score += 50.0
 	}
-	
+
 	// App name match
 	appName := strings.ToLower(getDefaultName(pkg.Name))
 	if appName == query {
@@ -147,18 +147,18 @@ func (s *SearchEngine) calculateScore(query string, pkgID string, pkg *models.Ap
 			}
 		}
 	}
-	
+
 	// Description match
 	desc := strings.ToLower(getDefaultName(pkg.Description))
 	if strings.Contains(desc, query) {
 		score += 10.0
 	}
-	
+
 	// Category match
 	if strings.Contains(strings.ToLower(pkg.Category), query) {
 		score += 5.0
 	}
-	
+
 	return score
 }
 
@@ -167,20 +167,20 @@ func getDefaultName(names map[string]string) string {
 	if names == nil {
 		return ""
 	}
-	
+
 	// Try common language codes
 	for _, lang := range []string{"default", "en", "en-US", "en_US"} {
 		if name, ok := names[lang]; ok && name != "" {
 			return name
 		}
 	}
-	
+
 	// Return first available
 	for _, name := range names {
 		if name != "" {
 			return name
 		}
 	}
-	
+
 	return ""
 }

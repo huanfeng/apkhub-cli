@@ -5,9 +5,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/apkhub/apkhub-cli/internal/config"
-	"github.com/apkhub/apkhub-cli/pkg/models"
-	"github.com/apkhub/apkhub-cli/pkg/repo"
+	"github.com/huanfeng/apkhub-cli/internal/config"
+	"github.com/huanfeng/apkhub-cli/pkg/models"
+	"github.com/huanfeng/apkhub-cli/pkg/repo"
 	"github.com/spf13/cobra"
 )
 
@@ -27,29 +27,29 @@ var listCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("failed to load configuration: %w", err)
 		}
-		
+
 		// Create repository instance
 		repository, err := repo.NewRepository(workDir, cfg)
 		if err != nil {
 			return fmt.Errorf("failed to create repository: %w", err)
 		}
-		
+
 		// Load manifest
 		manifest, err := repository.BuildManifestFromInfos()
 		if err != nil {
 			return fmt.Errorf("failed to load manifest: %w", err)
 		}
-		
+
 		if len(manifest.Packages) == 0 {
 			fmt.Println("No packages found in repository.")
 			return nil
 		}
-		
+
 		// Filter by package ID if specified
 		if listPackageID != "" {
 			return listSinglePackage(manifest, listPackageID)
 		}
-		
+
 		// List all packages
 		return listAllPackages(manifest)
 	},
@@ -57,7 +57,7 @@ var listCmd = &cobra.Command{
 
 func init() {
 	repoCmd.AddCommand(listCmd)
-	
+
 	listCmd.Flags().StringVarP(&listPackageID, "package", "p", "", "Show details for specific package ID")
 	listCmd.Flags().BoolVarP(&showVersions, "versions", "v", false, "Show all versions for each package")
 	listCmd.Flags().StringVarP(&sortBy, "sort", "s", "name", "Sort by: name, size, versions, updated")
@@ -68,29 +68,29 @@ func listSinglePackage(manifest *models.ManifestIndex, packageID string) error {
 	if !exists {
 		return fmt.Errorf("package %s not found", packageID)
 	}
-	
+
 	fmt.Printf("=== Package Details ===\n")
 	fmt.Printf("Package ID: %s\n", packageID)
 	fmt.Printf("Name: %s\n", getDefaultName(pkg.Name))
 	fmt.Printf("Versions: %d\n", len(pkg.Versions))
 	fmt.Printf("Latest: %s\n\n", pkg.Latest)
-	
+
 	// List all versions
 	type versionInfo struct {
 		Key     string
 		Version *models.AppVersion
 	}
-	
+
 	var versions []versionInfo
 	for k, v := range pkg.Versions {
 		versions = append(versions, versionInfo{k, v})
 	}
-	
+
 	// Sort by version code
 	sort.Slice(versions, func(i, j int) bool {
 		return versions[i].Version.VersionCode > versions[j].Version.VersionCode
 	})
-	
+
 	fmt.Printf("=== Versions ===\n")
 	for _, v := range versions {
 		fmt.Printf("\n%s (Code: %d):\n", v.Version.Version, v.Version.VersionCode)
@@ -109,28 +109,28 @@ func listSinglePackage(manifest *models.ManifestIndex, packageID string) error {
 			fmt.Printf("  ⚠️  Alternative signature variant\n")
 		}
 	}
-	
+
 	return nil
 }
 
 func listAllPackages(manifest *models.ManifestIndex) error {
 	type packageInfo struct {
-		ID           string
-		Package      *models.AppPackage
+		ID            string
+		Package       *models.AppPackage
 		LatestVersion *models.AppVersion
-		TotalSize    int64
-		LastUpdated  string
+		TotalSize     int64
+		LastUpdated   string
 	}
-	
+
 	var packages []packageInfo
-	
+
 	// Collect package information
 	for id, pkg := range manifest.Packages {
 		info := packageInfo{
 			ID:      id,
 			Package: pkg,
 		}
-		
+
 		// Calculate total size and find latest version
 		var latestTime int64
 		for _, version := range pkg.Versions {
@@ -143,10 +143,10 @@ func listAllPackages(manifest *models.ManifestIndex) error {
 				info.LatestVersion = version
 			}
 		}
-		
+
 		packages = append(packages, info)
 	}
-	
+
 	// Sort packages
 	switch sortBy {
 	case "size":
@@ -166,18 +166,18 @@ func listAllPackages(manifest *models.ManifestIndex) error {
 			return packages[i].ID < packages[j].ID
 		})
 	}
-	
+
 	// Display header
 	fmt.Printf("%-40s %-20s %-10s %-12s %s\n", "Package ID", "Name", "Versions", "Total Size", "Last Updated")
 	fmt.Println(strings.Repeat("-", 100))
-	
+
 	// Display packages
 	for _, info := range packages {
 		name := getDefaultName(info.Package.Name)
 		if len(name) > 18 {
 			name = name[:15] + "..."
 		}
-		
+
 		fmt.Printf("%-40s %-20s %-10d %-12s %s\n",
 			info.ID,
 			name,
@@ -185,7 +185,7 @@ func listAllPackages(manifest *models.ManifestIndex) error {
 			formatSize(info.TotalSize),
 			info.LastUpdated,
 		)
-		
+
 		// Show version details if requested
 		if showVersions {
 			for _, version := range info.Package.Versions {
@@ -202,10 +202,10 @@ func listAllPackages(manifest *models.ManifestIndex) error {
 			}
 		}
 	}
-	
+
 	// Summary
 	fmt.Printf("\nTotal: %d packages, %d APKs\n", len(packages), manifest.TotalAPKs)
-	
+
 	return nil
 }
 

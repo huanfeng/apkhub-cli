@@ -7,16 +7,16 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/apkhub/apkhub-cli/internal/config"
-	"github.com/apkhub/apkhub-cli/pkg/apk"
-	"github.com/apkhub/apkhub-cli/pkg/models"
-	"github.com/apkhub/apkhub-cli/pkg/repo"
+	"github.com/huanfeng/apkhub-cli/internal/config"
+	"github.com/huanfeng/apkhub-cli/pkg/apk"
+	"github.com/huanfeng/apkhub-cli/pkg/models"
+	"github.com/huanfeng/apkhub-cli/pkg/repo"
 	"github.com/spf13/cobra"
 )
 
 var (
-	dryRun      bool
-	keepVersions int
+	dryRun        bool
+	keepVersions  int
 	removeOrphans bool
 )
 
@@ -30,20 +30,20 @@ var cleanCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("failed to load configuration: %w", err)
 		}
-		
+
 		// Override keep versions if specified
 		if cmd.Flags().Changed("keep") {
 			cfg.Repository.KeepVersions = keepVersions
 		} else {
 			keepVersions = cfg.Repository.KeepVersions
 		}
-		
+
 		// Create repository instance
 		repository, err := repo.NewRepository(workDir, cfg)
 		if err != nil {
 			return fmt.Errorf("failed to create repository: %w", err)
 		}
-		
+
 		fmt.Printf("=== Repository Cleanup ===\n")
 		fmt.Printf("Repository: %s\n", repository.GetRootDir())
 		if dryRun {
@@ -53,63 +53,63 @@ var cleanCmd = &cobra.Command{
 			fmt.Printf("Keep Versions: %d\n", keepVersions)
 		}
 		fmt.Printf("\n")
-		
+
 		// Load all APK infos
 		infos, err := repository.LoadAllAPKInfos()
 		if err != nil {
 			return fmt.Errorf("failed to load APK infos: %w", err)
 		}
-		
+
 		// Group by package ID
 		packageGroups := make(map[string][]*models.APKInfo)
 		for _, info := range infos {
 			packageGroups[info.PackageID] = append(packageGroups[info.PackageID], info)
 		}
-		
+
 		var totalRemoved int
 		var totalSize int64
 		var filesToRemove []string
-		
+
 		// Process each package
 		if keepVersions > 0 {
 			fmt.Printf("=== Version Cleanup ===\n")
-			
+
 			for packageID, versions := range packageGroups {
 				if len(versions) <= keepVersions {
 					continue
 				}
-				
+
 				// Sort by version code (newest first)
 				sort.Slice(versions, func(i, j int) bool {
 					return versions[i].VersionCode > versions[j].VersionCode
 				})
-				
+
 				// Mark old versions for removal
 				fmt.Printf("\nPackage: %s\n", packageID)
 				fmt.Printf("  Current versions: %d\n", len(versions))
-				
+
 				for i := keepVersions; i < len(versions); i++ {
 					version := versions[i]
-					fmt.Printf("  Remove: v%s (Code: %d) - %s\n", 
-						version.Version, 
+					fmt.Printf("  Remove: v%s (Code: %d) - %s\n",
+						version.Version,
 						version.VersionCode,
 						formatSize(version.Size))
-					
+
 					// Add files to removal list
 					apkPath := filepath.Join(repository.GetRootDir(), version.FilePath)
 					infoPath := filepath.Join(repository.GetRootDir(), version.InfoPath)
-					
+
 					filesToRemove = append(filesToRemove, apkPath, infoPath)
 					totalRemoved++
 					totalSize += version.Size
 				}
 			}
 		}
-		
+
 		// Find orphan files
 		if removeOrphans {
 			fmt.Printf("\n=== Orphan File Detection ===\n")
-			
+
 			// Check for orphan APKs
 			apksDir := filepath.Join(repository.GetRootDir(), "apks")
 			orphanAPKs, err := findOrphanFiles(apksDir, infos, "apks")
@@ -122,7 +122,7 @@ var cleanCmd = &cobra.Command{
 					filesToRemove = append(filesToRemove, orphan)
 				}
 			}
-			
+
 			// Check for orphan info files
 			infosDir := filepath.Join(repository.GetRootDir(), "infos")
 			orphanInfos, err := findOrphanInfoFiles(infosDir, infos)
@@ -136,18 +136,18 @@ var cleanCmd = &cobra.Command{
 				}
 			}
 		}
-		
+
 		// Summary
 		fmt.Printf("\n=== Summary ===\n")
 		fmt.Printf("Files to remove: %d\n", len(filesToRemove))
 		fmt.Printf("APKs to remove: %d\n", totalRemoved)
 		fmt.Printf("Space to free: %s\n", formatSize(totalSize))
-		
+
 		if len(filesToRemove) == 0 {
 			fmt.Printf("\nNothing to clean up!\n")
 			return nil
 		}
-		
+
 		// Confirm deletion
 		if !dryRun && !skipConfirm {
 			fmt.Print("\nProceed with cleanup? [y/N]: ")
@@ -158,7 +158,7 @@ var cleanCmd = &cobra.Command{
 				return nil
 			}
 		}
-		
+
 		// Delete files
 		if !dryRun {
 			fmt.Printf("\n=== Removing Files ===\n")
@@ -170,25 +170,25 @@ var cleanCmd = &cobra.Command{
 					removed++
 				}
 			}
-			
+
 			fmt.Printf("\nRemoved %d files\n", removed)
-			
+
 			// Update manifest
 			fmt.Printf("Updating manifest...\n")
 			if err := repository.UpdateManifest(); err != nil {
 				return fmt.Errorf("failed to update manifest: %w", err)
 			}
-			
+
 			fmt.Printf("\n✓ Cleanup completed successfully!\n")
 		}
-		
+
 		return nil
 	},
 }
 
 func init() {
 	repoCmd.AddCommand(cleanCmd)
-	
+
 	cleanCmd.Flags().BoolVar(&dryRun, "dry-run", false, "Show what would be deleted without actually deleting")
 	cleanCmd.Flags().IntVarP(&keepVersions, "keep", "k", 0, "Number of versions to keep (overrides config)")
 	cleanCmd.Flags().BoolVar(&removeOrphans, "orphans", true, "Remove orphan files")
@@ -205,7 +205,7 @@ func findOrphanFiles(dir string, infos []*models.APKInfo, subdir string) ([]stri
 			knownFiles[filename] = true
 		}
 	}
-	
+
 	var orphans []string
 	entries, err := os.ReadDir(dir)
 	if err != nil {
@@ -214,22 +214,22 @@ func findOrphanFiles(dir string, infos []*models.APKInfo, subdir string) ([]stri
 		}
 		return nil, err
 	}
-	
+
 	for _, entry := range entries {
 		if entry.IsDir() {
 			continue
 		}
-		
+
 		filename := entry.Name()
 		if subdir == "apks" && !apk.IsAPKFile(filename) {
 			continue
 		}
-		
+
 		if !knownFiles[filename] {
 			orphans = append(orphans, filepath.Join(dir, filename))
 		}
 	}
-	
+
 	return orphans, nil
 }
 
@@ -241,7 +241,7 @@ func findOrphanInfoFiles(dir string, infos []*models.APKInfo) ([]string, error) 
 		infoName := filepath.Base(info.InfoPath)
 		validInfos[infoName] = true
 	}
-	
+
 	var orphans []string
 	entries, err := os.ReadDir(dir)
 	if err != nil {
@@ -250,16 +250,16 @@ func findOrphanInfoFiles(dir string, infos []*models.APKInfo) ([]string, error) 
 		}
 		return nil, err
 	}
-	
+
 	for _, entry := range entries {
 		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".json") {
 			continue
 		}
-		
+
 		if !validInfos[entry.Name()] {
 			orphans = append(orphans, filepath.Join(dir, entry.Name()))
 		}
 	}
-	
+
 	return orphans, nil
 }

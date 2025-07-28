@@ -6,10 +6,10 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/apkhub/apkhub-cli/internal/config"
-	"github.com/apkhub/apkhub-cli/pkg/apk"
-	"github.com/apkhub/apkhub-cli/pkg/models"
-	"github.com/apkhub/apkhub-cli/pkg/repo"
+	"github.com/huanfeng/apkhub-cli/internal/config"
+	"github.com/huanfeng/apkhub-cli/pkg/apk"
+	"github.com/huanfeng/apkhub-cli/pkg/models"
+	"github.com/huanfeng/apkhub-cli/pkg/repo"
 	"github.com/spf13/cobra"
 )
 
@@ -26,13 +26,13 @@ var scanCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		directory := args[0]
-		
+
 		// Convert to absolute paths
 		absDir, err := filepath.Abs(directory)
 		if err != nil {
 			return fmt.Errorf("invalid directory path: %w", err)
 		}
-		
+
 		// Load configuration
 		cfg, err := config.Load(cfgFile)
 		if err != nil {
@@ -50,7 +50,7 @@ var scanCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("failed to create repository: %w", err)
 		}
-		
+
 		// Initialize repository structure
 		if err := repository.Initialize(); err != nil {
 			return fmt.Errorf("failed to initialize repository: %w", err)
@@ -78,7 +78,7 @@ var scanCmd = &cobra.Command{
 
 		// Perform scan
 		parser := apk.NewParser(repository.GetRootDir())
-		
+
 		var (
 			scannedFiles  int
 			newAPKs       int
@@ -86,7 +86,7 @@ var scanCmd = &cobra.Command{
 			unchangedAPKs int
 			errors        []error
 		)
-		
+
 		// Walk through directory
 		err = filepath.Walk(absDir, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
@@ -114,11 +114,11 @@ var scanCmd = &cobra.Command{
 			}
 
 			scannedFiles++
-			
+
 			// Check if APK needs processing (incremental scan)
 			filename := filepath.Base(path)
 			existingInfo, exists := existingInfos[filename]
-			
+
 			if !fullScan && exists {
 				// Check if file has been modified
 				if info.ModTime().Equal(existingInfo.UpdatedAt) || info.ModTime().Before(existingInfo.UpdatedAt) {
@@ -127,7 +127,7 @@ var scanCmd = &cobra.Command{
 					return nil
 				}
 			}
-			
+
 			// Parse APK
 			fmt.Printf("Processing: %s\n", filename)
 			apkInfo, err := parser.ParseAPK(path)
@@ -135,10 +135,10 @@ var scanCmd = &cobra.Command{
 				errors = append(errors, fmt.Errorf("failed to parse %s: %w", filename, err))
 				return nil
 			}
-			
+
 			// Generate normalized filename
 			normalizedName := repository.GenerateNormalizedFileName(apkInfo)
-			
+
 			// Create APK info
 			modelAPKInfo := &models.APKInfo{
 				PackageID:     apkInfo.PackageID,
@@ -159,7 +159,7 @@ var scanCmd = &cobra.Command{
 				FileName:      normalizedName,
 				FilePath:      filepath.Join("apks", normalizedName),
 			}
-			
+
 			// If existing, preserve original added time
 			if exists {
 				modelAPKInfo.AddedAt = existingInfo.AddedAt
@@ -167,7 +167,7 @@ var scanCmd = &cobra.Command{
 			} else {
 				newAPKs++
 			}
-			
+
 			// Check if APK exists in repository
 			targetPath := repository.GetAPKPath(normalizedName)
 			if _, err := os.Stat(targetPath); os.IsNotExist(err) {
@@ -178,13 +178,13 @@ var scanCmd = &cobra.Command{
 					return nil
 				}
 			}
-			
+
 			// Save APK info with icon
 			if err := repository.SaveAPKInfoWithIcon(apkInfo, modelAPKInfo); err != nil {
 				errors = append(errors, fmt.Errorf("failed to save info for %s: %w", filename, err))
 				return nil
 			}
-			
+
 			return nil
 		})
 
@@ -204,28 +204,28 @@ var scanCmd = &cobra.Command{
 		fmt.Printf("New APKs: %d\n", newAPKs)
 		fmt.Printf("Updated APKs: %d\n", updatedAPKs)
 		fmt.Printf("Unchanged APKs: %d\n", unchangedAPKs)
-		
+
 		if len(errors) > 0 {
 			fmt.Printf("\nErrors encountered (%d):\n", len(errors))
 			for _, err := range errors {
 				fmt.Printf("  - %v\n", err)
 			}
 		}
-		
+
 		fmt.Printf("\n✓ Repository updated successfully!\n")
-		
+
 		return nil
 	},
 }
 
 func init() {
 	repoCmd.AddCommand(scanCmd)
-	
+
 	scanCmd.Flags().StringVarP(&outputPath, "output", "o", "", "Legacy option (ignored, manifest is always apkhub_manifest.json)")
 	scanCmd.Flags().BoolP("recursive", "r", true, "Scan directories recursively")
 	scanCmd.Flags().BoolVar(&pretty, "pretty", true, "Pretty print JSON output")
 	scanCmd.Flags().BoolVar(&fullScan, "full", false, "Perform full scan instead of incremental")
-	
+
 	// Mark output as deprecated
 	scanCmd.Flags().MarkDeprecated("output", "manifest is always saved as apkhub_manifest.json")
 }

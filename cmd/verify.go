@@ -8,10 +8,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/apkhub/apkhub-cli/internal/config"
-	"github.com/apkhub/apkhub-cli/pkg/apk"
-	"github.com/apkhub/apkhub-cli/pkg/models"
-	"github.com/apkhub/apkhub-cli/pkg/repo"
+	"github.com/huanfeng/apkhub-cli/internal/config"
+	"github.com/huanfeng/apkhub-cli/pkg/apk"
+	"github.com/huanfeng/apkhub-cli/pkg/models"
+	"github.com/huanfeng/apkhub-cli/pkg/repo"
 	"github.com/spf13/cobra"
 )
 
@@ -29,41 +29,41 @@ var verifyCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("failed to load configuration: %w", err)
 		}
-		
+
 		// Create repository instance
 		repository, err := repo.NewRepository(workDir, cfg)
 		if err != nil {
 			return fmt.Errorf("failed to create repository: %w", err)
 		}
-		
+
 		fmt.Println("Verifying repository integrity...")
 		fmt.Printf("Repository: %s\n\n", repository.GetRootDir())
-		
+
 		// Load all APK infos
 		infos, err := repository.LoadAllAPKInfos()
 		if err != nil {
 			return fmt.Errorf("failed to load APK infos: %w", err)
 		}
-		
+
 		if len(infos) == 0 {
 			fmt.Println("No APKs found in repository.")
 			return nil
 		}
-		
+
 		var (
-			totalAPKs    = len(infos)
-			missingAPKs  []string
-			corruptAPKs  []string
-			orphanInfos  []string
-			validAPKs    int
+			totalAPKs   = len(infos)
+			missingAPKs []string
+			corruptAPKs []string
+			orphanInfos []string
+			validAPKs   int
 		)
-		
+
 		// Verify each APK
 		for i, info := range infos {
 			fmt.Printf("Verifying [%d/%d]: %s\n", i+1, totalAPKs, info.FileName)
-			
+
 			apkPath := repository.GetAPKPath(info.FileName)
-			
+
 			// Check if APK file exists
 			fileInfo, err := os.Stat(apkPath)
 			if err != nil {
@@ -75,12 +75,12 @@ var verifyCmd = &cobra.Command{
 				}
 				return fmt.Errorf("failed to stat APK: %w", err)
 			}
-			
+
 			// Check file size
 			if fileInfo.Size() != info.Size {
 				fmt.Printf("  ⚠️  Size mismatch: expected %d, got %d\n", info.Size, fileInfo.Size())
 			}
-			
+
 			// Verify SHA256 checksum
 			sha256Hash, err := calculateFileSHA256(apkPath)
 			if err != nil {
@@ -88,7 +88,7 @@ var verifyCmd = &cobra.Command{
 				corruptAPKs = append(corruptAPKs, info.FilePath)
 				continue
 			}
-			
+
 			if sha256Hash != info.SHA256 {
 				fmt.Printf("  ❌ Checksum mismatch\n")
 				fmt.Printf("     Expected: %s\n", info.SHA256)
@@ -96,11 +96,11 @@ var verifyCmd = &cobra.Command{
 				corruptAPKs = append(corruptAPKs, info.FilePath)
 				continue
 			}
-			
+
 			fmt.Printf("  ✓ Valid\n")
 			validAPKs++
 		}
-		
+
 		// Check for orphan APK files (APKs without info files)
 		fmt.Printf("\nChecking for orphan APK files...\n")
 		apksDir := filepath.Join(repository.GetRootDir(), "apks")
@@ -108,37 +108,37 @@ var verifyCmd = &cobra.Command{
 		if err != nil {
 			fmt.Printf("Warning: failed to check for orphan APKs: %v\n", err)
 		}
-		
+
 		// Print summary
 		fmt.Printf("\n=== Verification Summary ===\n")
 		fmt.Printf("Total APKs indexed: %d\n", totalAPKs)
 		fmt.Printf("Valid APKs: %d\n", validAPKs)
-		
+
 		if len(missingAPKs) > 0 {
 			fmt.Printf("\nMissing APKs (%d):\n", len(missingAPKs))
 			for _, path := range missingAPKs {
 				fmt.Printf("  - %s\n", path)
 			}
 		}
-		
+
 		if len(corruptAPKs) > 0 {
 			fmt.Printf("\nCorrupt APKs (%d):\n", len(corruptAPKs))
 			for _, path := range corruptAPKs {
 				fmt.Printf("  - %s\n", path)
 			}
 		}
-		
+
 		if len(orphanAPKs) > 0 {
 			fmt.Printf("\nOrphan APKs (%d) - files without info:\n", len(orphanAPKs))
 			for _, path := range orphanAPKs {
 				fmt.Printf("  - %s\n", path)
 			}
 		}
-		
+
 		// Handle fixes if requested
 		if fixIssues && (len(orphanInfos) > 0 || len(orphanAPKs) > 0) {
 			fmt.Printf("\n=== Fixing Issues ===\n")
-			
+
 			// Remove orphan info files
 			if len(orphanInfos) > 0 {
 				fmt.Printf("Removing orphan info files...\n")
@@ -151,7 +151,7 @@ var verifyCmd = &cobra.Command{
 					}
 				}
 			}
-			
+
 			// Remove orphan APK files
 			if len(orphanAPKs) > 0 {
 				fmt.Printf("Remove orphan APK files? [y/N]: ")
@@ -168,14 +168,14 @@ var verifyCmd = &cobra.Command{
 					}
 				}
 			}
-			
+
 			// Update manifest
 			fmt.Printf("\nUpdating manifest...\n")
 			if err := repository.UpdateManifest(); err != nil {
 				return fmt.Errorf("failed to update manifest: %w", err)
 			}
 		}
-		
+
 		// Final status
 		if len(missingAPKs) == 0 && len(corruptAPKs) == 0 && len(orphanAPKs) == 0 {
 			fmt.Printf("\n✓ Repository is valid!\n")
@@ -185,14 +185,14 @@ var verifyCmd = &cobra.Command{
 				fmt.Printf("Run with --fix to attempt repairs.\n")
 			}
 		}
-		
+
 		return nil
 	},
 }
 
 func init() {
 	repoCmd.AddCommand(verifyCmd)
-	
+
 	verifyCmd.Flags().BoolVar(&fixIssues, "fix", false, "Attempt to fix issues found during verification")
 }
 
@@ -203,12 +203,12 @@ func calculateFileSHA256(filePath string) (string, error) {
 		return "", err
 	}
 	defer file.Close()
-	
+
 	hash := sha256.New()
 	if _, err := io.Copy(hash, file); err != nil {
 		return "", err
 	}
-	
+
 	return hex.EncodeToString(hash.Sum(nil)), nil
 }
 
@@ -219,7 +219,7 @@ func findOrphanAPKs(apksDir string, infos []*models.APKInfo) ([]string, error) {
 	for _, info := range infos {
 		knownAPKs[info.FileName] = true
 	}
-	
+
 	// Check all files in apks directory
 	var orphans []string
 	entries, err := os.ReadDir(apksDir)
@@ -229,21 +229,21 @@ func findOrphanAPKs(apksDir string, infos []*models.APKInfo) ([]string, error) {
 		}
 		return nil, err
 	}
-	
+
 	for _, entry := range entries {
 		if entry.IsDir() {
 			continue
 		}
-		
+
 		filename := entry.Name()
 		if !apk.IsAPKFile(filename) {
 			continue
 		}
-		
+
 		if !knownAPKs[filename] {
 			orphans = append(orphans, filename)
 		}
 	}
-	
+
 	return orphans, nil
 }

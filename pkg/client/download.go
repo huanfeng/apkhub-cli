@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/apkhub/apkhub-cli/pkg/models"
+	"github.com/huanfeng/apkhub-cli/pkg/models"
 )
 
 // DownloadManager handles APK downloads
@@ -46,16 +46,16 @@ func (d *DownloadManager) Download(packageID string, options DownloadOptions) (s
 	if err != nil {
 		return "", fmt.Errorf("failed to get manifest: %w", err)
 	}
-	
+
 	// Find package
 	pkg, exists := manifest.Packages[packageID]
 	if !exists {
 		return "", fmt.Errorf("package '%s' not found", packageID)
 	}
-	
+
 	// Select version
 	var version *models.AppVersion
-	
+
 	if options.Version != "" {
 		// Find specific version
 		for _, ver := range pkg.Versions {
@@ -74,11 +74,11 @@ func (d *DownloadManager) Download(packageID string, options DownloadOptions) (s
 		}
 		version = pkg.Versions[pkg.Latest]
 	}
-	
+
 	// Construct filename
 	filename := fmt.Sprintf("%s_%d.apk", packageID, version.VersionCode)
 	targetPath := filepath.Join(d.config.Client.DownloadDir, filename)
-	
+
 	// Check if already downloaded
 	if !options.Force {
 		if info, err := os.Stat(targetPath); err == nil {
@@ -90,28 +90,28 @@ func (d *DownloadManager) Download(packageID string, options DownloadOptions) (s
 				}
 				fmt.Println("Checksum mismatch, re-downloading...")
 			} else {
-				fmt.Printf("✓ Already downloaded: %s (size: %.2f MB)\n", 
+				fmt.Printf("✓ Already downloaded: %s (size: %.2f MB)\n",
 					targetPath, float64(info.Size())/(1024*1024))
 				return targetPath, nil
 			}
 		}
 	}
-	
+
 	// Download URL
 	downloadURL := version.DownloadURL
 	if downloadURL == "" {
 		return "", fmt.Errorf("no download URL for version %s", version.Version)
 	}
-	
+
 	// Download with progress
 	fmt.Printf("Downloading %s v%s...\n", packageID, version.Version)
 	fmt.Printf("URL: %s\n", downloadURL)
 	fmt.Printf("Size: %.2f MB\n", float64(version.Size)/(1024*1024))
-	
+
 	if err := d.downloadFile(downloadURL, targetPath); err != nil {
 		return "", fmt.Errorf("download failed: %w", err)
 	}
-	
+
 	// Verify checksum
 	if !options.NoCVerify && version.SHA256 != "" {
 		fmt.Print("Verifying checksum... ")
@@ -121,7 +121,7 @@ func (d *DownloadManager) Download(packageID string, options DownloadOptions) (s
 		}
 		fmt.Println("✓ OK")
 	}
-	
+
 	fmt.Printf("✓ Downloaded to: %s\n", targetPath)
 	return targetPath, nil
 }
@@ -133,7 +133,7 @@ func (d *DownloadManager) downloadFile(url, targetPath string) error {
 	if err := os.MkdirAll(downloadDir, 0755); err != nil {
 		return fmt.Errorf("failed to create download directory: %w", err)
 	}
-	
+
 	// Create temp file
 	tempPath := targetPath + ".tmp"
 	out, err := os.Create(tempPath)
@@ -141,7 +141,7 @@ func (d *DownloadManager) downloadFile(url, targetPath string) error {
 		return err
 	}
 	defer out.Close()
-	
+
 	// Download
 	resp, err := d.client.Get(url)
 	if err != nil {
@@ -149,28 +149,28 @@ func (d *DownloadManager) downloadFile(url, targetPath string) error {
 		return err
 	}
 	defer resp.Body.Close()
-	
+
 	if resp.StatusCode != http.StatusOK {
 		os.Remove(tempPath)
 		return fmt.Errorf("HTTP %d: %s", resp.StatusCode, resp.Status)
 	}
-	
+
 	// Copy with progress
 	written, err := io.Copy(out, resp.Body)
 	if err != nil {
 		os.Remove(tempPath)
 		return err
 	}
-	
+
 	// Close file before rename
 	out.Close()
-	
+
 	// Rename temp to final
 	if err := os.Rename(tempPath, targetPath); err != nil {
 		os.Remove(tempPath)
 		return err
 	}
-	
+
 	fmt.Printf("Downloaded %d bytes\n", written)
 	return nil
 }
@@ -182,12 +182,12 @@ func (d *DownloadManager) verifyChecksum(filePath, expectedSHA256 string) (bool,
 		return false, err
 	}
 	defer file.Close()
-	
+
 	hash := sha256.New()
 	if _, err := io.Copy(hash, file); err != nil {
 		return false, err
 	}
-	
+
 	actualSHA256 := hex.EncodeToString(hash.Sum(nil))
 	return actualSHA256 == expectedSHA256, nil
 }
@@ -206,7 +206,7 @@ func (d *DownloadManager) GetPackageInfo(packageID string) (*models.AppPackage, 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get manifest: %w", err)
 	}
-	
+
 	// Find package
 	pkg, exists := manifest.Packages[packageID]
 	if !exists {
@@ -218,6 +218,6 @@ func (d *DownloadManager) GetPackageInfo(packageID string) (*models.AppPackage, 
 		}
 		return nil, fmt.Errorf("package '%s' not found", packageID)
 	}
-	
+
 	return pkg, nil
 }

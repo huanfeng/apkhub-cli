@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/apkhub/apkhub-cli/pkg/models"
+	"github.com/huanfeng/apkhub-cli/pkg/models"
 	"github.com/shogo82148/androidbinary/apk"
 )
 
@@ -35,7 +35,7 @@ func (p *Parser) ParseAPK(apkPath string) (*APKInfo, error) {
 	if IsXAPKFile(apkPath) {
 		return p.parseXAPK(apkPath)
 	}
-	
+
 	// Open APK file
 	pkg, err := apk.OpenFile(apkPath)
 	if err != nil {
@@ -73,19 +73,19 @@ func (p *Parser) ParseAPK(apkPath string) (*APKInfo, error) {
 
 	// Build APK info
 	info := &APKInfo{
-		PackageID:    manifest.Package.MustString(),
-		AppName:      p.extractAppName(&manifest),
-		Version:      manifest.VersionName.MustString(),
-		VersionCode:  int64(manifest.VersionCode.MustInt32()),
-		MinSDK:       p.extractMinSDK(&manifest),
-		TargetSDK:    p.extractTargetSDK(&manifest),
-		Size:         fileInfo.Size(),
-		SHA256:       hashes["sha256"],
+		PackageID:     manifest.Package.MustString(),
+		AppName:       p.extractAppName(&manifest),
+		Version:       manifest.VersionName.MustString(),
+		VersionCode:   int64(manifest.VersionCode.MustInt32()),
+		MinSDK:        p.extractMinSDK(&manifest),
+		TargetSDK:     p.extractTargetSDK(&manifest),
+		Size:          fileInfo.Size(),
+		SHA256:        hashes["sha256"],
 		SignatureInfo: signatureInfo,
-		Permissions:  p.extractPermissions(&manifest),
-		Features:     p.extractFeatures(&manifest),
-		ABIs:         p.extractABIs(apkPath),
-		ReleaseDate:  fileInfo.ModTime(),
+		Permissions:   p.extractPermissions(&manifest),
+		Features:      p.extractFeatures(&manifest),
+		ABIs:          p.extractABIs(apkPath),
+		ReleaseDate:   fileInfo.ModTime(),
 	}
 
 	// Add icon data if extraction was successful
@@ -139,7 +139,7 @@ func (p *Parser) calculateHashes(filePath string) (map[string]string, error) {
 
 	// Create a multi-writer to calculate all hashes in one pass
 	multiWriter := io.MultiWriter(md5Hash, sha1Hash, sha256Hash)
-	
+
 	if _, err := io.Copy(multiWriter, file); err != nil {
 		return nil, err
 	}
@@ -154,17 +154,17 @@ func (p *Parser) calculateHashes(filePath string) (map[string]string, error) {
 // extractAppName extracts application name with multi-language support
 func (p *Parser) extractAppName(manifest *apk.Manifest) map[string]string {
 	names := make(map[string]string)
-	
+
 	// Try to get the default name
 	if labelStr, err := manifest.App.Label.String(); err == nil && labelStr != "" {
 		names["default"] = labelStr
 	}
-	
+
 	// If no label found, use package name as fallback
 	if len(names) == 0 {
 		names["default"] = manifest.Package.MustString()
 	}
-	
+
 	return names
 }
 
@@ -205,14 +205,14 @@ func (p *Parser) extractFeatures(manifest *apk.Manifest) []string {
 // extractABIs extracts supported ABIs from native libraries
 func (p *Parser) extractABIs(apkPath string) []string {
 	abiMap := make(map[string]bool)
-	
+
 	// Open APK as zip file to access entries
 	reader, err := zip.OpenReader(apkPath)
 	if err != nil {
 		return []string{}
 	}
 	defer reader.Close()
-	
+
 	// Check lib directory
 	for _, file := range reader.File {
 		if strings.HasPrefix(file.Name, "lib/") {
@@ -223,13 +223,13 @@ func (p *Parser) extractABIs(apkPath string) []string {
 			}
 		}
 	}
-	
+
 	// Convert map to slice
 	var abis []string
 	for abi := range abiMap {
 		abis = append(abis, abi)
 	}
-	
+
 	return abis
 }
 
@@ -254,53 +254,53 @@ func IsAPKFile(path string) bool {
 // parseWithAAPTFallback uses aapt command as fallback when androidbinary fails
 func (p *Parser) parseWithAAPTFallback(apkPath string, originalErr error) (*APKInfo, error) {
 	fmt.Printf("Warning: androidbinary failed to parse APK, trying aapt fallback...\n")
-	
+
 	// Try parsing with aapt
 	basicInfo, aaptErr := TryParseWithAAPT(apkPath)
 	if aaptErr != nil {
 		return nil, fmt.Errorf("both parsers failed - androidbinary: %v, aapt: %v", originalErr, aaptErr)
 	}
-	
+
 	// Get file info
 	fileInfo, err := os.Stat(apkPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to stat APK file: %w", err)
 	}
-	
+
 	// Calculate hashes
 	hashes, err := p.calculateHashes(apkPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to calculate hashes: %w", err)
 	}
-	
+
 	// Extract icon
 	iconExtractor := NewIconExtractor()
 	iconData, iconExt, iconErr := iconExtractor.ExtractIcon(apkPath)
 	// Icon extraction is non-fatal
-	
+
 	// Build APK info from aapt data
 	info := &APKInfo{
-		PackageID:    basicInfo.PackageID,
-		AppName:      map[string]string{"default": basicInfo.AppName},
-		Version:      basicInfo.VersionName,
-		VersionCode:  basicInfo.VersionCode,
-		MinSDK:       basicInfo.MinSDK,
-		TargetSDK:    basicInfo.TargetSDK,
-		Size:         fileInfo.Size(),
-		SHA256:       hashes["sha256"],
+		PackageID:     basicInfo.PackageID,
+		AppName:       map[string]string{"default": basicInfo.AppName},
+		Version:       basicInfo.VersionName,
+		VersionCode:   basicInfo.VersionCode,
+		MinSDK:        basicInfo.MinSDK,
+		TargetSDK:     basicInfo.TargetSDK,
+		Size:          fileInfo.Size(),
+		SHA256:        hashes["sha256"],
 		SignatureInfo: &models.SignatureInfo{}, // Empty signature for aapt fallback
-		Permissions:  basicInfo.Permissions,
-		Features:     basicInfo.Features,
-		ABIs:         basicInfo.ABIs,
-		ReleaseDate:  fileInfo.ModTime(),
+		Permissions:   basicInfo.Permissions,
+		Features:      basicInfo.Features,
+		ABIs:          basicInfo.ABIs,
+		ReleaseDate:   fileInfo.ModTime(),
 	}
-	
+
 	// Add icon data if extraction was successful
 	if iconErr == nil && iconData != nil {
 		info.IconData = iconData
 		info.IconExt = iconExt
 	}
-	
+
 	// Calculate relative path if within work directory
 	relPath, err := filepath.Rel(p.workDir, apkPath)
 	if err == nil && !strings.HasPrefix(relPath, "..") {
@@ -308,7 +308,7 @@ func (p *Parser) parseWithAAPTFallback(apkPath string, originalErr error) (*APKI
 	} else {
 		info.FilePath = filepath.Base(apkPath)
 	}
-	
+
 	return info, nil
 }
 
@@ -319,10 +319,10 @@ func (p *Parser) parseXAPK(xapkPath string) (*APKInfo, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse XAPK: %w", err)
 	}
-	
+
 	// Convert XAPKInfo to APKInfo
 	apkInfo := xapkInfo.APKInfo
-	
+
 	// Add XAPK specific markers
 	if len(xapkInfo.APKFiles) > 1 {
 		// Add feature to indicate it's a split APK
@@ -331,6 +331,6 @@ func (p *Parser) parseXAPK(xapkPath string) (*APKInfo, error) {
 	if len(xapkInfo.OBBFiles) > 0 {
 		apkInfo.Features = append(apkInfo.Features, "has_obb")
 	}
-	
+
 	return apkInfo, nil
 }

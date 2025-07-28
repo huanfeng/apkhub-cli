@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/apkhub/apkhub-cli/pkg/models"
+	"github.com/huanfeng/apkhub-cli/pkg/models"
 )
 
 // BucketManager manages repository buckets
@@ -30,17 +30,17 @@ func (b *BucketManager) FetchManifest(bucketName string) (*models.ManifestIndex,
 	if !exists {
 		return nil, fmt.Errorf("bucket %s not found", bucketName)
 	}
-	
+
 	if !bucket.Enabled {
 		return nil, fmt.Errorf("bucket %s is disabled", bucketName)
 	}
-	
+
 	// Check cache
 	cachePath := filepath.Join(b.config.Client.CacheDir, bucketName+".json")
 	if manifest, err := b.loadCachedManifest(cachePath, b.config.Client.CacheTTL); err == nil {
 		return manifest, nil
 	}
-	
+
 	// Fetch from remote
 	manifestURL := bucket.URL + "/apkhub_manifest.json"
 	resp, err := http.Get(manifestURL)
@@ -48,40 +48,40 @@ func (b *BucketManager) FetchManifest(bucketName string) (*models.ManifestIndex,
 		return nil, fmt.Errorf("failed to fetch manifest from %s: %w", manifestURL, err)
 	}
 	defer resp.Body.Close()
-	
+
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("failed to fetch manifest: HTTP %d", resp.StatusCode)
 	}
-	
+
 	// Read response
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read manifest: %w", err)
 	}
-	
+
 	// Parse manifest
 	var manifest models.ManifestIndex
 	if err := json.Unmarshal(data, &manifest); err != nil {
 		return nil, fmt.Errorf("failed to parse manifest: %w", err)
 	}
-	
+
 	// Save to cache
 	if err := b.saveToCache(cachePath, data); err != nil {
 		// Non-fatal, just log
 		fmt.Printf("Warning: failed to cache manifest: %v\n", err)
 	}
-	
+
 	// Update last updated time
 	bucket.LastUpdated = time.Now()
 	b.config.Save()
-	
+
 	return &manifest, nil
 }
 
 // UpdateAll updates all enabled buckets
 func (b *BucketManager) UpdateAll() error {
 	var errors []error
-	
+
 	for name, bucket := range b.config.GetEnabledBuckets() {
 		fmt.Printf("Updating bucket '%s' from %s...\n", name, bucket.URL)
 		if _, err := b.FetchManifest(name); err != nil {
@@ -90,11 +90,11 @@ func (b *BucketManager) UpdateAll() error {
 			fmt.Printf("✓ Updated %s\n", name)
 		}
 	}
-	
+
 	if len(errors) > 0 {
 		return fmt.Errorf("some buckets failed to update: %v", errors)
 	}
-	
+
 	return nil
 }
 
@@ -107,7 +107,7 @@ func (b *BucketManager) GetMergedManifest() (*models.ManifestIndex, error) {
 		UpdatedAt:   time.Now(),
 		Packages:    make(map[string]*models.AppPackage),
 	}
-	
+
 	// Load each bucket's manifest
 	for name := range b.config.GetEnabledBuckets() {
 		manifest, err := b.FetchManifest(name)
@@ -115,7 +115,7 @@ func (b *BucketManager) GetMergedManifest() (*models.ManifestIndex, error) {
 			fmt.Printf("Warning: failed to load bucket %s: %v\n", name, err)
 			continue
 		}
-		
+
 		// Merge packages
 		for pkgID, pkg := range manifest.Packages {
 			if existing, exists := merged.Packages[pkgID]; exists {
@@ -157,11 +157,11 @@ func (b *BucketManager) GetMergedManifest() (*models.ManifestIndex, error) {
 				merged.Packages[pkgID] = clonedPkg
 			}
 		}
-		
+
 		merged.TotalAPKs += manifest.TotalAPKs
 		merged.TotalSize += manifest.TotalSize
 	}
-	
+
 	return merged, nil
 }
 
@@ -171,24 +171,24 @@ func (b *BucketManager) loadCachedManifest(cachePath string, ttl int) (*models.M
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Check if cache is expired
 	if time.Since(info.ModTime()) > time.Duration(ttl)*time.Second {
 		return nil, fmt.Errorf("cache expired")
 	}
-	
+
 	// Read cache file
 	data, err := os.ReadFile(cachePath)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Parse manifest
 	var manifest models.ManifestIndex
 	if err := json.Unmarshal(data, &manifest); err != nil {
 		return nil, err
 	}
-	
+
 	return &manifest, nil
 }
 
@@ -199,7 +199,7 @@ func (b *BucketManager) saveToCache(cachePath string, data []byte) error {
 	if err := os.MkdirAll(cacheDir, 0755); err != nil {
 		return err
 	}
-	
+
 	return os.WriteFile(cachePath, data, 0644)
 }
 

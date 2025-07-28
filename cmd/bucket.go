@@ -5,7 +5,7 @@ import (
 	"os"
 	"text/tabwriter"
 
-	"github.com/apkhub/apkhub-cli/pkg/client"
+	"github.com/huanfeng/apkhub-cli/pkg/client"
 	"github.com/spf13/cobra"
 )
 
@@ -24,43 +24,43 @@ var bucketListCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("failed to load config: %w", err)
 		}
-		
+
 		if len(config.Buckets) == 0 {
 			fmt.Println("No buckets configured. Use 'apkhub bucket add' to add one.")
 			return nil
 		}
-		
+
 		// Display buckets in table format
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 		fmt.Fprintln(w, "NAME\tDISPLAY NAME\tURL\tENABLED\tLAST UPDATED")
 		fmt.Fprintln(w, "----\t------------\t---\t-------\t------------")
-		
+
 		for name, bucket := range config.Buckets {
 			enabled := "Yes"
 			if !bucket.Enabled {
 				enabled = "No"
 			}
-			
+
 			lastUpdated := "Never"
 			if !bucket.LastUpdated.IsZero() {
 				lastUpdated = bucket.LastUpdated.Format("2006-01-02 15:04")
 			}
-			
+
 			marker := ""
 			if name == config.DefaultBucket {
 				marker = "*"
 			}
-			
+
 			fmt.Fprintf(w, "%s%s\t%s\t%s\t%s\t%s\n",
 				name, marker, bucket.Name, bucket.URL, enabled, lastUpdated)
 		}
-		
+
 		w.Flush()
-		
+
 		if config.DefaultBucket != "" {
 			fmt.Printf("\n* Default bucket: %s\n", config.DefaultBucket)
 		}
-		
+
 		return nil
 	},
 }
@@ -76,20 +76,20 @@ var bucketAddCmd = &cobra.Command{
 		if len(args) > 2 {
 			displayName = args[2]
 		}
-		
+
 		// Load client config
 		config, err := client.Load()
 		if err != nil {
 			return fmt.Errorf("failed to load config: %w", err)
 		}
-		
+
 		// Add bucket
 		if err := config.AddBucket(name, url, displayName); err != nil {
 			return fmt.Errorf("failed to add bucket: %w", err)
 		}
-		
+
 		fmt.Printf("✓ Added bucket '%s' (%s)\n", name, url)
-		
+
 		// Update bucket index
 		fmt.Printf("Fetching bucket manifest...\n")
 		bucketMgr := client.NewBucketManager(config)
@@ -99,7 +99,7 @@ var bucketAddCmd = &cobra.Command{
 		} else {
 			fmt.Println("✓ Bucket manifest fetched successfully")
 		}
-		
+
 		return nil
 	},
 }
@@ -110,13 +110,13 @@ var bucketRemoveCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name := args[0]
-		
+
 		// Load client config
 		config, err := client.Load()
 		if err != nil {
 			return fmt.Errorf("failed to load config: %w", err)
 		}
-		
+
 		// Confirm removal
 		if !skipConfirm {
 			fmt.Printf("Remove bucket '%s'? [y/N]: ", name)
@@ -127,18 +127,18 @@ var bucketRemoveCmd = &cobra.Command{
 				return nil
 			}
 		}
-		
+
 		// Remove bucket
 		if err := config.RemoveBucket(name); err != nil {
 			return fmt.Errorf("failed to remove bucket: %w", err)
 		}
-		
+
 		fmt.Printf("✓ Removed bucket '%s'\n", name)
-		
+
 		// Clean up cache
 		cacheFile := fmt.Sprintf("%s/%s.json", config.Client.CacheDir, name)
 		os.Remove(cacheFile)
-		
+
 		return nil
 	},
 }
@@ -152,9 +152,9 @@ var bucketUpdateCmd = &cobra.Command{
 		if err != nil {
 			return fmt.Errorf("failed to load config: %w", err)
 		}
-		
+
 		bucketMgr := client.NewBucketManager(config)
-		
+
 		if len(args) > 0 {
 			// Update specific bucket
 			name := args[0]
@@ -170,7 +170,7 @@ var bucketUpdateCmd = &cobra.Command{
 			}
 			fmt.Println("\n✓ All buckets updated")
 		}
-		
+
 		return nil
 	},
 }
@@ -199,29 +199,29 @@ func setBucketEnabled(name string, enabled bool) error {
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
-	
+
 	bucket, exists := config.Buckets[name]
 	if !exists {
 		return fmt.Errorf("bucket '%s' not found", name)
 	}
-	
+
 	bucket.Enabled = enabled
 	if err := config.Save(); err != nil {
 		return fmt.Errorf("failed to save config: %w", err)
 	}
-	
+
 	status := "enabled"
 	if !enabled {
 		status = "disabled"
 	}
 	fmt.Printf("✓ Bucket '%s' %s\n", name, status)
-	
+
 	return nil
 }
 
 func init() {
 	rootCmd.AddCommand(bucketCmd)
-	
+
 	// Add subcommands
 	bucketCmd.AddCommand(bucketListCmd)
 	bucketCmd.AddCommand(bucketAddCmd)
@@ -229,7 +229,7 @@ func init() {
 	bucketCmd.AddCommand(bucketUpdateCmd)
 	bucketCmd.AddCommand(bucketEnableCmd)
 	bucketCmd.AddCommand(bucketDisableCmd)
-	
+
 	// Add flags
 	bucketRemoveCmd.Flags().BoolVarP(&skipConfirm, "yes", "y", false, "Skip confirmation prompt")
 }

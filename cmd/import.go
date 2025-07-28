@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/apkhub/apkhub-cli/internal/config"
-	"github.com/apkhub/apkhub-cli/pkg/models"
-	"github.com/apkhub/apkhub-cli/pkg/repo"
+	"github.com/huanfeng/apkhub-cli/internal/config"
+	"github.com/huanfeng/apkhub-cli/pkg/models"
+	"github.com/huanfeng/apkhub-cli/pkg/repo"
 	"github.com/spf13/cobra"
 )
 
@@ -29,29 +29,29 @@ var importCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		importSource = args[0]
-		
+
 		// Load configuration
 		cfg, err := config.Load(cfgFile)
 		if err != nil {
 			return fmt.Errorf("failed to load configuration: %w", err)
 		}
-		
+
 		// Create repository instance
 		repository, err := repo.NewRepository(workDir, cfg)
 		if err != nil {
 			return fmt.Errorf("failed to create repository: %w", err)
 		}
-		
+
 		// Initialize repository structure
 		if err := repository.Initialize(); err != nil {
 			return fmt.Errorf("failed to initialize repository: %w", err)
 		}
-		
+
 		fmt.Printf("=== Import APK Metadata ===\n")
 		fmt.Printf("Source: %s\n", importSource)
 		fmt.Printf("Format: %s\n", importFormat)
 		fmt.Printf("Download APKs: %v\n\n", downloadAPKs)
-		
+
 		// Load source data
 		var sourceData []byte
 		if strings.HasPrefix(importSource, "http://") || strings.HasPrefix(importSource, "https://") {
@@ -62,7 +62,7 @@ var importCmd = &cobra.Command{
 				return fmt.Errorf("failed to download: %w", err)
 			}
 			defer resp.Body.Close()
-			
+
 			sourceData, err = io.ReadAll(resp.Body)
 			if err != nil {
 				return fmt.Errorf("failed to read response: %w", err)
@@ -74,10 +74,10 @@ var importCmd = &cobra.Command{
 				return fmt.Errorf("failed to read file: %w", err)
 			}
 		}
-		
+
 		// Import based on format
 		var importedPackages []*models.APKInfo
-		
+
 		switch importFormat {
 		case "apkhub":
 			importedPackages, err = importFromApkHub(sourceData)
@@ -88,13 +88,13 @@ var importCmd = &cobra.Command{
 		default:
 			return fmt.Errorf("unsupported import format: %s", importFormat)
 		}
-		
+
 		if err != nil {
 			return fmt.Errorf("import failed: %w", err)
 		}
-		
+
 		fmt.Printf("\nFound %d APKs to import\n", len(importedPackages))
-		
+
 		// Confirm import
 		if !skipConfirm && len(importedPackages) > 0 {
 			fmt.Printf("\nProceed with import? [y/N]: ")
@@ -105,69 +105,69 @@ var importCmd = &cobra.Command{
 				return nil
 			}
 		}
-		
+
 		// Import APKs
 		fmt.Printf("\n=== Importing APKs ===\n")
 		var imported, skipped, failed int
-		
+
 		for _, apkInfo := range importedPackages {
 			fmt.Printf("\nImporting: %s v%s\n", apkInfo.PackageID, apkInfo.Version)
-			
+
 			// Check if already exists
 			existingInfos, _ := repository.LoadAllAPKInfos()
 			exists := false
 			for _, existing := range existingInfos {
-				if existing.PackageID == apkInfo.PackageID && 
-				   existing.VersionCode == apkInfo.VersionCode {
+				if existing.PackageID == apkInfo.PackageID &&
+					existing.VersionCode == apkInfo.VersionCode {
 					exists = true
 					break
 				}
 			}
-			
+
 			if exists {
 				fmt.Printf("  Skip: Already exists\n")
 				skipped++
 				continue
 			}
-			
+
 			// Save APK info
 			if err := repository.SaveAPKInfo(apkInfo); err != nil {
 				fmt.Printf("  Failed: %v\n", err)
 				failed++
 				continue
 			}
-			
+
 			// Download APK if requested and URL is available
 			if downloadAPKs && apkInfo.FilePath != "" {
 				fmt.Printf("  Downloading APK...\n")
 				// TODO: Implement APK download
 				fmt.Printf("  Download not implemented yet\n")
 			}
-			
+
 			imported++
 			fmt.Printf("  ✓ Imported successfully\n")
 		}
-		
+
 		// Update manifest
 		fmt.Printf("\nUpdating repository manifest...\n")
 		if err := repository.UpdateManifest(); err != nil {
 			return fmt.Errorf("failed to update manifest: %w", err)
 		}
-		
+
 		// Summary
 		fmt.Printf("\n=== Import Summary ===\n")
 		fmt.Printf("Imported: %d\n", imported)
 		fmt.Printf("Skipped: %d\n", skipped)
 		fmt.Printf("Failed: %d\n", failed)
 		fmt.Printf("\n✓ Import completed!\n")
-		
+
 		return nil
 	},
 }
 
 func init() {
 	repoCmd.AddCommand(importCmd)
-	
+
 	importCmd.Flags().StringVarP(&importFormat, "format", "f", "apkhub", "Import format: apkhub, fdroid, json")
 	importCmd.Flags().BoolVarP(&downloadAPKs, "download", "d", false, "Download APK files if URLs are provided")
 	importCmd.Flags().BoolVarP(&skipConfirm, "yes", "y", false, "Skip confirmation prompt")
@@ -180,9 +180,9 @@ func importFromApkHub(data []byte) ([]*models.APKInfo, error) {
 	if err := json.Unmarshal(data, &manifest); err != nil {
 		return nil, fmt.Errorf("failed to parse ApkHub manifest: %w", err)
 	}
-	
+
 	var apkInfos []*models.APKInfo
-	
+
 	for packageID, pkg := range manifest.Packages {
 		for versionKey, version := range pkg.Versions {
 			info := &models.APKInfo{
@@ -207,7 +207,7 @@ func importFromApkHub(data []byte) ([]*models.APKInfo, error) {
 			apkInfos = append(apkInfos, info)
 		}
 	}
-	
+
 	return apkInfos, nil
 }
 
@@ -223,56 +223,56 @@ func importFromFDroid(data []byte) ([]*models.APKInfo, error) {
 			Name        string `json:"name"`
 		} `json:"apps"`
 		Packages map[string][]struct {
-			VersionName   string   `json:"versionName"`
-			VersionCode   int64    `json:"versionCode"`
-			Size          int64    `json:"size"`
-			MinSdkVersion int      `json:"minSdkVersion"`
-			TargetSdkVersion int   `json:"targetSdkVersion"`
-			Hash          string   `json:"hash"`
-			HashType      string   `json:"hashType"`
-			Added         int64    `json:"added"`
-			Permissions   []string `json:"uses-permission"`
+			VersionName      string   `json:"versionName"`
+			VersionCode      int64    `json:"versionCode"`
+			Size             int64    `json:"size"`
+			MinSdkVersion    int      `json:"minSdkVersion"`
+			TargetSdkVersion int      `json:"targetSdkVersion"`
+			Hash             string   `json:"hash"`
+			HashType         string   `json:"hashType"`
+			Added            int64    `json:"added"`
+			Permissions      []string `json:"uses-permission"`
 		} `json:"packages"`
 	}
-	
+
 	if err := json.Unmarshal(data, &fdroidIndex); err != nil {
 		return nil, fmt.Errorf("failed to parse F-Droid index: %w", err)
 	}
-	
+
 	// Build app name map
 	appNames := make(map[string]string)
 	for _, app := range fdroidIndex.Apps {
 		appNames[app.PackageName] = app.Name
 	}
-	
+
 	var apkInfos []*models.APKInfo
-	
+
 	for packageID, versions := range fdroidIndex.Packages {
 		appName := appNames[packageID]
 		if appName == "" {
 			appName = packageID
 		}
-		
+
 		for _, version := range versions {
 			info := &models.APKInfo{
-				PackageID:   packageID,
-				AppName:     map[string]string{"default": appName},
-				Version:     version.VersionName,
-				VersionCode: version.VersionCode,
-				MinSDK:      version.MinSdkVersion,
-				TargetSDK:   version.TargetSdkVersion,
-				Size:        version.Size,
-				SHA256:      version.Hash,
+				PackageID:     packageID,
+				AppName:       map[string]string{"default": appName},
+				Version:       version.VersionName,
+				VersionCode:   version.VersionCode,
+				MinSDK:        version.MinSdkVersion,
+				TargetSDK:     version.TargetSdkVersion,
+				Size:          version.Size,
+				SHA256:        version.Hash,
 				SignatureInfo: &models.SignatureInfo{},
-				Permissions:  version.Permissions,
-				AddedAt:      time.Unix(version.Added/1000, 0),
-				UpdatedAt:    time.Now(),
-				OriginalName: fmt.Sprintf("%s_%d.apk", packageID, version.VersionCode),
+				Permissions:   version.Permissions,
+				AddedAt:       time.Unix(version.Added/1000, 0),
+				UpdatedAt:     time.Now(),
+				OriginalName:  fmt.Sprintf("%s_%d.apk", packageID, version.VersionCode),
 			}
 			apkInfos = append(apkInfos, info)
 		}
 	}
-	
+
 	return apkInfos, nil
 }
 
@@ -287,29 +287,29 @@ func importFromGenericJSON(data []byte, fieldMap map[string]string) ([]*models.A
 		}
 		rawData = []map[string]interface{}{singleObj}
 	}
-	
+
 	// Default field mapping
 	if len(fieldMap) == 0 {
 		fieldMap = map[string]string{
-			"package_id": "package_id",
-			"app_name": "app_name",
-			"version": "version",
+			"package_id":   "package_id",
+			"app_name":     "app_name",
+			"version":      "version",
 			"version_code": "version_code",
-			"size": "size",
-			"sha256": "sha256",
+			"size":         "size",
+			"sha256":       "sha256",
 		}
 	}
-	
+
 	var apkInfos []*models.APKInfo
-	
+
 	for _, item := range rawData {
 		info := &models.APKInfo{
-			AddedAt:   time.Now(),
-			UpdatedAt: time.Now(),
-			AppName:   make(map[string]string),
+			AddedAt:       time.Now(),
+			UpdatedAt:     time.Now(),
+			AppName:       make(map[string]string),
 			SignatureInfo: &models.SignatureInfo{},
 		}
-		
+
 		// Map fields
 		if v, ok := getFieldValue(item, fieldMap["package_id"]); ok {
 			info.PackageID = fmt.Sprintf("%v", v)
@@ -333,7 +333,7 @@ func importFromGenericJSON(data []byte, fieldMap map[string]string) ([]*models.A
 		if v, ok := getFieldValue(item, fieldMap["sha256"]); ok {
 			info.SHA256 = fmt.Sprintf("%v", v)
 		}
-		
+
 		// Set defaults
 		if info.PackageID == "" {
 			continue // Skip invalid entries
@@ -341,12 +341,12 @@ func importFromGenericJSON(data []byte, fieldMap map[string]string) ([]*models.A
 		if info.AppName["default"] == "" {
 			info.AppName["default"] = info.PackageID
 		}
-		
+
 		info.OriginalName = fmt.Sprintf("%s_%d.apk", info.PackageID, info.VersionCode)
-		
+
 		apkInfos = append(apkInfos, info)
 	}
-	
+
 	return apkInfos, nil
 }
 
@@ -355,23 +355,23 @@ func getFieldValue(data map[string]interface{}, path string) (interface{}, bool)
 	if path == "" {
 		return nil, false
 	}
-	
+
 	parts := strings.Split(path, ".")
 	current := data
-	
+
 	for i, part := range parts {
 		if i == len(parts)-1 {
 			val, ok := current[part]
 			return val, ok
 		}
-		
+
 		if next, ok := current[part].(map[string]interface{}); ok {
 			current = next
 		} else {
 			return nil, false
 		}
 	}
-	
+
 	return nil, false
 }
 

@@ -22,9 +22,9 @@ builds:
     # 自动注入版本信息
     ldflags:
       - -s -w
-      - -X github.com/apkhub/apkhub-cli/internal/version.Version={{.Version}}
-      - -X github.com/apkhub/apkhub-cli/internal/version.Commit={{.Commit}}
-      - -X github.com/apkhub/apkhub-cli/internal/version.BuildDate={{.Date}}
+      - -X github.com/huanfeng/apkhub-cli/internal/version.Version={{.Version}}
+      - -X github.com/huanfeng/apkhub-cli/internal/version.Commit={{.Commit}}
+      - -X github.com/huanfeng/apkhub-cli/internal/version.BuildDate={{.Date}}
 
 # 打包配置
 archives:
@@ -44,7 +44,7 @@ archives:
     format_overrides:
       - goos: windows
         formats: ['zip']
-    
+
 # 生成校验和文件
 checksum:
   name_template: 'SHA256SUMS.txt'
@@ -59,24 +59,24 @@ release:
   mode: append
   header: |
     ## ApkHub CLI {{.Version}}
-    
+
     ### Installation
-    
+
     #### Linux/macOS
     ```bash
     # Download the appropriate archive for your system
-    curl -L https://github.com/apkhub/apkhub-cli/releases/download/{{.Tag}}/{{ .ProjectName }}-{{.Version}}-linux-x86_64.tar.gz -o apkhub.tar.gz
-    
+    curl -L https://github.com/huanfeng/apkhub-cli/releases/download/{{.Tag}}/{{ .ProjectName }}-{{.Version}}-linux-x86_64.tar.gz -o apkhub.tar.gz
+
     # Extract
     tar xzf apkhub.tar.gz
-    
+
     # Move to PATH
     sudo mv apkhub /usr/local/bin/
-    
+
     # Make executable
     sudo chmod +x /usr/local/bin/apkhub
     ```
-    
+
     #### Windows
     Download the Windows archive and extract `apkhub.exe` to a directory in your PATH.
 
@@ -98,3 +98,62 @@ changelog:
       order: 1
     - title: Others
       order: 999
+
+# Homebrew Formula
+# 注意：需要先创建 homebrew-tap 仓库并设置 HOMEBREW_TAP_GITHUB_TOKEN
+brews:
+  - name: apkhub
+    # GitHub repository to push the formula to
+    repository:
+      owner: apkhub
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+
+    # 如果没有设置 token，跳过此步骤
+    skip: "{{ not .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+
+    # Formula description
+    description: "A command-line tool for managing distributed APK repositories"
+    homepage: "https://github.com/huanfeng/apkhub-cli"
+    license: "MIT"
+
+    # Dependencies
+    dependencies:
+      - name: aapt
+        type: optional
+        description: "for APK parsing functionality"
+
+    # Installation
+    install: |
+      bin.install "apkhub"
+
+    # Test
+    test: |
+      system "#{bin}/apkhub", "version"
+
+# Scoop Manifest
+# 注意：需要先创建 apkhub-scoop-bucket 仓库并设置 SCOOP_BUCKET_GITHUB_TOKEN
+scoops:
+  - name: apkhub
+    # GitHub repository to push the manifest to
+    repository:
+      owner: huanfeng
+      name: apkhub-scoop-bucket
+      token: "{{ .Env.SCOOP_BUCKET_GITHUB_TOKEN }}"
+
+    # 如果没有设置 token，跳过此步骤
+    skip: "{{ not .Env.SCOOP_BUCKET_GITHUB_TOKEN }}"
+
+    # Manifest description
+    description: "A command-line tool for managing distributed APK repositories"
+    homepage: "https://github.com/huanfeng/apkhub-cli"
+    license: "MIT"
+
+    # Dependencies
+    suggest:
+      aapt: ["main/android-sdk"]
+
+    # Persist data between updates
+    persist:
+      - "apkhub.yaml"
+      - "apkhub_manifest.json"

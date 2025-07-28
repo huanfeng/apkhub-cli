@@ -1,4 +1,29 @@
-# 构建说明
+# 构建和安装说明
+
+## 安装方式
+
+### 通过包管理器安装（推荐）
+
+#### Homebrew (macOS/Linux)
+```bash
+# 添加 tap（仅第一次）
+brew tap apkhub/tap
+
+# 安装
+brew install apkhub
+```
+
+#### Scoop (Windows)
+```powershell
+# 添加 bucket（仅第一次）
+scoop bucket add apkhub https://github.com/huanfeng/apkhub-scoop-bucket
+
+# 安装
+scoop install apkhub
+```
+
+### 直接下载
+从 [Releases](https://github.com/huanfeng/apkhub-cli/releases) 页面下载对应平台的二进制文件。
 
 ## 开发构建
 
@@ -10,7 +35,7 @@ go build -o apkhub
 ### 包含版本信息的构建
 ```bash
 # 手动指定版本
-go build -ldflags "-X github.com/apkhub/apkhub-cli/internal/version.Version=v1.0.0" -o apkhub
+go build -ldflags "-X github.com/huanfeng/apkhub-cli/internal/version.Version=v1.0.0" -o apkhub
 
 # 查看版本
 ./apkhub version

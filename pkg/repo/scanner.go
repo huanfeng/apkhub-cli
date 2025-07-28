@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/apkhub/apkhub-cli/pkg/apk"
-	"github.com/apkhub/apkhub-cli/pkg/models"
+	"github.com/huanfeng/apkhub-cli/pkg/apk"
+	"github.com/huanfeng/apkhub-cli/pkg/models"
 )
 
 // Scanner handles directory scanning for APK files
@@ -131,9 +131,9 @@ func (s *Scanner) processAPK(apkPath string, result *ScanResult) error {
 	pkg, exists := result.Index.Packages[apkInfo.PackageID]
 	if !exists {
 		pkg = &models.AppPackage{
-			PackageID:   apkInfo.PackageID,
-			Name:        apkInfo.AppName,
-			Versions:    make(map[string]*models.AppVersion),
+			PackageID: apkInfo.PackageID,
+			Name:      apkInfo.AppName,
+			Versions:  make(map[string]*models.AppVersion),
 		}
 		result.Index.Packages[apkInfo.PackageID] = pkg
 	}
@@ -160,7 +160,7 @@ func (s *Scanner) processAPK(apkPath string, result *ScanResult) error {
 		// Check if signatures differ
 		if existingVersion.SignatureInfo != nil && apkInfo.SignatureInfo != nil &&
 			existingVersion.SignatureInfo.SHA256 != apkInfo.SignatureInfo.SHA256 {
-			
+
 			switch s.config.Repository.SignatureHandling {
 			case "mark":
 				// Add signature variant suffix
@@ -193,14 +193,14 @@ func (s *Scanner) processAPK(apkPath string, result *ScanResult) error {
 func (s *Scanner) buildDownloadURL(filePath string) string {
 	// Convert backslashes to forward slashes for URLs
 	urlPath := strings.ReplaceAll(filePath, "\\", "/")
-	
+
 	if s.config.Repository.BaseURL != "" {
 		// Ensure base URL doesn't end with slash and path doesn't start with slash
 		baseURL := strings.TrimRight(s.config.Repository.BaseURL, "/")
 		urlPath = strings.TrimLeft(urlPath, "/")
 		return fmt.Sprintf("%s/%s", baseURL, urlPath)
 	}
-	
+
 	// Return relative path
 	return urlPath
 }
@@ -215,7 +215,7 @@ func (s *Scanner) updateLatestVersion(pkg *models.AppPackage) {
 		if version.SignatureVariant != "" {
 			continue
 		}
-		
+
 		if latestVersion == nil || version.VersionCode > latestVersion.VersionCode {
 			latestVersion = version
 			latestVersionKey = versionKey

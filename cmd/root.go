@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/apkhub/apkhub-cli/internal/version"
+	"github.com/huanfeng/apkhub-cli/internal/version"
 	"github.com/spf13/cobra"
 )
 
@@ -30,7 +30,7 @@ func Execute() {
 
 func init() {
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
-	
+
 	// Global flags
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is ./apkhub.yaml)")
 	rootCmd.PersistentFlags().StringVarP(&workDir, "work-dir", "w", ".", "working directory for relative paths")

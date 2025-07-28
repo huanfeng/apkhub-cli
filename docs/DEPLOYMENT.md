@@ -16,13 +16,13 @@
 
 ```bash
 # 从源码构建
-git clone https://github.com/apkhub/apkhub-cli.git
+git clone https://github.com/huanfeng/apkhub-cli.git
 cd apkhub-cli
 go build -o apkhub
 sudo mv apkhub /usr/local/bin/
 
 # 或者下载预编译版本
-wget https://github.com/apkhub/apkhub-cli/releases/latest/download/apkhub-linux-amd64
+wget https://github.com/huanfeng/apkhub-cli/releases/latest/download/apkhub-linux-amd64
 chmod +x apkhub-linux-amd64
 sudo mv apkhub-linux-amd64 /usr/local/bin/apkhub
 ```
@@ -84,34 +84,34 @@ server {
     listen 80;
     server_name apk.example.com;
     root /var/www/apkhub;
-    
+
     # 启用目录浏览
     autoindex on;
     autoindex_format json;
-    
+
     # CORS 支持
     add_header Access-Control-Allow-Origin *;
-    
+
     # 优化大文件下载
     sendfile on;
     tcp_nopush on;
     tcp_nodelay on;
-    
+
     # Gzip 压缩（不压缩 APK）
     gzip on;
     gzip_types application/json text/plain;
     gzip_exclude "\.apk$|\.xapk$|\.apkm$";
-    
+
     location / {
         try_files $uri $uri/ =404;
     }
-    
+
     # 缓存策略
     location ~ \.(apk|xapk|apkm)$ {
         expires 30d;
         add_header Cache-Control "public, immutable";
     }
-    
+
     location ~ \.json$ {
         expires 1h;
         add_header Cache-Control "public, must-revalidate";
@@ -125,31 +125,31 @@ server {
 <VirtualHost *:80>
     ServerName apk.example.com
     DocumentRoot /var/www/apkhub
-    
+
     <Directory /var/www/apkhub>
         Options Indexes FollowSymLinks
         AllowOverride None
         Require all granted
-        
+
         # 启用 JSON 格式的目录列表
         IndexOptions FancyIndexing
         HeaderName /HEADER.html
         ReadmeName /README.html
     </Directory>
-    
+
     # CORS 支持
     Header set Access-Control-Allow-Origin "*"
-    
+
     # 文件类型
     AddType application/vnd.android.package-archive .apk
     AddType application/vnd.android.package-archive .xapk
     AddType application/vnd.android.package-archive .apkm
-    
+
     # 缓存策略
     <FilesMatch "\.(apk|xapk|apkm)$">
         Header set Cache-Control "max-age=2592000, public"
     </FilesMatch>
-    
+
     <FilesMatch "\.json$">
         Header set Cache-Control "max-age=3600, public"
     </FilesMatch>
@@ -185,7 +185,7 @@ COPY --from=golang:1.21 /usr/local/go /usr/local/go
 ENV PATH="/usr/local/go/bin:${PATH}"
 
 RUN apk add --no-cache git && \
-    git clone https://github.com/apkhub/apkhub-cli.git && \
+    git clone https://github.com/huanfeng/apkhub-cli.git && \
     cd apkhub-cli && \
     go build -o /usr/local/bin/apkhub && \
     rm -rf /apkhub-cli /usr/local/go && \

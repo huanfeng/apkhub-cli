@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/apkhub/apkhub-cli/internal/version"
+	"github.com/huanfeng/apkhub-cli/internal/version"
 	"github.com/spf13/cobra"
 )
 
