@@ -17,92 +17,51 @@ import (
 	"github.com/shogo82148/androidbinary/apk"
 )
 
-// Parser handles APK file parsing
+// Parser handles APK file parsing using a chain of parsers
 type Parser struct {
-	workDir string
+	workDir     string
+	parserChain *ParserChain
 }
 
-// NewParser creates a new APK parser
+// NewParser creates a new APK parser with parser chain
 func NewParser(workDir string) *Parser {
+	// Create parser chain with logger
+	logger := &SimpleLogger{}
+	chain := NewParserChain(logger)
+	
+	// Add parsers in priority order
+	chain.AddParser(NewAndroidBinaryParser(workDir))
+	chain.AddParser(NewAAPTParserWrapper(workDir))
+	chain.AddParser(NewXAPKParserWrapper(workDir))
+	
 	return &Parser{
-		workDir: workDir,
+		workDir:     workDir,
+		parserChain: chain,
 	}
 }
 
-// ParseAPK parses an APK file and extracts its information
+// ParseAPK parses an APK file and extracts its information using parser chain
 func (p *Parser) ParseAPK(apkPath string) (*APKInfo, error) {
-	// Check if it's XAPK/APKM
-	if IsXAPKFile(apkPath) {
-		return p.parseXAPK(apkPath)
-	}
-
-	// Open APK file
-	pkg, err := apk.OpenFile(apkPath)
+	// Use parser chain to parse APK (handles APK, XAPK, APKM)
+	result, err := p.parserChain.ParseAPK(apkPath)
 	if err != nil {
-		// Try with aapt as fallback
-		return p.parseWithAAPTFallback(apkPath, err)
-	}
-	defer pkg.Close()
-
-	// Get file info
-	fileInfo, err := os.Stat(apkPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to stat APK file: %w", err)
+		return nil, err
 	}
 
-	// Parse manifest
-	manifest := pkg.Manifest()
-
-	// Calculate hashes
-	hashes, err := p.calculateHashes(apkPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to calculate hashes: %w", err)
+	// Log parsing result
+	fmt.Printf("File parsed successfully using %s parser (took %v)\n", result.Parser, result.Duration)
+	
+	// Show warnings if any
+	for _, warning := range result.Warnings {
+		fmt.Printf("Warning: %s\n", warning)
 	}
 
-	// Extract signature info
-	signatureInfo, err := p.extractSignatureInfo(pkg)
-	if err != nil {
-		// Non-fatal error, continue without signature info
-		signatureInfo = nil
-	}
+	return result.APKInfo, nil
+}
 
-	// Extract icon
-	iconExtractor := NewIconExtractor()
-	iconData, iconExt, iconErr := iconExtractor.ExtractIcon(apkPath)
-	// Icon extraction is non-fatal
-
-	// Build APK info
-	info := &APKInfo{
-		PackageID:     manifest.Package.MustString(),
-		AppName:       p.extractAppName(&manifest),
-		Version:       manifest.VersionName.MustString(),
-		VersionCode:   int64(manifest.VersionCode.MustInt32()),
-		MinSDK:        p.extractMinSDK(&manifest),
-		TargetSDK:     p.extractTargetSDK(&manifest),
-		Size:          fileInfo.Size(),
-		SHA256:        hashes["sha256"],
-		SignatureInfo: signatureInfo,
-		Permissions:   p.extractPermissions(&manifest),
-		Features:      p.extractFeatures(&manifest),
-		ABIs:          p.extractABIs(apkPath),
-		ReleaseDate:   fileInfo.ModTime(),
-	}
-
-	// Add icon data if extraction was successful
-	if iconErr == nil && iconData != nil {
-		info.IconData = iconData
-		info.IconExt = iconExt
-	}
-
-	// Calculate relative path if within work directory
-	relPath, err := filepath.Rel(p.workDir, apkPath)
-	if err == nil && !strings.HasPrefix(relPath, "..") {
-		info.FilePath = relPath
-	} else {
-		info.FilePath = filepath.Base(apkPath)
-	}
-
-	return info, nil
+// GetParserInfo returns information about available parsers
+func (p *Parser) GetParserInfo() []ParserInfo {
+	return p.parserChain.GetAvailableParsers()
 }
 
 // APKInfo contains parsed APK information
@@ -253,13 +212,24 @@ func IsAPKFile(path string) bool {
 
 // parseWithAAPTFallback uses aapt command as fallback when androidbinary fails
 func (p *Parser) parseWithAAPTFallback(apkPath string, originalErr error) (*APKInfo, error) {
-	fmt.Printf("Warning: androidbinary failed to parse APK, trying aapt fallback...\n")
+	fmt.Printf("Warning: androidbinary failed to parse APK: %v\n", originalErr)
+	fmt.Printf("Attempting aapt fallback parsing...\n")
 
 	// Try parsing with aapt
 	basicInfo, aaptErr := TryParseWithAAPT(apkPath)
 	if aaptErr != nil {
+		// Check if it's a tool not found error
+		if strings.Contains(aaptErr.Error(), "not found") {
+			fmt.Printf("Info: %v\n", aaptErr)
+			fmt.Printf("Continuing with limited APK information from file analysis...\n")
+			
+			// Return basic info that we can extract without aapt
+			return p.createBasicAPKInfo(apkPath, originalErr)
+		}
 		return nil, fmt.Errorf("both parsers failed - androidbinary: %v, aapt: %v", originalErr, aaptErr)
 	}
+	
+	fmt.Printf("Success: APK parsed using aapt fallback\n")
 
 	// Get file info
 	fileInfo, err := os.Stat(apkPath)
@@ -309,6 +279,56 @@ func (p *Parser) parseWithAAPTFallback(apkPath string, originalErr error) (*APKI
 		info.FilePath = filepath.Base(apkPath)
 	}
 
+	return info, nil
+}
+
+// createBasicAPKInfo creates basic APK info when both parsers fail
+func (p *Parser) createBasicAPKInfo(apkPath string, originalErr error) (*APKInfo, error) {
+	// Get file info
+	fileInfo, err := os.Stat(apkPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to stat APK file: %w", err)
+	}
+
+	// Calculate hashes
+	hashes, err := p.calculateHashes(apkPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to calculate hashes: %w", err)
+	}
+
+	// Extract basic info from filename if possible
+	filename := filepath.Base(apkPath)
+	packageID := strings.TrimSuffix(filename, filepath.Ext(filename))
+	
+	// Try to extract ABIs from APK structure
+	abis := p.extractABIs(apkPath)
+
+	// Build minimal APK info
+	info := &APKInfo{
+		PackageID:     packageID, // Use filename as fallback
+		AppName:       map[string]string{"default": packageID},
+		Version:       "unknown",
+		VersionCode:   0,
+		MinSDK:        1,
+		TargetSDK:     0,
+		Size:          fileInfo.Size(),
+		SHA256:        hashes["sha256"],
+		SignatureInfo: &models.SignatureInfo{}, // Empty signature info
+		Permissions:   []string{},
+		Features:      []string{"parsing_limited"}, // Mark as limited parsing
+		ABIs:          abis,
+		ReleaseDate:   fileInfo.ModTime(),
+	}
+
+	// Calculate relative path if within work directory
+	relPath, err := filepath.Rel(p.workDir, apkPath)
+	if err == nil && !strings.HasPrefix(relPath, "..") {
+		info.FilePath = relPath
+	} else {
+		info.FilePath = filepath.Base(apkPath)
+	}
+
+	fmt.Printf("Warning: Created limited APK info due to parsing failures\n")
 	return info, nil
 }
 

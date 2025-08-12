@@ -1,9 +1,13 @@
 package cmd
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/huanfeng/apkhub-cli/internal/config"
@@ -113,10 +117,17 @@ var scanCmd = &cobra.Command{
 				return nil
 			}
 
+			filename := filepath.Base(path)
+			
+			// Skip files that look like they're already normalized (to avoid processing repository files)
+			if isNormalizedFilename(filename) {
+				fmt.Printf("Skip (normalized): %s\n", filename)
+				return nil
+			}
+
 			scannedFiles++
 
 			// Check if APK needs processing (incremental scan)
-			filename := filepath.Base(path)
 			existingInfo, exists := existingInfos[filename]
 
 			if !fullScan && exists {
@@ -125,6 +136,20 @@ var scanCmd = &cobra.Command{
 					unchangedAPKs++
 					fmt.Printf("Skip (unchanged): %s\n", filename)
 					return nil
+				}
+			}
+			
+			// Quick hash check to detect if this file is already processed (by SHA256)
+			if !fullScan {
+				quickHash, err := calculateQuickHash(path)
+				if err == nil {
+					for _, existing := range existingInfos {
+						if existing.SHA256 == quickHash {
+							unchangedAPKs++
+							fmt.Printf("Skip (duplicate hash): %s\n", filename)
+							return nil
+						}
+					}
 				}
 			}
 
@@ -236,4 +261,87 @@ func getScanMode() string {
 		return "Full scan"
 	}
 	return "Incremental scan"
+}
+
+// isNormalizedFilename checks if a filename looks like it's already been normalized by the repository
+func isNormalizedFilename(filename string) bool {
+	// Remove extension
+	name := strings.TrimSuffix(filename, filepath.Ext(filename))
+	
+	// Check if it matches the normalized pattern: packageid_versioncode_signature_variant
+	parts := strings.Split(name, "_")
+	
+	// Must have at least 3 parts and the pattern should be very specific
+	if len(parts) < 3 {
+		return false
+	}
+	
+	// Check if it has a package-like first part (contains dots)
+	if !strings.Contains(parts[0], ".") {
+		return false
+	}
+	
+	// Look for the specific pattern where we have:
+	// 1. Package ID (with dots)
+	// 2. Version code (numeric) OR "0" (from Basic parser)
+	// 3. ABI or other variant
+	
+	// If second part is "0", it's likely from Basic parser normalization
+	if len(parts) >= 3 && parts[1] == "0" {
+		return true
+	}
+	
+	// Check for very long version codes (original files usually have shorter version codes)
+	if len(parts) >= 2 && isNumericString(parts[1]) && len(parts[1]) > 8 {
+		// This is likely an original file with a long version code
+		return false
+	}
+	
+	// If we have multiple ABI-like suffixes, it's likely a normalized file that got re-processed
+	abiCount := 0
+	commonABIs := []string{"armeabiv7a", "arm64v8a", "x86", "x8664", "universal"}
+	for _, part := range parts {
+		for _, abi := range commonABIs {
+			if part == abi {
+				abiCount++
+				break
+			}
+		}
+	}
+	
+	// If we have multiple ABI parts, it's likely a re-processed file
+	if abiCount > 1 {
+		return true
+	}
+	
+	return false
+}
+
+// isNumericString checks if a string contains only digits
+func isNumericString(s string) bool {
+	if len(s) == 0 {
+		return false
+	}
+	for _, r := range s {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+	return true
+}
+
+// calculateQuickHash calculates SHA256 hash of a file for duplicate detection
+func calculateQuickHash(filePath string) (string, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	hash := sha256.New()
+	if _, err := io.Copy(hash, file); err != nil {
+		return "", err
+	}
+
+	return hex.EncodeToString(hash.Sum(nil)), nil
 }

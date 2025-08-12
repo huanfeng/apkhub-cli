@@ -56,10 +56,17 @@ type XAPKManifest struct {
 
 // ParseXAPK parses an XAPK/APKM file
 func (p *XAPKParser) ParseXAPK(xapkPath string) (*XAPKInfo, error) {
+	fmt.Printf("Parsing XAPK/APKM file: %s\n", filepath.Base(xapkPath))
+	
+	// Verify file exists and is readable
+	if _, err := os.Stat(xapkPath); err != nil {
+		return nil, fmt.Errorf("XAPK file not accessible: %w", err)
+	}
+	
 	// Open XAPK as zip file
 	reader, err := zip.OpenReader(xapkPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open XAPK file: %w", err)
+		return nil, fmt.Errorf("failed to open XAPK file (not a valid zip): %w", err)
 	}
 	defer reader.Close()
 
@@ -68,6 +75,9 @@ func (p *XAPKParser) ParseXAPK(xapkPath string) (*XAPKInfo, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to stat XAPK file: %w", err)
 	}
+	
+	fmt.Printf("XAPK file size: %.2f MB, contains %d entries\n", 
+		float64(fileInfo.Size())/(1024*1024), len(reader.File))
 
 	xapkInfo := &XAPKInfo{
 		IsXAPK:        true,
@@ -77,53 +87,78 @@ func (p *XAPKParser) ParseXAPK(xapkPath string) (*XAPKInfo, error) {
 		ExpansionAPKs: []string{},
 	}
 
-	// Look for manifest files
+	// Look for manifest files and APK contents
 	var manifestData []byte
 	var baseAPKData io.ReadCloser
 
+	fmt.Printf("Analyzing XAPK contents...\n")
+	
 	for _, file := range reader.File {
 		fileName := filepath.Base(file.Name)
 
 		// Check for manifest files
 		switch fileName {
 		case "manifest.json", "info.json":
+			fmt.Printf("Found manifest: %s\n", file.Name)
 			rc, err := file.Open()
 			if err != nil {
+				fmt.Printf("Warning: failed to read manifest %s: %v\n", file.Name, err)
 				continue
 			}
-			manifestData, _ = io.ReadAll(rc)
+			manifestData, err = io.ReadAll(rc)
 			rc.Close()
+			if err != nil {
+				fmt.Printf("Warning: failed to read manifest content: %v\n", err)
+				manifestData = nil
+			}
 		}
 
 		// Track APK files
-		if strings.HasSuffix(file.Name, ".apk") {
+		if strings.HasSuffix(strings.ToLower(file.Name), ".apk") {
 			xapkInfo.APKFiles = append(xapkInfo.APKFiles, file.Name)
+			fmt.Printf("Found APK: %s (%.2f MB)\n", file.Name, float64(file.UncompressedSize64)/(1024*1024))
 
-			// Find base APK
-			if strings.Contains(file.Name, "base.apk") || file.Name == "base.apk" {
+			// Find base APK (priority order)
+			if strings.Contains(strings.ToLower(file.Name), "base.apk") || strings.ToLower(fileName) == "base.apk" {
+				if baseAPKData != nil {
+					baseAPKData.Close()
+				}
 				baseAPKData, _ = file.Open()
-			} else if baseAPKData == nil && !strings.Contains(file.Name, "config.") {
+				fmt.Printf("Using as base APK: %s\n", file.Name)
+			} else if baseAPKData == nil && !strings.Contains(strings.ToLower(file.Name), "config.") {
 				// Use first non-config APK as base
 				baseAPKData, _ = file.Open()
+				fmt.Printf("Using as base APK (fallback): %s\n", file.Name)
 			}
 		}
 
 		// Track OBB files
-		if strings.HasSuffix(file.Name, ".obb") {
+		if strings.HasSuffix(strings.ToLower(file.Name), ".obb") {
 			xapkInfo.OBBFiles = append(xapkInfo.OBBFiles, file.Name)
+			fmt.Printf("Found OBB: %s (%.2f MB)\n", file.Name, float64(file.UncompressedSize64)/(1024*1024))
 		}
 	}
+	
+	fmt.Printf("XAPK analysis complete: %d APKs, %d OBBs, manifest: %v\n", 
+		len(xapkInfo.APKFiles), len(xapkInfo.OBBFiles), manifestData != nil)
 
 	// Parse manifest if found
 	var manifest *XAPKManifest
 	if manifestData != nil {
 		manifest = &XAPKManifest{}
-		json.Unmarshal(manifestData, manifest)
+		if err := json.Unmarshal(manifestData, manifest); err != nil {
+			fmt.Printf("Warning: failed to parse manifest JSON: %v\n", err)
+			manifest = nil
+		} else {
+			fmt.Printf("Manifest parsed: %s v%s (%d)\n", manifest.Name, manifest.VersionName, manifest.VersionCode)
+		}
 	}
 
 	// Extract base APK info
 	if baseAPKData != nil {
 		defer baseAPKData.Close()
+		
+		fmt.Printf("Extracting base APK for parsing...\n")
 
 		// Create temporary file
 		tempFile, err := os.CreateTemp("", "xapk_base_*.apk")
@@ -139,16 +174,22 @@ func (p *XAPKParser) ParseXAPK(xapkPath string) (*XAPKInfo, error) {
 		}
 		tempFile.Close()
 
-		// Parse base APK
+		fmt.Printf("Parsing extracted base APK...\n")
+		
+		// Parse base APK using parser chain
 		parser := NewParser(p.workDir)
 		apkInfo, err := parser.ParseAPK(tempFile.Name())
 		if err != nil {
+			fmt.Printf("Warning: base APK parsing failed: %v\n", err)
 			// Try to use manifest info if APK parsing fails
 			if manifest != nil {
+				fmt.Printf("Falling back to manifest information...\n")
 				apkInfo = p.createAPKInfoFromManifest(manifest, xapkPath)
 			} else {
-				return nil, fmt.Errorf("failed to parse base APK: %w", err)
+				return nil, fmt.Errorf("failed to parse base APK and no manifest available: %w", err)
 			}
+		} else {
+			fmt.Printf("Base APK parsed successfully\n")
 		}
 
 		xapkInfo.APKInfo = apkInfo

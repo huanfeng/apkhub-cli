@@ -3,8 +3,11 @@ package apk
 import (
 	"encoding/xml"
 	"fmt"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 )
@@ -26,33 +29,151 @@ func (p *AAPTParser) SetAAPTPath(path string) {
 	p.aaptPath = path
 }
 
-// CheckAAPT checks if aapt2 is available
+// CheckAAPT checks if aapt2 is available with enhanced detection
 func (p *AAPTParser) CheckAAPT() error {
-	cmd := exec.Command(p.aaptPath, "version")
-	if err := cmd.Run(); err != nil {
-		// Try aapt (older version)
-		cmd = exec.Command("aapt", "version")
-		if err := cmd.Run(); err != nil {
-			return fmt.Errorf("aapt2 or aapt not found in PATH")
-		}
-		p.aaptPath = "aapt"
+	// Try to find aapt2 first
+	if path, err := p.findAAPTTool("aapt2"); err == nil {
+		p.aaptPath = path
+		return nil
 	}
-	return nil
+	
+	// Try to find aapt as fallback
+	if path, err := p.findAAPTTool("aapt"); err == nil {
+		p.aaptPath = path
+		return nil
+	}
+	
+	// Neither found, return detailed error with installation hints
+	return p.createAAPTNotFoundError()
+}
+
+// findAAPTTool attempts to find aapt tool in various locations
+func (p *AAPTParser) findAAPTTool(toolName string) (string, error) {
+	// First try PATH
+	if path, err := exec.LookPath(toolName); err == nil {
+		// Verify it works
+		if err := exec.Command(path, "version").Run(); err == nil {
+			return path, nil
+		}
+	}
+	
+	// Try common installation paths
+	commonPaths := p.getCommonAAPTPaths(toolName)
+	for _, path := range commonPaths {
+		if _, err := os.Stat(path); err == nil {
+			// Verify it works
+			if err := exec.Command(path, "version").Run(); err == nil {
+				return path, nil
+			}
+		}
+	}
+	
+	return "", fmt.Errorf("%s not found", toolName)
+}
+
+// getCommonAAPTPaths returns common installation paths for aapt tools
+func (p *AAPTParser) getCommonAAPTPaths(toolName string) []string {
+	var paths []string
+	
+	switch runtime.GOOS {
+	case "linux":
+		paths = []string{
+			"/usr/bin/" + toolName,
+			"/usr/local/bin/" + toolName,
+			"/opt/android-sdk/build-tools/*/aapt2",
+			"/opt/android-sdk/build-tools/*/aapt",
+			filepath.Join(os.Getenv("HOME"), "Android/Sdk/build-tools/*/"+toolName),
+		}
+	case "darwin":
+		paths = []string{
+			"/usr/local/bin/" + toolName,
+			"/opt/homebrew/bin/" + toolName,
+			filepath.Join(os.Getenv("HOME"), "Library/Android/sdk/build-tools/*/"+toolName),
+			"/Applications/Android Studio.app/Contents/plugins/android/lib/build-tools/*/"+toolName,
+		}
+	case "windows":
+		paths = []string{
+			"C:\\Android\\Sdk\\build-tools\\*\\" + toolName + ".exe",
+			filepath.Join(os.Getenv("LOCALAPPDATA"), "Android\\Sdk\\build-tools\\*\\"+toolName+".exe"),
+			filepath.Join(os.Getenv("PROGRAMFILES"), "Android\\Android Studio\\plugins\\android\\lib\\build-tools\\*\\"+toolName+".exe"),
+		}
+	}
+	
+	return paths
+}
+
+// createAAPTNotFoundError creates a detailed error message with installation hints
+func (p *AAPTParser) createAAPTNotFoundError() error {
+	var installHints []string
+	
+	switch runtime.GOOS {
+	case "linux":
+		installHints = []string{
+			"Ubuntu/Debian: sudo apt-get install aapt",
+			"Or install Android SDK Build Tools:",
+			"  1. Download Android SDK Command Line Tools from https://developer.android.com/studio#command-tools",
+			"  2. Extract and add build-tools directory to PATH",
+			"  3. Or set ANDROID_HOME environment variable",
+		}
+	case "darwin":
+		installHints = []string{
+			"macOS: brew install --cask android-commandlinetools",
+			"Or install Android SDK Build Tools:",
+			"  1. Download Android SDK Command Line Tools from https://developer.android.com/studio#command-tools",
+			"  2. Extract to ~/Library/Android/sdk/",
+			"  3. Add build-tools directory to PATH",
+		}
+	case "windows":
+		installHints = []string{
+			"Windows: Install Android SDK Build Tools",
+			"  1. Download Android SDK Command Line Tools from https://developer.android.com/studio#command-tools",
+			"  2. Extract to C:\\Android\\Sdk\\",
+			"  3. Add build-tools directory to PATH",
+		}
+	default:
+		installHints = []string{
+			"Install Android SDK Build Tools from https://developer.android.com/studio#command-tools",
+		}
+	}
+	
+	errorMsg := "aapt2 or aapt not found. APK parsing will use limited androidbinary library.\n\n"
+	errorMsg += "To enable full APK parsing, install aapt2:\n"
+	for _, hint := range installHints {
+		errorMsg += "  " + hint + "\n"
+	}
+	
+	return fmt.Errorf(errorMsg)
 }
 
 // ParseAPKWithAAPT parses APK using aapt command
 func (p *AAPTParser) ParseAPKWithAAPT(apkPath string) (*APKBasicInfo, error) {
-	// Run aapt dump badging
+	// Verify APK file exists
+	if _, err := os.Stat(apkPath); err != nil {
+		return nil, fmt.Errorf("APK file not found: %w", err)
+	}
+	
+	// Determine command based on tool
 	var cmd *exec.Cmd
-	if p.aaptPath == "aapt2" {
+	toolName := filepath.Base(p.aaptPath)
+	
+	if strings.Contains(toolName, "aapt2") {
 		cmd = exec.Command(p.aaptPath, "dump", "badging", apkPath)
 	} else {
 		cmd = exec.Command(p.aaptPath, "dump", "badging", apkPath)
 	}
 	
+	// Execute command with better error handling
 	output, err := cmd.Output()
 	if err != nil {
-		return nil, fmt.Errorf("aapt command failed: %w", err)
+		if exitError, ok := err.(*exec.ExitError); ok {
+			stderr := string(exitError.Stderr)
+			return nil, fmt.Errorf("aapt command failed (exit code %d): %s", exitError.ExitCode(), stderr)
+		}
+		return nil, fmt.Errorf("aapt command execution failed: %w", err)
+	}
+	
+	if len(output) == 0 {
+		return nil, fmt.Errorf("aapt produced no output for APK: %s", apkPath)
 	}
 	
 	return p.parseBadgingOutput(string(output))
