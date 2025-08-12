@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/huanfeng/apkhub-cli/pkg/client"
+	"github.com/huanfeng/apkhub-cli/pkg/system"
 	"github.com/spf13/cobra"
 )
 
@@ -15,6 +17,7 @@ var (
 	installDowngrade bool
 	installGrant     bool
 	installLocalPath string
+	installCheckDeps bool
 )
 
 var installCmd = &cobra.Command{
@@ -25,6 +28,11 @@ You can specify either a package ID to download and install, or a local APK path
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		target := args[0]
+
+		// Check dependencies first
+		if err := checkInstallDependencies(); err != nil {
+			return err
+		}
 
 		// Load client config
 		config, err := client.Load()
@@ -111,6 +119,44 @@ You can specify either a package ID to download and install, or a local APK path
 	},
 }
 
+// checkInstallDependencies checks if all required dependencies for install are available
+func checkInstallDependencies() error {
+	if installCheckDeps {
+		fmt.Println("🔍 Checking dependencies for install command...")
+	}
+
+	depManager := system.NewDependencyManager()
+	deps := depManager.CheckForCommand("install")
+
+	var missingRequired []string
+	for _, dep := range deps {
+		if dep.Required && !dep.Available {
+			missingRequired = append(missingRequired, dep.Name)
+		}
+	}
+
+	if len(missingRequired) > 0 {
+		fmt.Printf("❌ Required dependencies missing: %s\n", strings.Join(missingRequired, ", "))
+		fmt.Println("\n💡 To fix this issue:")
+		fmt.Println("   1. Run 'apkhub doctor' to see installation instructions")
+		fmt.Println("   2. Run 'apkhub doctor --fix' to attempt automatic installation")
+		fmt.Printf("   3. Run 'apkhub deps --command install' for detailed dependency info\n")
+		return fmt.Errorf("missing required dependencies")
+	}
+
+	if installCheckDeps {
+		fmt.Println("✅ All required dependencies are available")
+		for _, dep := range deps {
+			if dep.Available {
+				fmt.Printf("   ✅ %s: %s\n", dep.Name, dep.Version)
+			}
+		}
+		fmt.Println()
+	}
+
+	return nil
+}
+
 func init() {
 	rootCmd.AddCommand(installCmd)
 
@@ -121,4 +167,5 @@ func init() {
 	installCmd.Flags().BoolVarP(&installGrant, "grant", "g", true, "Grant all runtime permissions")
 	installCmd.Flags().StringVarP(&downloadVersion, "version", "v", "", "Install specific version (when using package ID)")
 	installCmd.Flags().StringVarP(&installLocalPath, "local", "l", "", "Force treating argument as local path")
+	installCmd.Flags().BoolVar(&installCheckDeps, "check-deps", false, "Check dependencies before installation")
 }

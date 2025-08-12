@@ -14,13 +14,15 @@ import (
 	"github.com/huanfeng/apkhub-cli/pkg/apk"
 	"github.com/huanfeng/apkhub-cli/pkg/models"
 	"github.com/huanfeng/apkhub-cli/pkg/repo"
+	"github.com/huanfeng/apkhub-cli/pkg/system"
 	"github.com/spf13/cobra"
 )
 
 var (
-	outputPath string
-	pretty     bool
-	fullScan   bool
+	outputPath   string
+	pretty       bool
+	fullScan     bool
+	scanCheckDeps bool
 )
 
 var scanCmd = &cobra.Command{
@@ -30,6 +32,14 @@ var scanCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		directory := args[0]
+
+		// Check dependencies
+		if err := checkScanDependencies(); err != nil {
+			// Don't fail completely, just warn
+			fmt.Printf("⚠️  %v\n", err)
+			fmt.Println("   Continuing with limited APK parsing capabilities...")
+			fmt.Println()
+		}
 
 		// Convert to absolute paths
 		absDir, err := filepath.Abs(directory)
@@ -250,6 +260,7 @@ func init() {
 	scanCmd.Flags().BoolP("recursive", "r", true, "Scan directories recursively")
 	scanCmd.Flags().BoolVar(&pretty, "pretty", true, "Pretty print JSON output")
 	scanCmd.Flags().BoolVar(&fullScan, "full", false, "Perform full scan instead of incremental")
+	scanCmd.Flags().BoolVar(&scanCheckDeps, "check-deps", false, "Check dependencies before scanning")
 
 	// Mark output as deprecated
 	scanCmd.Flags().MarkDeprecated("output", "manifest is always saved as apkhub_manifest.json")
@@ -328,6 +339,45 @@ func isNumericString(s string) bool {
 		}
 	}
 	return true
+}
+
+// checkScanDependencies checks dependencies for repo scan command
+func checkScanDependencies() error {
+	if scanCheckDeps {
+		fmt.Println("🔍 Checking dependencies for repo scan command...")
+	}
+
+	depManager := system.NewDependencyManager()
+	deps := depManager.CheckForCommand("repo scan")
+
+	var availableCount int
+	var warnings []string
+
+	for _, dep := range deps {
+		if dep.Available {
+			availableCount++
+			if scanCheckDeps {
+				fmt.Printf("   ✅ %s: %s\n", dep.Name, dep.Version)
+			}
+		} else {
+			warnings = append(warnings, fmt.Sprintf("%s not available", dep.Name))
+		}
+	}
+
+	if availableCount == 0 {
+		return fmt.Errorf("no APK parsing tools available - some APKs may fail to parse")
+	}
+
+	if len(warnings) > 0 && scanCheckDeps {
+		fmt.Printf("   ⚠️  %s\n", strings.Join(warnings, ", "))
+		fmt.Println("   💡 Run 'apkhub doctor --fix' to install missing tools")
+	}
+
+	if scanCheckDeps {
+		fmt.Println()
+	}
+
+	return nil
 }
 
 // calculateQuickHash calculates SHA256 hash of a file for duplicate detection
