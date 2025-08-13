@@ -123,3 +123,20 @@ scanning:
 
 	return os.WriteFile(path, []byte(templateContent), 0644)
 }
+
+// SaveConfig saves a configuration to file
+func SaveConfig(cfg *models.Config, path string) error {
+	// Convert config to YAML
+	viper.Set("repository.name", cfg.Repository.Name)
+	viper.Set("repository.description", cfg.Repository.Description)
+	viper.Set("repository.base_url", cfg.Repository.BaseURL)
+	viper.Set("repository.keep_versions", cfg.Repository.KeepVersions)
+	viper.Set("repository.signature_handling", cfg.Repository.SignatureHandling)
+	viper.Set("scanning.recursive", cfg.Scanning.Recursive)
+	viper.Set("scanning.follow_symlinks", cfg.Scanning.FollowSymlinks)
+	viper.Set("scanning.include_pattern", cfg.Scanning.IncludePattern)
+	viper.Set("scanning.exclude_pattern", cfg.Scanning.ExcludePattern)
+	viper.Set("scanning.parse_apk_info", cfg.Scanning.ParseAPKInfo)
+	
+	return viper.WriteConfigAs(path)
+}

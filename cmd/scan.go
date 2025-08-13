@@ -15,14 +15,16 @@ import (
 	"github.com/huanfeng/apkhub-cli/pkg/models"
 	"github.com/huanfeng/apkhub-cli/pkg/repo"
 	"github.com/huanfeng/apkhub-cli/pkg/system"
+	"github.com/huanfeng/apkhub-cli/pkg/utils"
 	"github.com/spf13/cobra"
 )
 
 var (
-	outputPath   string
-	pretty       bool
-	fullScan     bool
+	outputPath    string
+	pretty        bool
+	fullScan      bool
 	scanCheckDeps bool
+	showProgress  bool
 )
 
 var scanCmd = &cobra.Command{
@@ -31,6 +33,9 @@ var scanCmd = &cobra.Command{
 	Long:  `Scan the specified directory for APK/XAPK/APKM files and update the repository index. By default performs incremental scan.`,
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		// Record scan start time
+		scanStart := time.Now()
+		
 		directory := args[0]
 
 		// Check dependencies
@@ -90,16 +95,29 @@ var scanCmd = &cobra.Command{
 			}
 		}
 
+		// Initialize progress tracking
+		progress := utils.NewScanProgress()
+		
+		// Initialize counters
+		var (
+			scannedFiles  = 0
+			newAPKs       = 0
+			updatedAPKs   = 0
+			unchangedAPKs = 0
+		)
+		
+		// First pass: count total files
+		if showProgress {
+			fmt.Printf("🔍 Counting files to process...\n")
+			totalFiles := countTotalAPKFiles(absDir, cfg.Scanning.Recursive)
+			progress.SetTotalFiles(totalFiles)
+			fmt.Printf("📁 Found %d APK files to process\n\n", totalFiles)
+		}
+
 		// Perform scan
 		parser := apk.NewParser(repository.GetRootDir())
 
-		var (
-			scannedFiles  int
-			newAPKs       int
-			updatedAPKs   int
-			unchangedAPKs int
-			errors        []error
-		)
+		var errors []error
 
 		// Walk through directory
 		err = filepath.Walk(absDir, func(path string, info os.FileInfo, err error) error {
@@ -233,21 +251,12 @@ var scanCmd = &cobra.Command{
 			return fmt.Errorf("failed to update manifest: %w", err)
 		}
 
-		// Print results
-		fmt.Printf("\n=== Scan Results ===\n")
-		fmt.Printf("Files scanned: %d\n", scannedFiles)
-		fmt.Printf("New APKs: %d\n", newAPKs)
-		fmt.Printf("Updated APKs: %d\n", updatedAPKs)
-		fmt.Printf("Unchanged APKs: %d\n", unchangedAPKs)
-
-		if len(errors) > 0 {
-			fmt.Printf("\nErrors encountered (%d):\n", len(errors))
-			for _, err := range errors {
-				fmt.Printf("  - %v\n", err)
-			}
+		// Show detailed scan results
+		var errorMessages []string
+		for _, err := range errors {
+			errorMessages = append(errorMessages, err.Error())
 		}
-
-		fmt.Printf("\n✓ Repository updated successfully!\n")
+		showScanResults(scannedFiles, newAPKs, updatedAPKs, unchangedAPKs, len(errors), errorMessages, time.Since(scanStart))
 
 		return nil
 	},
@@ -378,6 +387,82 @@ func checkScanDependencies() error {
 	}
 
 	return nil
+}
+
+// countTotalAPKFiles counts APK files in directory
+func countTotalAPKFiles(dir string, recursive bool) int {
+	count := 0
+	
+	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return nil
+		}
+		
+		if info.IsDir() {
+			if !recursive && path != dir {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		
+		if strings.HasSuffix(strings.ToLower(info.Name()), ".apk") {
+			count++
+		}
+		
+		return nil
+	})
+	
+	return count
+}
+
+// showScanResults displays detailed scan results
+func showScanResults(scanned, newAPKs, updated, unchanged, errors int, errorMessages []string, duration time.Duration) {
+	fmt.Println("\n" + strings.Repeat("=", 50))
+	fmt.Println("📊 SCAN RESULTS")
+	fmt.Println(strings.Repeat("=", 50))
+	
+	// Summary statistics
+	fmt.Printf("⏱️  Total time: %v\n", duration)
+	fmt.Printf("📁 Files scanned: %d\n", scanned)
+	fmt.Printf("🆕 New APKs: %d\n", newAPKs)
+	fmt.Printf("🔄 Updated APKs: %d\n", updated)
+	fmt.Printf("⏭️  Unchanged APKs: %d\n", unchanged)
+	
+	if errors > 0 {
+		fmt.Printf("❌ Errors: %d\n", errors)
+	} else {
+		fmt.Printf("✅ Errors: 0\n")
+	}
+	
+	// Performance metrics
+	if scanned > 0 {
+		avgTime := duration / time.Duration(scanned)
+		fmt.Printf("📈 Average time per file: %v\n", avgTime)
+	}
+	
+	// Show errors if any
+	if errors > 0 {
+		fmt.Printf("\n❌ ERRORS ENCOUNTERED (%d):\n", errors)
+		fmt.Println(strings.Repeat("-", 40))
+		for i, errMsg := range errorMessages {
+			fmt.Printf("   %d. %s\n", i+1, errMsg)
+		}
+		
+		fmt.Println("\n💡 TROUBLESHOOTING TIPS:")
+		fmt.Println("   • Run 'apkhub doctor' to check dependencies")
+		fmt.Println("   • Use --verbose flag for detailed error information")
+		fmt.Println("   • Ensure APK files are not corrupted")
+	}
+	
+	fmt.Println(strings.Repeat("=", 50))
+	
+	if errors == 0 {
+		fmt.Println("🎉 Repository updated successfully!")
+	} else if newAPKs > 0 || updated > 0 {
+		fmt.Println("⚠️  Repository updated with some errors")
+	} else {
+		fmt.Println("❌ Repository update completed with errors")
+	}
 }
 
 // calculateQuickHash calculates SHA256 hash of a file for duplicate detection
