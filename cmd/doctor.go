@@ -20,15 +20,15 @@ var (
 var doctorCmd = &cobra.Command{
 	Use:   "doctor",
 	Short: "Diagnose and fix system issues",
-	Long: `The doctor command performs comprehensive system diagnostics to identify
+	Long: `The doctor command performs system diagnostics to identify
 and optionally fix issues that might prevent ApkHub CLI from working properly.
 
 It checks:
 - Required dependencies (adb, aapt, aapt2)
-- System resources (disk space, memory, permissions)
-- Configuration files
-- Network connectivity
-- File system access`,
+- File system access permissions
+- Network connectivity (optional)
+
+Note: Configuration files (apkhub.yaml) are only needed for self-hosted repositories.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logger := utils.GetGlobalLogger()
 		logger.Info("Starting system diagnostics...")
@@ -50,25 +50,19 @@ It checks:
 			logger.Error("Dependency check failed: %v", err)
 		}
 
-		// 2. Check system resources
-		fmt.Println("\n💾 Checking System Resources...")
-		if err := checkSystemResources(resourceChecker, &allPassed, &issues, &suggestions); err != nil {
-			logger.Error("Resource check failed: %v", err)
-		}
+		// 2. Skip system resource checks - avoid accessing sensitive system data
+		// Basic file system access will be checked separately
 
-		// 3. Check configuration
-		fmt.Println("\n⚙️  Checking Configuration...")
-		if err := checkConfiguration(&allPassed, &issues, &suggestions); err != nil {
-			logger.Error("Configuration check failed: %v", err)
-		}
+		// 3. Skip configuration check - apkhub.yaml is for self-hosted repos only
+		// Configuration is optional and not required for basic CLI functionality
 
-		// 4. Check file system access
+		// 3. Check file system access
 		fmt.Println("\n📁 Checking File System Access...")
 		if err := checkFileSystemAccess(resourceChecker, &allPassed, &issues, &suggestions); err != nil {
 			logger.Error("File system check failed: %v", err)
 		}
 
-		// 5. Check network connectivity (if needed)
+		// 4. Check network connectivity (if needed)
 		if doctorCheck == "all" || doctorCheck == "network" {
 			fmt.Println("\n🌐 Checking Network Connectivity...")
 			networkChecker := system.NewNetworkChecker(logger)

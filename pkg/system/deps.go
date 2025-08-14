@@ -183,7 +183,7 @@ func (dm *DefaultDependencyManager) getToolVersion(toolPath string, versionArgs 
 	}
 
 	cmd := exec.Command(toolPath, versionArgs...)
-	output, err := cmd.Output()
+	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return ""
 	}
@@ -191,7 +191,10 @@ func (dm *DefaultDependencyManager) getToolVersion(toolPath string, versionArgs 
 	// Extract first line as version
 	lines := strings.Split(string(output), "\n")
 	if len(lines) > 0 {
-		return strings.TrimSpace(lines[0])
+		version := strings.TrimSpace(lines[0])
+		if version != "" {
+			return version
+		}
 	}
 
 	return "unknown"

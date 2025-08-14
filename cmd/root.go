@@ -94,7 +94,7 @@ func init() {
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 
 	// Global flags
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is ./apkhub.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (optional, for self-hosted repos)")
 	rootCmd.PersistentFlags().StringVarP(&workDir, "work-dir", "w", ".", "working directory for relative paths")
 	rootCmd.PersistentFlags().BoolVar(&verbose, "verbose", false, "enable verbose output")
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "enable debug output")
