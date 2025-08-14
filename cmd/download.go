@@ -8,10 +8,14 @@ import (
 )
 
 var (
-	downloadVersion  string
-	downloadForce    bool
-	downloadNoVerify bool
+	downloadVersion   string
+	downloadForce     bool
+	downloadNoVerify  bool
 	downloadNoInstall bool
+	downloadOutput    string
+	downloadRetries   int
+	downloadTimeout   int
+	downloadProgress  bool
 )
 
 var downloadCmd = &cobra.Command{
@@ -39,9 +43,13 @@ var downloadCmd = &cobra.Command{
 
 		// Download options
 		options := client.DownloadOptions{
-			Version:   downloadVersion,
-			Force:     downloadForce,
-			NoCVerify: downloadNoVerify,
+			Version:      downloadVersion,
+			Force:        downloadForce,
+			NoVerify:     downloadNoVerify,
+			OutputPath:   downloadOutput,
+			MaxRetries:   downloadRetries,
+			Timeout:      downloadTimeout,
+			ShowProgress: downloadProgress,
 		}
 
 		// Download APK
@@ -68,4 +76,8 @@ func init() {
 	downloadCmd.Flags().BoolVarP(&downloadForce, "force", "f", false, "Force re-download even if exists")
 	downloadCmd.Flags().BoolVar(&downloadNoVerify, "no-verify", false, "Skip checksum verification")
 	downloadCmd.Flags().BoolVar(&downloadNoInstall, "no-install", false, "Download without prompting to install")
+	downloadCmd.Flags().StringVarP(&downloadOutput, "output", "o", "", "Output file path (default: auto-generated)")
+	downloadCmd.Flags().IntVar(&downloadRetries, "retries", 3, "Number of retry attempts")
+	downloadCmd.Flags().IntVar(&downloadTimeout, "timeout", 1800, "Download timeout in seconds")
+	downloadCmd.Flags().BoolVar(&downloadProgress, "progress", true, "Show download progress")
 }
