@@ -96,7 +96,7 @@ var scanCmd = &cobra.Command{
 		}
 
 		// Initialize progress tracking
-		progress := utils.NewScanProgress()
+		progress := utils.NewProgressTracker("Scanning APKs", 0, false)
 		
 		// Initialize counters
 		var (
@@ -110,7 +110,7 @@ var scanCmd = &cobra.Command{
 		if showProgress {
 			fmt.Printf("🔍 Counting files to process...\n")
 			totalFiles := countTotalAPKFiles(absDir, cfg.Scanning.Recursive)
-			progress.SetTotalFiles(totalFiles)
+			progress = utils.NewProgressTracker("Scanning APKs", int64(totalFiles), true)
 			fmt.Printf("📁 Found %d APK files to process\n\n", totalFiles)
 		}
 
@@ -154,6 +154,11 @@ var scanCmd = &cobra.Command{
 			}
 
 			scannedFiles++
+
+			// Update progress if enabled
+			if showProgress && progress != nil {
+				progress.Update(int64(scannedFiles), fmt.Sprintf("Processing %s", filename))
+			}
 
 			// Check if APK needs processing (incremental scan)
 			existingInfo, exists := existingInfos[filename]
@@ -245,6 +250,11 @@ var scanCmd = &cobra.Command{
 			return fmt.Errorf("error walking directory: %w", err)
 		}
 
+		// Finish progress tracking
+		if showProgress && progress != nil {
+			progress.Finish("Scan completed")
+		}
+
 		// Update manifest
 		fmt.Printf("\nUpdating repository manifest...\n")
 		if err := repository.UpdateManifest(); err != nil {
@@ -270,6 +280,7 @@ func init() {
 	scanCmd.Flags().BoolVar(&pretty, "pretty", true, "Pretty print JSON output")
 	scanCmd.Flags().BoolVar(&fullScan, "full", false, "Perform full scan instead of incremental")
 	scanCmd.Flags().BoolVar(&scanCheckDeps, "check-deps", false, "Check dependencies before scanning")
+	scanCmd.Flags().BoolVar(&showProgress, "progress", true, "Show scan progress")
 
 	// Mark output as deprecated
 	scanCmd.Flags().MarkDeprecated("output", "manifest is always saved as apkhub_manifest.json")

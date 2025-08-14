@@ -3,858 +3,355 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"os/exec"
-	"path/filepath"
-	"runtime"
 	"strings"
-	"text/tabwriter"
 
+	"github.com/huanfeng/apkhub-cli/internal/errors"
+	"github.com/huanfeng/apkhub-cli/pkg/system"
+	"github.com/huanfeng/apkhub-cli/pkg/utils"
 	"github.com/spf13/cobra"
 )
 
 var (
-	doctorFix bool
+	doctorFix     bool
+	doctorVerbose bool
+	doctorCheck   string
 )
 
 var doctorCmd = &cobra.Command{
 	Use:   "doctor",
-	Short: "Check system dependencies and environment",
-	Long:  `Check system dependencies required for ApkHub CLI and provide installation instructions.`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Println("🔍 ApkHub CLI Environment Check")
-		fmt.Println("================================")
-		fmt.Println()
+	Short: "Diagnose and fix system issues",
+	Long: `The doctor command performs comprehensive system diagnostics to identify
+and optionally fix issues that might prevent ApkHub CLI from working properly.
 
-		// Check dependencies
-		deps := checkDependencies()
-		
-		// Display results
-		displayDependencyResults(deps)
-		
-		// Provide recommendations
-		provideRecommendations(deps)
-		
-		// Auto-fix if requested
-		if doctorFix {
-			fmt.Println("\n🔧 Attempting to fix issues...")
-			return autoFixDependencies(deps)
+It checks:
+- Required dependencies (adb, aapt, aapt2)
+- System resources (disk space, memory, permissions)
+- Configuration files
+- Network connectivity
+- File system access`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		logger := utils.GetGlobalLogger()
+		logger.Info("Starting system diagnostics...")
+
+		fmt.Println("🏥 ApkHub CLI System Doctor")
+		fmt.Println(strings.Repeat("=", 50))
+
+		// Initialize checkers
+		depManager := system.NewDependencyManager()
+		resourceChecker := system.NewResourceChecker(logger)
+
+		var allPassed = true
+		var issues []string
+		var suggestions []string
+
+		// 1. Check dependencies
+		fmt.Println("\n🔍 Checking Dependencies...")
+		if err := checkDependencies(depManager, &allPassed, &issues, &suggestions); err != nil {
+			logger.Error("Dependency check failed: %v", err)
 		}
-		
+
+		// 2. Check system resources
+		fmt.Println("\n💾 Checking System Resources...")
+		if err := checkSystemResources(resourceChecker, &allPassed, &issues, &suggestions); err != nil {
+			logger.Error("Resource check failed: %v", err)
+		}
+
+		// 3. Check configuration
+		fmt.Println("\n⚙️  Checking Configuration...")
+		if err := checkConfiguration(&allPassed, &issues, &suggestions); err != nil {
+			logger.Error("Configuration check failed: %v", err)
+		}
+
+		// 4. Check file system access
+		fmt.Println("\n📁 Checking File System Access...")
+		if err := checkFileSystemAccess(resourceChecker, &allPassed, &issues, &suggestions); err != nil {
+			logger.Error("File system check failed: %v", err)
+		}
+
+		// 5. Check network connectivity (if needed)
+		if doctorCheck == "all" || doctorCheck == "network" {
+			fmt.Println("\n🌐 Checking Network Connectivity...")
+			networkChecker := system.NewNetworkChecker(logger)
+			if err := checkNetworkConnectivity(networkChecker, &allPassed, &issues, &suggestions); err != nil {
+				logger.Error("Network check failed: %v", err)
+			}
+		}
+
+		// Display results
+		fmt.Println("\n" + strings.Repeat("=", 50))
+		fmt.Println("📊 DIAGNOSTIC RESULTS")
+		fmt.Println(strings.Repeat("=", 50))
+
+		if allPassed {
+			fmt.Println("✅ All checks passed! Your system is ready to use ApkHub CLI.")
+		} else {
+			fmt.Printf("❌ Found %d issues that need attention:\n\n", len(issues))
+			
+			for i, issue := range issues {
+				fmt.Printf("%d. %s\n", i+1, issue)
+			}
+
+			if len(suggestions) > 0 {
+				fmt.Println("\n💡 Suggestions to fix these issues:")
+				for i, suggestion := range suggestions {
+					fmt.Printf("%d. %s\n", i+1, suggestion)
+				}
+			}
+
+			if doctorFix {
+				fmt.Println("\n🔧 Attempting to fix issues automatically...")
+				if err := attemptDoctorAutoFix(depManager, issues, suggestions); err != nil {
+					logger.Error("Auto-fix failed: %v", err)
+					return errors.WrapError(err, errors.ErrorTypeConfiguration, "AUTO_FIX_FAILED", 
+						"Failed to automatically fix issues").
+						WithSuggestion("Try fixing the issues manually using the suggestions above")
+				}
+			} else {
+				fmt.Println("\n💡 Run 'apkhub doctor --fix' to attempt automatic fixes")
+			}
+		}
+
+		if !allPassed {
+			return fmt.Errorf("system diagnostics found issues")
+		}
+
 		return nil
 	},
 }
 
-type DependencyCheck struct {
-	Name        string
-	Required    bool
-	Available   bool
-	Version     string
-	Path        string
-	UsedBy      []string
-	InstallHint string
-	Status      string
-}
-
-func checkDependencies() []DependencyCheck {
-	var deps []DependencyCheck
+// checkDependencies checks all required dependencies
+func checkDependencies(depManager system.DependencyManager, allPassed *bool, issues *[]string, suggestions *[]string) error {
+	depsMap := depManager.CheckAll()
 	
-	// Check aapt2
-	aapt2 := DependencyCheck{
-		Name:     "aapt2",
-		Required: false, // Recommended but not required
-		UsedBy:   []string{"repo scan", "repo add", "repo parse", "info"},
-		InstallHint: getAAPTInstallHint(),
+	// Convert map to slice for easier processing
+	var deps []system.DependencyStatus
+	for _, dep := range depsMap {
+		deps = append(deps, dep)
 	}
 	
-	if path, version, available := checkAAPT("aapt2"); available {
-		aapt2.Available = true
-		aapt2.Version = version
-		aapt2.Path = path
-		aapt2.Status = "✅ Available"
-	} else {
-		aapt2.Status = "❌ Not found"
-	}
-	
-	deps = append(deps, aapt2)
-	
-	// Check aapt (fallback)
-	aapt := DependencyCheck{
-		Name:     "aapt",
-		Required: false,
-		UsedBy:   []string{"repo scan (fallback)", "repo add (fallback)"},
-		InstallHint: getAAPTInstallHint(),
-	}
-	
-	if path, version, available := checkAAPT("aapt"); available {
-		aapt.Available = true
-		aapt.Version = version
-		aapt.Path = path
-		aapt.Status = "✅ Available"
-	} else {
-		aapt.Status = "❌ Not found"
-	}
-	
-	deps = append(deps, aapt)
-	
-	// Check adb
-	adb := DependencyCheck{
-		Name:     "adb",
-		Required: true, // Required for install functionality
-		UsedBy:   []string{"install"},
-		InstallHint: getADBInstallHint(),
-	}
-	
-	if path, version, available := checkADB(); available {
-		adb.Available = true
-		adb.Version = version
-		adb.Path = path
-		adb.Status = "✅ Available"
-	} else {
-		adb.Status = "❌ Not found"
-	}
-	
-	deps = append(deps, adb)
-	
-	return deps
-}
-
-func checkAAPT(toolName string) (string, string, bool) {
-	// Try PATH first
-	if path, err := exec.LookPath(toolName); err == nil {
-		if version := getToolVersion(path, "version"); version != "" {
-			return path, version, true
-		}
-	}
-	
-	// Try common paths
-	commonPaths := getCommonAAPTPaths(toolName)
-	for _, path := range commonPaths {
-		if _, err := os.Stat(path); err == nil {
-			if version := getToolVersion(path, "version"); version != "" {
-				return path, version, true
-			}
-		}
-	}
-	
-	return "", "", false
-}
-
-func checkADB() (string, string, bool) {
-	// Try PATH first
-	if path, err := exec.LookPath("adb"); err == nil {
-		if version := getToolVersion(path, "version"); version != "" {
-			return path, version, true
-		}
-	}
-	
-	// Try common paths
-	commonPaths := getCommonADBPaths()
-	for _, path := range commonPaths {
-		if _, err := os.Stat(path); err == nil {
-			if version := getToolVersion(path, "version"); version != "" {
-				return path, version, true
-			}
-		}
-	}
-	
-	return "", "", false
-}
-
-func getToolVersion(toolPath, versionArg string) string {
-	cmd := exec.Command(toolPath, versionArg)
-	output, err := cmd.Output()
-	if err != nil {
-		return ""
-	}
-	
-	// Extract version from output
-	lines := strings.Split(string(output), "\n")
-	if len(lines) > 0 {
-		return strings.TrimSpace(lines[0])
-	}
-	
-	return "unknown"
-}
-
-func getCommonAAPTPaths(toolName string) []string {
-	var paths []string
-	
-	switch runtime.GOOS {
-	case "linux":
-		paths = []string{
-			"/usr/bin/" + toolName,
-			"/usr/local/bin/" + toolName,
-			"/opt/android-sdk/build-tools/*/aapt2",
-			"/opt/android-sdk/build-tools/*/aapt",
-		}
-		
-		// Add user-specific paths
-		if home := os.Getenv("HOME"); home != "" {
-			paths = append(paths, 
-				filepath.Join(home, "Android/Sdk/build-tools/*/"+toolName),
-				filepath.Join(home, ".android-sdk/build-tools/*/"+toolName),
-			)
-		}
-		
-	case "darwin":
-		paths = []string{
-			"/usr/local/bin/" + toolName,
-			"/opt/homebrew/bin/" + toolName,
-		}
-		
-		if home := os.Getenv("HOME"); home != "" {
-			paths = append(paths,
-				filepath.Join(home, "Library/Android/sdk/build-tools/*/"+toolName),
-				filepath.Join(home, ".android-sdk/build-tools/*/"+toolName),
-			)
-		}
-		
-	case "windows":
-		paths = []string{
-			"C:\\Android\\Sdk\\build-tools\\*\\" + toolName + ".exe",
-		}
-		
-		if localAppData := os.Getenv("LOCALAPPDATA"); localAppData != "" {
-			paths = append(paths, filepath.Join(localAppData, "Android\\Sdk\\build-tools\\*\\"+toolName+".exe"))
-		}
-		
-		if programFiles := os.Getenv("PROGRAMFILES"); programFiles != "" {
-			paths = append(paths, filepath.Join(programFiles, "Android\\Android Studio\\plugins\\android\\lib\\build-tools\\*\\"+toolName+".exe"))
-		}
-	}
-	
-	return paths
-}
-
-func getCommonADBPaths() []string {
-	var paths []string
-	
-	switch runtime.GOOS {
-	case "linux":
-		paths = []string{
-			"/usr/bin/adb",
-			"/usr/local/bin/adb",
-			"/opt/android-sdk/platform-tools/adb",
-		}
-		
-		if home := os.Getenv("HOME"); home != "" {
-			paths = append(paths,
-				filepath.Join(home, "Android/Sdk/platform-tools/adb"),
-				filepath.Join(home, ".android-sdk/platform-tools/adb"),
-			)
-		}
-		
-	case "darwin":
-		paths = []string{
-			"/usr/local/bin/adb",
-			"/opt/homebrew/bin/adb",
-		}
-		
-		if home := os.Getenv("HOME"); home != "" {
-			paths = append(paths,
-				filepath.Join(home, "Library/Android/sdk/platform-tools/adb"),
-			)
-		}
-		
-	case "windows":
-		paths = []string{
-			"C:\\Android\\Sdk\\platform-tools\\adb.exe",
-		}
-		
-		if localAppData := os.Getenv("LOCALAPPDATA"); localAppData != "" {
-			paths = append(paths, filepath.Join(localAppData, "Android\\Sdk\\platform-tools\\adb.exe"))
-		}
-	}
-	
-	return paths
-}
-
-func displayDependencyResults(deps []DependencyCheck) {
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "TOOL\tSTATUS\tVERSION\tPATH\tUSED BY")
-	fmt.Fprintln(w, "----\t------\t-------\t----\t-------")
+	var missingRequired []string
+	var missingOptional []string
 	
 	for _, dep := range deps {
-		usedBy := strings.Join(dep.UsedBy, ", ")
-		if len(usedBy) > 40 {
-			usedBy = usedBy[:37] + "..."
-		}
-		
-		path := dep.Path
-		if len(path) > 30 {
-			path = "..." + path[len(path)-27:]
-		}
-		
-		fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
-			dep.Name, dep.Status, dep.Version, path, usedBy)
-	}
-	
-	w.Flush()
-}
-
-func provideRecommendations(deps []DependencyCheck) {
-	fmt.Println("\n📋 Recommendations:")
-	fmt.Println("===================")
-	
-	hasIssues := false
-	
-	// Check for missing required dependencies
-	for _, dep := range deps {
-		if dep.Required && !dep.Available {
-			fmt.Printf("\n❌ %s is REQUIRED but not found\n", dep.Name)
-			fmt.Printf("   Used by: %s\n", strings.Join(dep.UsedBy, ", "))
-			fmt.Printf("   Install: %s\n", dep.InstallHint)
-			hasIssues = true
-		}
-	}
-	
-	// Check for missing recommended dependencies
-	aaptAvailable := false
-	for _, dep := range deps {
-		if (dep.Name == "aapt2" || dep.Name == "aapt") && dep.Available {
-			aaptAvailable = true
-			break
-		}
-	}
-	
-	if !aaptAvailable {
-		fmt.Printf("\n⚠️  Neither aapt2 nor aapt is available\n")
-		fmt.Printf("   Impact: APK parsing will be limited, some APKs may fail to parse\n")
-		fmt.Printf("   Recommendation: Install aapt2 for better APK parsing support\n")
-		fmt.Printf("   Install: %s\n", getAAPTInstallHint())
-		hasIssues = true
-	}
-	
-	if !hasIssues {
-		fmt.Println("\n✅ All dependencies are properly configured!")
-		fmt.Println("   Your ApkHub CLI installation is ready to use.")
-	} else {
-		fmt.Printf("\n💡 Run 'apkhub doctor --fix' to attempt automatic fixes\n")
-	}
-}
-
-func getAAPTInstallHint() string {
-	switch runtime.GOOS {
-	case "linux":
-		return "sudo apt-get install aapt (Ubuntu/Debian) or brew install android-commandlinetools (Homebrew) or install Android SDK Build Tools"
-	case "darwin":
-		return "brew install --cask android-commandlinetools"
-	case "windows":
-		return "Install Android SDK Build Tools from https://developer.android.com/studio#command-tools"
-	default:
-		return "Install Android SDK Build Tools"
-	}
-}
-
-func getADBInstallHint() string {
-	switch runtime.GOOS {
-	case "linux":
-		return "sudo apt-get install adb (Ubuntu/Debian) or brew install android-platform-tools (Homebrew) or install Android SDK Platform Tools"
-	case "darwin":
-		return "brew install android-platform-tools"
-	case "windows":
-		return "Install Android SDK Platform Tools"
-	default:
-		return "Install Android SDK Platform Tools"
-	}
-}
-
-func autoFixDependencies(deps []DependencyCheck) error {
-	switch runtime.GOOS {
-	case "linux":
-		return autoFixLinux(deps)
-	case "darwin":
-		return autoFixMacOS(deps)
-	case "windows":
-		return autoFixWindows(deps)
-	default:
-		fmt.Println("🚧 Auto-fix is not supported on this platform")
-		fmt.Println("Please follow the manual installation instructions above.")
-		return nil
-	}
-}
-
-func autoFixLinux(deps []DependencyCheck) error {
-	fmt.Println("🐧 Attempting to fix dependencies on Linux...")
-	
-	// Detect available package managers
-	var availableManagers []string
-	
-	if _, err := exec.LookPath("apt-get"); err == nil {
-		availableManagers = append(availableManagers, "apt")
-	}
-	
-	if _, err := exec.LookPath("brew"); err == nil {
-		availableManagers = append(availableManagers, "brew")
-	}
-	
-	if _, err := exec.LookPath("yum"); err == nil {
-		availableManagers = append(availableManagers, "yum")
-	}
-	
-	if _, err := exec.LookPath("dnf"); err == nil {
-		availableManagers = append(availableManagers, "dnf")
-	}
-	
-	if _, err := exec.LookPath("pacman"); err == nil {
-		availableManagers = append(availableManagers, "pacman")
-	}
-	
-	if len(availableManagers) == 0 {
-		fmt.Println("❌ No supported package manager found")
-		fmt.Println("Please install dependencies manually")
-		return nil
-	}
-	
-	// If only one manager is available, use it directly
-	if len(availableManagers) == 1 {
-		return autoFixWithPackageManager(availableManagers[0], deps)
-	}
-	
-	// Multiple managers available, let user choose
-	fmt.Printf("📦 Multiple package managers detected: %s\n", strings.Join(availableManagers, ", "))
-	fmt.Println("\nWhich package manager would you like to use?")
-	
-	for i, manager := range availableManagers {
-		fmt.Printf("  %d) %s %s\n", i+1, manager, getPackageManagerDescription(manager))
-	}
-	
-	fmt.Print("\nEnter your choice (1-" + fmt.Sprintf("%d", len(availableManagers)) + "): ")
-	
-	var choice int
-	if _, err := fmt.Scanln(&choice); err != nil || choice < 1 || choice > len(availableManagers) {
-		fmt.Println("❌ Invalid choice")
-		return nil
-	}
-	
-	selectedManager := availableManagers[choice-1]
-	return autoFixWithPackageManager(selectedManager, deps)
-}
-
-func getPackageManagerDescription(manager string) string {
-	switch manager {
-	case "apt":
-		return "(Ubuntu/Debian - system packages, may be older versions)"
-	case "brew":
-		return "(Homebrew - usually more up-to-date versions)"
-	case "yum":
-		return "(RHEL/CentOS - system packages)"
-	case "dnf":
-		return "(Fedora - system packages)"
-	case "pacman":
-		return "(Arch Linux - system packages)"
-	default:
-		return ""
-	}
-}
-
-func autoFixWithPackageManager(manager string, deps []DependencyCheck) error {
-	switch manager {
-	case "apt":
-		return autoFixWithApt(deps)
-	case "brew":
-		return autoFixWithBrewLinux(deps)
-	case "yum":
-		return autoFixWithYum(deps)
-	case "dnf":
-		return autoFixWithDnf(deps)
-	case "pacman":
-		return autoFixWithPacman(deps)
-	default:
-		fmt.Printf("❌ Package manager %s is not supported\n", manager)
-		return nil
-	}
-}
-
-func autoFixWithApt(deps []DependencyCheck) error {
-	fmt.Println("📦 Detected APT package manager")
-	
-	var packagesToInstall []string
-	
-	for _, dep := range deps {
-		if !dep.Available {
-			switch dep.Name {
-			case "adb":
-				packagesToInstall = append(packagesToInstall, "adb")
-			case "aapt2", "aapt":
-				if !contains(packagesToInstall, "aapt") {
-					packagesToInstall = append(packagesToInstall, "aapt")
-				}
-			}
-		}
-	}
-	
-	if len(packagesToInstall) == 0 {
-		fmt.Println("✅ No packages need to be installed")
-		return nil
-	}
-	
-	fmt.Printf("📥 Will install: %s\n", strings.Join(packagesToInstall, ", "))
-	fmt.Print("Continue? [y/N]: ")
-	
-	var response string
-	fmt.Scanln(&response)
-	if strings.ToLower(response) != "y" {
-		fmt.Println("❌ Installation cancelled")
-		return nil
-	}
-	
-	// Install packages
-	for _, pkg := range packagesToInstall {
-		fmt.Printf("📦 Installing %s...\n", pkg)
-		cmd := exec.Command("sudo", "apt-get", "install", "-y", pkg)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		
-		if err := cmd.Run(); err != nil {
-			fmt.Printf("❌ Failed to install %s: %v\n", pkg, err)
-			continue
-		}
-		
-		fmt.Printf("✅ Successfully installed %s\n", pkg)
-	}
-	
-	return nil
-}
-
-func autoFixMacOS(deps []DependencyCheck) error {
-	fmt.Println("🍎 Attempting to fix dependencies on macOS...")
-	
-	// Check if brew is available
-	if _, err := exec.LookPath("brew"); err == nil {
-		return autoFixWithBrew(deps)
-	}
-	
-	fmt.Println("❌ Homebrew not found")
-	fmt.Println("Please install Homebrew first: https://brew.sh")
-	return nil
-}
-
-func autoFixWithBrew(deps []DependencyCheck) error {
-	fmt.Println("🍺 Detected Homebrew package manager")
-	
-	var packagesToInstall []string
-	
-	for _, dep := range deps {
-		if !dep.Available {
-			switch dep.Name {
-			case "adb":
-				packagesToInstall = append(packagesToInstall, "android-platform-tools")
-			case "aapt2", "aapt":
-				if !contains(packagesToInstall, "android-commandlinetools") {
-					packagesToInstall = append(packagesToInstall, "--cask android-commandlinetools")
-				}
-			}
-		}
-	}
-	
-	if len(packagesToInstall) == 0 {
-		fmt.Println("✅ No packages need to be installed")
-		return nil
-	}
-	
-	fmt.Printf("📥 Will install: %s\n", strings.Join(packagesToInstall, ", "))
-	fmt.Print("Continue? [y/N]: ")
-	
-	var response string
-	fmt.Scanln(&response)
-	if strings.ToLower(response) != "y" {
-		fmt.Println("❌ Installation cancelled")
-		return nil
-	}
-	
-	// Install packages
-	for _, pkg := range packagesToInstall {
-		fmt.Printf("📦 Installing %s...\n", pkg)
-		
-		var cmd *exec.Cmd
-		if strings.Contains(pkg, "--cask") {
-			parts := strings.Split(pkg, " ")
-			cmd = exec.Command("brew", "install", parts[0], parts[1])
+		if dep.Available {
+			fmt.Printf("   ✅ %s: %s\n", dep.Name, dep.Version)
 		} else {
-			cmd = exec.Command("brew", "install", pkg)
-		}
-		
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		
-		if err := cmd.Run(); err != nil {
-			fmt.Printf("❌ Failed to install %s: %v\n", pkg, err)
-			continue
-		}
-		
-		fmt.Printf("✅ Successfully installed %s\n", pkg)
-	}
-	
-	return nil
-}
-
-func autoFixWindows(deps []DependencyCheck) error {
-	fmt.Println("🪟 Auto-fix for Windows is not yet implemented")
-	fmt.Println("Please install dependencies manually:")
-	fmt.Println("1. Download Android SDK Command Line Tools")
-	fmt.Println("2. Extract to C:\\Android\\Sdk\\")
-	fmt.Println("3. Add platform-tools and build-tools to PATH")
-	return nil
-}
-
-func autoFixWithBrewLinux(deps []DependencyCheck) error {
-	fmt.Println("🍺 Using Homebrew on Linux")
-	
-	// First ensure homebrew/cask is tapped
-	fmt.Println("📦 Ensuring homebrew/cask is available...")
-	tapCmd := exec.Command("brew", "tap", "homebrew/cask")
-	tapCmd.Run() // Ignore errors if already tapped
-	
-	var packagesToInstall []string
-	var caskPackages []string
-	
-	for _, dep := range deps {
-		if !dep.Available {
-			switch dep.Name {
-			case "adb":
-				caskPackages = append(caskPackages, "android-platform-tools")
-			case "aapt2", "aapt":
-				if !contains(caskPackages, "android-commandlinetools") {
-					caskPackages = append(caskPackages, "android-commandlinetools")
-				}
+			if dep.Required {
+				fmt.Printf("   ❌ %s: Not found (required)\n", dep.Name)
+				missingRequired = append(missingRequired, dep.Name)
+				*allPassed = false
+			} else {
+				fmt.Printf("   ⚠️  %s: Not found (optional)\n", dep.Name)
+				missingOptional = append(missingOptional, dep.Name)
 			}
 		}
 	}
 	
-	if len(packagesToInstall) == 0 && len(caskPackages) == 0 {
-		fmt.Println("✅ No packages need to be installed")
-		return nil
+	if len(missingRequired) > 0 {
+		*issues = append(*issues, fmt.Sprintf("Missing required dependencies: %s", strings.Join(missingRequired, ", ")))
+		*suggestions = append(*suggestions, "Install missing dependencies using your package manager")
+		*suggestions = append(*suggestions, "Run 'apkhub doctor --fix' to attempt automatic installation")
 	}
 	
-	allPackages := append(packagesToInstall, caskPackages...)
-	fmt.Printf("📥 Will install: %s\n", strings.Join(allPackages, ", "))
-	fmt.Println("💡 Note: Homebrew packages are usually more up-to-date than system packages")
-	fmt.Print("Continue? [y/N]: ")
-	
-	var response string
-	fmt.Scanln(&response)
-	if strings.ToLower(response) != "y" {
-		fmt.Println("❌ Installation cancelled")
-		return nil
-	}
-	
-	// Install regular packages
-	for _, pkg := range packagesToInstall {
-		fmt.Printf("📦 Installing %s...\n", pkg)
-		cmd := exec.Command("brew", "install", pkg)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		
-		if err := cmd.Run(); err != nil {
-			fmt.Printf("❌ Failed to install %s: %v\n", pkg, err)
-			continue
-		}
-		
-		fmt.Printf("✅ Successfully installed %s\n", pkg)
-	}
-	
-	// Install cask packages
-	for _, pkg := range caskPackages {
-		fmt.Printf("📦 Installing %s (cask)...\n", pkg)
-		
-		// Try cask first
-		cmd := exec.Command("brew", "install", "--cask", pkg)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		
-		if err := cmd.Run(); err != nil {
-			fmt.Printf("⚠️  Cask installation failed, trying regular formula...\n")
-			
-			// Try regular formula
-			cmd = exec.Command("brew", "install", pkg)
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
-			
-			if err := cmd.Run(); err != nil {
-				fmt.Printf("❌ Failed to install %s: %v\n", pkg, err)
-				
-				// Provide specific guidance for common issues
-				if pkg == "android-commandlinetools" {
-					fmt.Printf("💡 Alternative installation methods for Android SDK:\n")
-					fmt.Printf("   1. Manual download: https://developer.android.com/studio#command-tools\n")
-					fmt.Printf("   2. Try APT: sudo apt-get install aapt\n")
-					fmt.Printf("   3. Install Android Studio which includes these tools\n")
-				} else {
-					fmt.Printf("💡 Manual installation may be required\n")
-				}
-				continue
-			}
-		}
-		
-		fmt.Printf("✅ Successfully installed %s\n", pkg)
+	if len(missingOptional) > 0 {
+		*suggestions = append(*suggestions, fmt.Sprintf("Consider installing optional dependencies for better functionality: %s", strings.Join(missingOptional, ", ")))
 	}
 	
 	return nil
 }
 
-func autoFixWithYum(deps []DependencyCheck) error {
-	fmt.Println("📦 Using YUM package manager")
+// checkSystemResources checks system resources
+func checkSystemResources(resourceChecker *system.ResourceChecker, allPassed *bool, issues *[]string, suggestions *[]string) error {
+	// Define minimum requirements
+	requirements := system.ResourceRequirement{
+		MinDiskSpace: 100 * 1024 * 1024, // 100 MB
+		MinMemory:    0,                  // Disable memory check for now
+		RequiredDirs: []string{"."},
+	}
 	
-	var packagesToInstall []string
+	// Check current directory and common paths
+	paths := []string{".", os.TempDir()}
+	if homeDir, err := os.UserHomeDir(); err == nil {
+		paths = append(paths, homeDir)
+	}
 	
-	for _, dep := range deps {
-		if !dep.Available {
-			switch dep.Name {
-			case "adb":
-				packagesToInstall = append(packagesToInstall, "android-tools")
-			case "aapt2", "aapt":
-				fmt.Println("⚠️  aapt/aapt2 may not be available in YUM repositories")
-				fmt.Println("💡 Consider installing Android SDK manually or using Homebrew")
-			}
+	result := resourceChecker.CheckResourceRequirements(requirements, paths)
+	
+	if result.SystemInfo != nil {
+		fmt.Printf("   💾 Memory: %.1f%% used\n", result.SystemInfo.Memory.UsedPct)
+		for _, disk := range result.SystemInfo.DiskSpaces {
+			fmt.Printf("   💿 Disk %s: %.1f%% used (%.2f GB available)\n", 
+				disk.Path, disk.UsedPct, float64(disk.Available)/(1024*1024*1024))
 		}
 	}
 	
-	if len(packagesToInstall) == 0 {
-		fmt.Println("✅ No packages available for installation via YUM")
-		return nil
+	if !result.Passed {
+		*allPassed = false
+		*issues = append(*issues, result.Errors...)
+		*suggestions = append(*suggestions, result.Suggestions...)
 	}
 	
-	fmt.Printf("📥 Will install: %s\n", strings.Join(packagesToInstall, ", "))
-	fmt.Print("Continue? [y/N]: ")
-	
-	var response string
-	fmt.Scanln(&response)
-	if strings.ToLower(response) != "y" {
-		fmt.Println("❌ Installation cancelled")
-		return nil
-	}
-	
-	// Install packages
-	for _, pkg := range packagesToInstall {
-		fmt.Printf("📦 Installing %s...\n", pkg)
-		cmd := exec.Command("sudo", "yum", "install", "-y", pkg)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		
-		if err := cmd.Run(); err != nil {
-			fmt.Printf("❌ Failed to install %s: %v\n", pkg, err)
-			continue
+	if len(result.Warnings) > 0 {
+		for _, warning := range result.Warnings {
+			fmt.Printf("   ⚠️  %s\n", warning)
 		}
-		
-		fmt.Printf("✅ Successfully installed %s\n", pkg)
 	}
 	
 	return nil
 }
 
-func autoFixWithDnf(deps []DependencyCheck) error {
-	fmt.Println("📦 Using DNF package manager")
+// checkConfiguration checks configuration files
+func checkConfiguration(allPassed *bool, issues *[]string, suggestions *[]string) error {
+	logger := utils.GetGlobalLogger()
+	configManager := system.NewConfigManager(logger)
 	
-	var packagesToInstall []string
-	
-	for _, dep := range deps {
-		if !dep.Available {
-			switch dep.Name {
-			case "adb":
-				packagesToInstall = append(packagesToInstall, "android-tools")
-			case "aapt2", "aapt":
-				fmt.Println("⚠️  aapt/aapt2 may not be available in DNF repositories")
-				fmt.Println("💡 Consider installing Android SDK manually or using Homebrew")
-			}
-		}
+	// Determine config file path
+	configPath := cfgFile
+	if configPath == "" {
+		configPath = "apkhub.yaml"
 	}
 	
-	if len(packagesToInstall) == 0 {
-		fmt.Println("✅ No packages available for installation via DNF")
-		return nil
-	}
+	// Validate configuration
+	result := configManager.ValidateConfig(configPath)
 	
-	fmt.Printf("📥 Will install: %s\n", strings.Join(packagesToInstall, ", "))
-	fmt.Print("Continue? [y/N]: ")
-	
-	var response string
-	fmt.Scanln(&response)
-	if strings.ToLower(response) != "y" {
-		fmt.Println("❌ Installation cancelled")
-		return nil
-	}
-	
-	// Install packages
-	for _, pkg := range packagesToInstall {
-		fmt.Printf("📦 Installing %s...\n", pkg)
-		cmd := exec.Command("sudo", "dnf", "install", "-y", pkg)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
+	if result.Valid {
+		fmt.Printf("   ✅ Configuration file: Valid (%s)\n", configPath)
 		
-		if err := cmd.Run(); err != nil {
-			fmt.Printf("❌ Failed to install %s: %v\n", pkg, err)
-			continue
+		// Show details if available
+		if count, exists := result.Details["config_keys"]; exists {
+			fmt.Printf("   ℹ️  Configuration sections: %v\n", count)
+		}
+		if repoCount, exists := result.Details["repository_count"]; exists {
+			fmt.Printf("   ℹ️  Configured repositories: %v\n", repoCount)
+		}
+	} else {
+		fmt.Printf("   ❌ Configuration file: Invalid (%s)\n", configPath)
+		*allPassed = false
+		
+		// Add errors to issues
+		for _, err := range result.Errors {
+			*issues = append(*issues, fmt.Sprintf("Config error: %s", err))
 		}
 		
-		fmt.Printf("✅ Successfully installed %s\n", pkg)
+		// Add suggestions
+		*suggestions = append(*suggestions, result.Suggestions...)
+	}
+	
+	// Show warnings
+	for _, warning := range result.Warnings {
+		fmt.Printf("   ⚠️  %s\n", warning)
+	}
+	
+	// Add warnings as suggestions if not already failing
+	if result.Valid && len(result.Warnings) > 0 {
+		*suggestions = append(*suggestions, "Address configuration warnings for better reliability")
 	}
 	
 	return nil
 }
 
-func autoFixWithPacman(deps []DependencyCheck) error {
-	fmt.Println("📦 Using Pacman package manager")
+// checkFileSystemAccess checks file system access permissions
+func checkFileSystemAccess(resourceChecker *system.ResourceChecker, allPassed *bool, issues *[]string, suggestions *[]string) error {
+	// Define permission checks
+	checks := []system.PermissionCheck{
+		{Path: ".", RequireRead: true, RequireWrite: true},
+		{Path: os.TempDir(), RequireRead: true, RequireWrite: true},
+	}
 	
-	var packagesToInstall []string
+	// Add home directory if available
+	if homeDir, err := os.UserHomeDir(); err == nil {
+		checks = append(checks, system.PermissionCheck{
+			Path: homeDir, RequireRead: true, RequireWrite: false,
+		})
+	}
 	
-	for _, dep := range deps {
-		if !dep.Available {
-			switch dep.Name {
-			case "adb":
-				packagesToInstall = append(packagesToInstall, "android-tools")
-			case "aapt2", "aapt":
-				packagesToInstall = append(packagesToInstall, "android-sdk-build-tools")
-			}
+	permIssues := resourceChecker.CheckPermissions(checks)
+	
+	if len(permIssues) == 0 {
+		fmt.Printf("   ✅ File system access: OK\n")
+	} else {
+		*allPassed = false
+		for _, issue := range permIssues {
+			fmt.Printf("   ❌ %s\n", issue)
+			*issues = append(*issues, issue)
 		}
-	}
-	
-	if len(packagesToInstall) == 0 {
-		fmt.Println("✅ No packages need to be installed")
-		return nil
-	}
-	
-	fmt.Printf("📥 Will install: %s\n", strings.Join(packagesToInstall, ", "))
-	fmt.Println("💡 Note: Some packages may be available in AUR")
-	fmt.Print("Continue? [y/N]: ")
-	
-	var response string
-	fmt.Scanln(&response)
-	if strings.ToLower(response) != "y" {
-		fmt.Println("❌ Installation cancelled")
-		return nil
-	}
-	
-	// Install packages
-	for _, pkg := range packagesToInstall {
-		fmt.Printf("📦 Installing %s...\n", pkg)
-		cmd := exec.Command("sudo", "pacman", "-S", "--noconfirm", pkg)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		
-		if err := cmd.Run(); err != nil {
-			fmt.Printf("❌ Failed to install %s: %v\n", pkg, err)
-			fmt.Printf("💡 Try installing from AUR: yay -S %s\n", pkg)
-			continue
-		}
-		
-		fmt.Printf("✅ Successfully installed %s\n", pkg)
+		*suggestions = append(*suggestions, "Fix file/directory permissions")
+		*suggestions = append(*suggestions, "Ensure you have read/write access to working directory")
 	}
 	
 	return nil
 }
 
-func contains(slice []string, item string) bool {
-	for _, s := range slice {
-		if s == item {
-			return true
+// checkNetworkConnectivity checks network connectivity
+func checkNetworkConnectivity(networkChecker *system.NetworkChecker, allPassed *bool, issues *[]string, suggestions *[]string) error {
+	// Test basic connectivity
+	basicStatus := networkChecker.CheckBasicConnectivity()
+	
+	if basicStatus.Connected {
+		fmt.Printf("   ✅ Basic connectivity: OK (%.2fms)\n", 
+			float64(basicStatus.Latency.Nanoseconds())/1000000)
+		fmt.Printf("   ✅ DNS resolution: %v\n", basicStatus.DNSWorking)
+		fmt.Printf("   ✅ HTTPS connectivity: %v\n", basicStatus.HTTPSWorking)
+	} else {
+		fmt.Printf("   ❌ Basic connectivity: Failed - %s\n", basicStatus.Error)
+		*allPassed = false
+		*issues = append(*issues, fmt.Sprintf("Network connectivity failed: %s", basicStatus.Error))
+		
+		// Add specific suggestions based on error type
+		networkSuggestions := networkChecker.DiagnoseNetworkIssue(fmt.Errorf(basicStatus.Error))
+		*suggestions = append(*suggestions, networkSuggestions...)
+		
+		return nil // Don't fail completely, just report the issue
+	}
+	
+	// Test connectivity to common services
+	tests := system.GetDefaultConnectivityTests()
+	diagnostic := networkChecker.CheckConnectivity(tests)
+	
+	var failedTests []string
+	for name, result := range diagnostic.Results {
+		test := diagnostic.Tests[name]
+		if result.Connected {
+			fmt.Printf("   ✅ %s: OK (%.2fms)\n", name, 
+				float64(result.Latency.Nanoseconds())/1000000)
+		} else {
+			status := "⚠️"
+			if test.Required {
+				status = "❌"
+				*allPassed = false
+			}
+			fmt.Printf("   %s %s: Failed - %s\n", status, name, result.Error)
+			failedTests = append(failedTests, name)
 		}
 	}
-	return false
+	
+	if len(failedTests) > 0 {
+		*issues = append(*issues, fmt.Sprintf("Some network services unreachable: %s", 
+			strings.Join(failedTests, ", ")))
+		*suggestions = append(*suggestions, diagnostic.Suggestions...)
+	}
+	
+	return nil
+}
+
+// attemptDoctorAutoFix attempts to automatically fix detected issues
+func attemptDoctorAutoFix(depManager system.DependencyManager, issues []string, suggestions []string) error {
+	fmt.Println("🔧 Auto-fix is not fully implemented yet")
+	fmt.Println("   Please follow the manual suggestions provided above")
+	
+	// In a full implementation, this would:
+	// 1. Try to install missing dependencies
+	// 2. Create missing directories
+	// 3. Fix common permission issues
+	// 4. Generate default configuration files
+	
+	return nil
 }
 
 func init() {
 	rootCmd.AddCommand(doctorCmd)
 	
-	doctorCmd.Flags().BoolVar(&doctorFix, "fix", false, "Attempt to automatically fix dependency issues")
+	doctorCmd.Flags().BoolVar(&doctorFix, "fix", false, "Attempt to automatically fix detected issues")
+	doctorCmd.Flags().BoolVar(&doctorVerbose, "verbose", false, "Show detailed diagnostic information")
+	doctorCmd.Flags().StringVar(&doctorCheck, "check", "basic", "Type of check to perform: basic, all, network")
 }
