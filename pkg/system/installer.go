@@ -57,7 +57,7 @@ func (ig *DefaultInstallationGuide) getAAPTInstructions() []InstallStep {
 	case "linux":
 		// Check available package managers
 		packageManagers := ig.DetectPackageManagers()
-		
+
 		for _, pm := range packageManagers {
 			switch pm {
 			case "apt":
@@ -133,7 +133,7 @@ func (ig *DefaultInstallationGuide) getADBInstructions() []InstallStep {
 	switch runtime.GOOS {
 	case "linux":
 		packageManagers := ig.DetectPackageManagers()
-		
+
 		for _, pm := range packageManagers {
 			switch pm {
 			case "apt":
@@ -194,7 +194,7 @@ func (ig *DefaultInstallationGuide) DetectPackageManagers() []string {
 	var managers []string
 
 	packageManagers := []string{"apt-get", "brew", "yum", "dnf", "pacman"}
-	
+
 	for _, pm := range packageManagers {
 		if ig.hasPackageManager(pm) {
 			// Normalize names
@@ -219,13 +219,13 @@ func (ig *DefaultInstallationGuide) hasPackageManager(manager string) bool {
 // CanAutoInstall checks if a tool can be automatically installed
 func (ig *DefaultInstallationGuide) CanAutoInstall(tool string) bool {
 	instructions := ig.GetPlatformInstructions(tool)
-	
+
 	for _, step := range instructions {
 		if !step.Manual && step.Command != "" {
 			return true
 		}
 	}
-	
+
 	return false
 }
 
@@ -236,12 +236,12 @@ func (ig *DefaultInstallationGuide) AutoInstall(tool string) error {
 	}
 
 	instructions := ig.GetPlatformInstructions(tool)
-	
+
 	// Try the first available automatic installation method
 	for _, step := range instructions {
 		if !step.Manual && step.Command != "" {
 			fmt.Printf("Executing: %s\n", step.Description)
-			
+
 			// Split command into parts
 			parts := strings.Fields(step.Command)
 			if len(parts) == 0 {
@@ -251,11 +251,11 @@ func (ig *DefaultInstallationGuide) AutoInstall(tool string) error {
 			cmd := exec.Command(parts[0], parts[1:]...)
 			cmd.Stdout = nil // We'll handle output in the caller
 			cmd.Stderr = nil
-			
+
 			if err := cmd.Run(); err != nil {
 				return fmt.Errorf("installation failed: %w", err)
 			}
-			
+
 			return nil
 		}
 	}
@@ -321,25 +321,25 @@ func (im *InstallationManager) GetInstallationGuide() InstallationGuide {
 func (im *InstallationManager) CheckAndSuggestInstallation(command string) ([]DependencyStatus, []InstallStep, error) {
 	// Check dependencies for the command
 	deps := im.depManager.CheckForCommand(command)
-	
+
 	var installSteps []InstallStep
 	var missingRequired []string
-	
+
 	for _, dep := range deps {
 		if !dep.Available {
 			if dep.Required {
 				missingRequired = append(missingRequired, dep.Name)
 			}
-			
+
 			// Get installation instructions
 			steps := im.installer.GetPlatformInstructions(dep.Name)
 			installSteps = append(installSteps, steps...)
 		}
 	}
-	
+
 	if len(missingRequired) > 0 {
 		return deps, installSteps, fmt.Errorf("required dependencies missing: %s", strings.Join(missingRequired, ", "))
 	}
-	
+
 	return deps, installSteps, nil
 }

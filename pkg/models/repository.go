@@ -12,35 +12,35 @@ type RepositoryLayout struct {
 
 // APKInfo represents individual APK information stored in infos/ directory
 type APKInfo struct {
-	PackageID     string                `json:"package_id"`
-	AppName       map[string]string     `json:"app_name"`
-	Version       string                `json:"version"`
-	VersionCode   int64                 `json:"version_code"`
-	MinSDK        int                   `json:"min_sdk"`
-	TargetSDK     int                   `json:"target_sdk"`
-	Size          int64                 `json:"size"`
-	SHA256        string                `json:"sha256"`
-	SignatureInfo *SignatureInfo        `json:"signature"`
-	Permissions   []string              `json:"permissions,omitempty"`
-	Features      []string              `json:"features,omitempty"`
-	ABIs          []string              `json:"abis,omitempty"`
-	AddedAt       time.Time             `json:"added_at"`
-	UpdatedAt     time.Time             `json:"updated_at"`
-	OriginalName  string                `json:"original_name"`
-	FileName      string                `json:"file_name"`      // Normalized filename
-	FilePath      string                `json:"file_path"`      // Relative path in apks/
-	InfoPath      string                `json:"info_path"`      // Relative path in infos/
-	IconPath      string                `json:"icon_path,omitempty"` // Relative path to icon in infos/
+	PackageID     string            `json:"package_id"`
+	AppName       map[string]string `json:"app_name"`
+	Version       string            `json:"version"`
+	VersionCode   int64             `json:"version_code"`
+	MinSDK        int               `json:"min_sdk"`
+	TargetSDK     int               `json:"target_sdk"`
+	Size          int64             `json:"size"`
+	SHA256        string            `json:"sha256"`
+	SignatureInfo *SignatureInfo    `json:"signature"`
+	Permissions   []string          `json:"permissions,omitempty"`
+	Features      []string          `json:"features,omitempty"`
+	ABIs          []string          `json:"abis,omitempty"`
+	AddedAt       time.Time         `json:"added_at"`
+	UpdatedAt     time.Time         `json:"updated_at"`
+	OriginalName  string            `json:"original_name"`
+	FileName      string            `json:"file_name"`           // Normalized filename
+	FilePath      string            `json:"file_path"`           // Relative path in apks/
+	InfoPath      string            `json:"info_path"`           // Relative path in infos/
+	IconPath      string            `json:"icon_path,omitempty"` // Relative path to icon in infos/
 }
 
 // ManifestIndex is the main index file (apkhub_manifest.json)
 type ManifestIndex struct {
-	Version     string                `json:"version"`
-	Name        string                `json:"name"`
-	Description string                `json:"description"`
-	UpdatedAt   time.Time             `json:"updated_at"`
-	TotalAPKs   int                   `json:"total_apks"`
-	TotalSize   int64                 `json:"total_size"`
+	Version     string                 `json:"version"`
+	Name        string                 `json:"name"`
+	Description string                 `json:"description"`
+	UpdatedAt   time.Time              `json:"updated_at"`
+	TotalAPKs   int                    `json:"total_apks"`
+	TotalSize   int64                  `json:"total_size"`
 	Packages    map[string]*AppPackage `json:"packages"`
 }
 

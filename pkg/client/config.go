@@ -42,7 +42,7 @@ type ADBSettings struct {
 func DefaultConfig() *Config {
 	homeDir, _ := os.UserHomeDir()
 	apkhubDir := filepath.Join(homeDir, ".apkhub")
-	
+
 	return &Config{
 		DefaultBucket: "main",
 		Buckets:       make(map[string]*Bucket),
@@ -67,7 +67,7 @@ func ConfigPath() string {
 // Load loads configuration from file
 func Load() (*Config, error) {
 	configPath := ConfigPath()
-	
+
 	// Create default config if file doesn't exist
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		config := DefaultConfig()
@@ -76,53 +76,53 @@ func Load() (*Config, error) {
 		}
 		return config, nil
 	}
-	
+
 	// Read config file
 	data, err := os.ReadFile(configPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read config: %w", err)
 	}
-	
+
 	// Parse YAML
 	config := DefaultConfig()
 	if err := yaml.Unmarshal(data, config); err != nil {
 		return nil, fmt.Errorf("failed to parse config: %w", err)
 	}
-	
+
 	// Expand paths
 	config.expandPaths()
-	
+
 	return config, nil
 }
 
 // Save saves configuration to file
 func (c *Config) Save() error {
 	configPath := ConfigPath()
-	
+
 	// Ensure directory exists
 	configDir := filepath.Dir(configPath)
 	if err := os.MkdirAll(configDir, 0755); err != nil {
 		return fmt.Errorf("failed to create config directory: %w", err)
 	}
-	
+
 	// Marshal to YAML
 	data, err := yaml.Marshal(c)
 	if err != nil {
 		return fmt.Errorf("failed to marshal config: %w", err)
 	}
-	
+
 	// Write file
 	if err := os.WriteFile(configPath, data, 0644); err != nil {
 		return fmt.Errorf("failed to write config: %w", err)
 	}
-	
+
 	return nil
 }
 
 // expandPaths expands ~ in paths
 func (c *Config) expandPaths() {
 	homeDir, _ := os.UserHomeDir()
-	
+
 	if c.Client.DownloadDir != "" && c.Client.DownloadDir[0] == '~' {
 		c.Client.DownloadDir = filepath.Join(homeDir, c.Client.DownloadDir[1:])
 	}
@@ -137,13 +137,13 @@ func (c *Config) EnsureDirectories() error {
 		c.Client.DownloadDir,
 		c.Client.CacheDir,
 	}
-	
+
 	for _, dir := range dirs {
 		if err := os.MkdirAll(dir, 0755); err != nil {
 			return fmt.Errorf("failed to create directory %s: %w", dir, err)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -152,17 +152,17 @@ func (c *Config) AddBucket(name, url, displayName string) error {
 	if c.Buckets == nil {
 		c.Buckets = make(map[string]*Bucket)
 	}
-	
+
 	if _, exists := c.Buckets[name]; exists {
 		return fmt.Errorf("bucket %s already exists", name)
 	}
-	
+
 	c.Buckets[name] = &Bucket{
 		Name:    displayName,
 		URL:     url,
 		Enabled: true,
 	}
-	
+
 	return c.Save()
 }
 
@@ -171,9 +171,9 @@ func (c *Config) RemoveBucket(name string) error {
 	if _, exists := c.Buckets[name]; !exists {
 		return fmt.Errorf("bucket %s not found", name)
 	}
-	
+
 	delete(c.Buckets, name)
-	
+
 	// Update default bucket if necessary
 	if c.DefaultBucket == name {
 		c.DefaultBucket = ""
@@ -182,7 +182,7 @@ func (c *Config) RemoveBucket(name string) error {
 			break
 		}
 	}
-	
+
 	return c.Save()
 }
 

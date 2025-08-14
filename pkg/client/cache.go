@@ -13,20 +13,20 @@ import (
 
 // CacheManager handles caching operations
 type CacheManager struct {
-	config    *Config
-	cacheDir  string
+	config     *Config
+	cacheDir   string
 	defaultTTL time.Duration
 }
 
 // CacheEntry represents a cached item with metadata
 type CacheEntry struct {
-	Key        string      `json:"key"`
-	Data       interface{} `json:"data"`
-	CreatedAt  time.Time   `json:"created_at"`
-	ExpiresAt  time.Time   `json:"expires_at"`
-	Size       int64       `json:"size"`
-	AccessCount int        `json:"access_count"`
-	LastAccess time.Time   `json:"last_access"`
+	Key         string      `json:"key"`
+	Data        interface{} `json:"data"`
+	CreatedAt   time.Time   `json:"created_at"`
+	ExpiresAt   time.Time   `json:"expires_at"`
+	Size        int64       `json:"size"`
+	AccessCount int         `json:"access_count"`
+	LastAccess  time.Time   `json:"last_access"`
 }
 
 // CacheStats contains cache statistics
@@ -64,7 +64,7 @@ func NewCacheManager(config *Config) *CacheManager {
 // Get retrieves an item from cache
 func (c *CacheManager) Get(key string, target interface{}) (bool, error) {
 	cachePath := c.getCachePath(key)
-	
+
 	// Check if cache file exists
 	if _, err := os.Stat(cachePath); os.IsNotExist(err) {
 		return false, nil
@@ -170,7 +170,7 @@ func (c *CacheManager) CleanExpired() (int, error) {
 	for _, entry := range entries {
 		if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".cache") {
 			cachePath := filepath.Join(c.cacheDir, entry.Name())
-			
+
 			cacheEntry, err := c.loadCacheEntry(cachePath)
 			if err != nil {
 				// Remove corrupted cache files
@@ -213,14 +213,14 @@ func (c *CacheManager) GetStats() (*CacheStats, error) {
 	for _, entry := range entries {
 		if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".cache") {
 			cachePath := filepath.Join(c.cacheDir, entry.Name())
-			
+
 			cacheEntry, err := c.loadCacheEntry(cachePath)
 			if err != nil {
 				continue
 			}
 
 			stats.TotalEntries++
-			
+
 			// Get file size
 			if info, err := entry.Info(); err == nil {
 				stats.TotalSize += info.Size()
@@ -259,7 +259,7 @@ func (c *CacheManager) GetStats() (*CacheStats, error) {
 // GetManifest retrieves a cached manifest with fallback to stale cache
 func (c *CacheManager) GetManifest(bucketName string, allowStale bool) (*models.ManifestIndex, bool, error) {
 	key := fmt.Sprintf("manifest_%s", bucketName)
-	
+
 	var manifest models.ManifestIndex
 	found, err := c.Get(key, &manifest)
 	if err != nil {
@@ -299,7 +299,7 @@ func (c *CacheManager) getCachePath(key string) string {
 	safeKey := strings.ReplaceAll(key, "/", "_")
 	safeKey = strings.ReplaceAll(safeKey, "\\", "_")
 	safeKey = strings.ReplaceAll(safeKey, ":", "_")
-	
+
 	return filepath.Join(c.cacheDir, safeKey+".cache")
 }
 
@@ -347,12 +347,12 @@ func (c *CacheManager) PrintStats() error {
 	fmt.Printf("   Total entries: %d\n", stats.TotalEntries)
 	fmt.Printf("   Total size: %s\n", formatBytes(stats.TotalSize))
 	fmt.Printf("   Default TTL: %v\n", stats.DefaultTTL)
-	
+
 	if stats.TotalEntries > 0 {
 		fmt.Printf("   Hit rate: %.1f%%\n", stats.HitRate*100)
 		fmt.Printf("   Miss rate: %.1f%%\n", stats.MissRate*100)
 		fmt.Printf("   Expired entries: %d\n", stats.ExpiredEntries)
-		
+
 		if !stats.OldestEntry.IsZero() {
 			fmt.Printf("   Oldest entry: %s\n", stats.OldestEntry.Format("2006-01-02 15:04:05"))
 		}

@@ -41,17 +41,17 @@ type DownloadOptions struct {
 	NoVerify     bool // Skip checksum verification
 	OutputPath   string
 	MaxRetries   int
-	Timeout      int  // Timeout in seconds
+	Timeout      int // Timeout in seconds
 	ShowProgress bool
 }
 
 // ProgressWriter wraps an io.Writer to report download progress
 type ProgressWriter struct {
-	writer      io.Writer
-	total       int64
-	written     int64
-	lastUpdate  time.Time
-	startTime   time.Time
+	writer       io.Writer
+	total        int64
+	written      int64
+	lastUpdate   time.Time
+	startTime    time.Time
 	showProgress bool
 }
 
@@ -92,7 +92,7 @@ func (pw *ProgressWriter) updateProgress() {
 
 	percentage := float64(pw.written) / float64(pw.total) * 100
 	elapsed := time.Since(pw.startTime)
-	
+
 	// Calculate speed and ETA
 	speed := float64(pw.written) / elapsed.Seconds()
 	remaining := pw.total - pw.written
@@ -118,7 +118,7 @@ func (pw *ProgressWriter) Finish() {
 		elapsed := time.Since(pw.startTime)
 		totalMB := float64(pw.written) / (1024 * 1024)
 		avgSpeed := float64(pw.written) / elapsed.Seconds() / (1024 * 1024)
-		
+
 		fmt.Printf("\r✅ Download completed: %.1f MB in %v (avg: %.1f MB/s)\n",
 			totalMB, elapsed.Round(time.Second), avgSpeed)
 	}

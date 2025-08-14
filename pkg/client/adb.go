@@ -42,10 +42,10 @@ type Device struct {
 
 // DeviceStatus represents device connection status
 type DeviceStatus struct {
-	Online      []Device `json:"online"`
-	Offline     []Device `json:"offline"`
+	Online       []Device `json:"online"`
+	Offline      []Device `json:"offline"`
 	Unauthorized []Device `json:"unauthorized"`
-	Total       int      `json:"total"`
+	Total        int      `json:"total"`
 }
 
 // InstallResult represents the result of an installation
@@ -66,31 +66,31 @@ func (a *ADBManager) GetDevices() ([]Device, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to run adb devices: %w", err)
 	}
-	
+
 	var devices []Device
 	lines := strings.Split(string(output), "\n")
-	
+
 	for _, line := range lines[1:] { // Skip header
 		line = strings.TrimSpace(line)
 		if line == "" {
 			continue
 		}
-		
+
 		parts := strings.Fields(line)
 		if len(parts) < 2 {
 			continue
 		}
-		
+
 		device := Device{
 			ID:       parts[0],
 			Status:   parts[1],
 			LastSeen: time.Now(),
 		}
-		
+
 		// Check if it's an emulator
-		device.IsEmulator = strings.Contains(device.ID, "emulator-") || 
+		device.IsEmulator = strings.Contains(device.ID, "emulator-") ||
 			strings.Contains(strings.ToLower(device.ID), "emulator")
-		
+
 		// Extract additional info from device list
 		for _, part := range parts[2:] {
 			if strings.HasPrefix(part, "model:") {
@@ -103,15 +103,15 @@ func (a *ADBManager) GetDevices() ([]Device, error) {
 				device.Transport = strings.TrimPrefix(part, "transport_id:")
 			}
 		}
-		
+
 		// Get additional device info if device is online
 		if device.Status == "device" {
 			a.enrichDeviceInfo(&device)
 		}
-		
+
 		devices = append(devices, device)
 	}
-	
+
 	return devices, nil
 }
 
@@ -123,20 +123,20 @@ func (a *ADBManager) enrichDeviceInfo(device *Device) {
 			device.AndroidAPI = api
 		}
 	}
-	
+
 	if version, err := a.getDeviceProperty(device.ID, "ro.build.version.release"); err == nil {
 		device.AndroidVer = strings.TrimSpace(version)
 	}
-	
+
 	// Get manufacturer and brand
 	if manufacturer, err := a.getDeviceProperty(device.ID, "ro.product.manufacturer"); err == nil {
 		device.Manufacturer = strings.TrimSpace(manufacturer)
 	}
-	
+
 	if brand, err := a.getDeviceProperty(device.ID, "ro.product.brand"); err == nil {
 		device.Brand = strings.TrimSpace(brand)
 	}
-	
+
 	// If model is empty, try to get it from properties
 	if device.Model == "" {
 		if model, err := a.getDeviceProperty(device.ID, "ro.product.model"); err == nil {
@@ -161,14 +161,14 @@ func (a *ADBManager) GetDeviceStatus() (*DeviceStatus, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	status := &DeviceStatus{
 		Online:       []Device{},
 		Offline:      []Device{},
 		Unauthorized: []Device{},
 		Total:        len(devices),
 	}
-	
+
 	for _, device := range devices {
 		switch device.Status {
 		case "device":
@@ -179,7 +179,7 @@ func (a *ADBManager) GetDeviceStatus() (*DeviceStatus, error) {
 			status.Unauthorized = append(status.Unauthorized, device)
 		}
 	}
-	
+
 	return status, nil
 }
 
@@ -189,7 +189,7 @@ func (a *ADBManager) Install(apkPath string, deviceID string, options InstallOpt
 	if err != nil {
 		return err
 	}
-	
+
 	if !result.Success {
 		// Format error with suggestions
 		errorMsg := fmt.Sprintf("installation failed: %s", result.ErrorMessage)
@@ -201,20 +201,20 @@ func (a *ADBManager) Install(apkPath string, deviceID string, options InstallOpt
 		}
 		return fmt.Errorf(errorMsg)
 	}
-	
+
 	return nil
 }
 
 // InstallWithResult installs an APK and returns detailed result information
 func (a *ADBManager) InstallWithResult(apkPath string, deviceID string, options InstallOptions) (*InstallResult, error) {
 	startTime := time.Now()
-	
+
 	result := &InstallResult{
-		DeviceID:  deviceID,
-		Duration:  0,
-		Success:   false,
+		DeviceID: deviceID,
+		Duration: 0,
+		Success:  false,
 	}
-	
+
 	// Validate device is online
 	if deviceID != "" {
 		if err := a.validateDeviceOnline(deviceID); err != nil {
@@ -227,17 +227,17 @@ func (a *ADBManager) InstallWithResult(apkPath string, deviceID string, options 
 			return result, nil
 		}
 	}
-	
+
 	// Build command arguments
 	args := []string{}
-	
+
 	// Add device selection if specified
 	if deviceID != "" {
 		args = append(args, "-s", deviceID)
 	}
-	
+
 	args = append(args, "install")
-	
+
 	// Add install options
 	if options.Replace {
 		args = append(args, "-r")
@@ -248,20 +248,20 @@ func (a *ADBManager) InstallWithResult(apkPath string, deviceID string, options 
 	if options.GrantPermissions {
 		args = append(args, "-g")
 	}
-	
+
 	args = append(args, apkPath)
-	
+
 	// Run adb install
 	cmd := exec.Command(a.config.ADB.Path, args...)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
-	
+
 	fmt.Printf("🔧 Running: %s %s\n", a.config.ADB.Path, strings.Join(args, " "))
-	
+
 	err := cmd.Run()
 	result.Duration = time.Since(startTime)
-	
+
 	if err != nil {
 		result.ErrorMessage = fmt.Sprintf("command execution failed: %v", err)
 		result.Suggestions = []string{
@@ -271,18 +271,18 @@ func (a *ADBManager) InstallWithResult(apkPath string, deviceID string, options 
 		}
 		return result, nil
 	}
-	
+
 	// Parse output
 	output := stdout.String() + stderr.String()
-	
+
 	if strings.Contains(output, "Success") {
 		result.Success = true
 		return result, nil
 	}
-	
+
 	// Parse and categorize errors
 	result.ErrorCode, result.ErrorMessage, result.Suggestions = a.parseInstallError(output)
-	
+
 	return result, nil
 }
 
@@ -292,7 +292,7 @@ func (a *ADBManager) validateDeviceOnline(deviceID string) error {
 	if err != nil {
 		return fmt.Errorf("failed to get device list: %w", err)
 	}
-	
+
 	for _, device := range devices {
 		if device.ID == deviceID {
 			switch device.Status {
@@ -307,14 +307,14 @@ func (a *ADBManager) validateDeviceOnline(deviceID string) error {
 			}
 		}
 	}
-	
+
 	return fmt.Errorf("device %s not found", deviceID)
 }
 
 // parseInstallError parses ADB install error output and provides suggestions
 func (a *ADBManager) parseInstallError(output string) (string, string, []string) {
 	output = strings.ToUpper(output)
-	
+
 	// Define error patterns and their solutions
 	errorPatterns := map[string]struct {
 		code        string
@@ -389,14 +389,14 @@ func (a *ADBManager) parseInstallError(output string) (string, string, []string)
 			},
 		},
 	}
-	
+
 	// Check for known error patterns
 	for pattern, info := range errorPatterns {
 		if strings.Contains(output, pattern) {
 			return info.code, info.message, info.suggestions
 		}
 	}
-	
+
 	// Generic error handling
 	if strings.Contains(output, "INSTALL_FAILED") {
 		// Extract the specific error code
@@ -411,7 +411,7 @@ func (a *ADBManager) parseInstallError(output string) (string, string, []string)
 			}
 		}
 	}
-	
+
 	// Unknown error
 	return "UNKNOWN", fmt.Sprintf("Unknown installation error: %s", output), []string{
 		"Check ADB connection",
@@ -431,50 +431,50 @@ type InstallOptions struct {
 // Uninstall uninstalls an app from device
 func (a *ADBManager) Uninstall(packageID string, deviceID string) error {
 	args := []string{}
-	
+
 	// Add device selection if specified
 	if deviceID != "" {
 		args = append(args, "-s", deviceID)
 	}
-	
+
 	args = append(args, "uninstall", packageID)
-	
+
 	// Run adb uninstall
 	cmd := exec.Command(a.config.ADB.Path, args...)
 	output, err := cmd.CombinedOutput()
-	
+
 	if err != nil {
 		return fmt.Errorf("adb uninstall failed: %w\nOutput: %s", err, string(output))
 	}
-	
+
 	if strings.Contains(string(output), "Success") {
 		return nil
 	}
-	
+
 	return fmt.Errorf("uninstall failed: %s", string(output))
 }
 
 // GetInstalledVersion gets the installed version of an app
 func (a *ADBManager) GetInstalledVersion(packageID string, deviceID string) (string, int64, error) {
 	args := []string{}
-	
+
 	// Add device selection if specified
 	if deviceID != "" {
 		args = append(args, "-s", deviceID)
 	}
-	
+
 	args = append(args, "shell", "dumpsys", "package", packageID)
-	
+
 	cmd := exec.Command(a.config.ADB.Path, args...)
 	output, err := cmd.Output()
 	if err != nil {
 		return "", 0, fmt.Errorf("failed to get package info: %w", err)
 	}
-	
+
 	// Parse output for version info
 	var versionName string
 	var versionCode int64
-	
+
 	lines := strings.Split(string(output), "\n")
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
@@ -489,11 +489,11 @@ func (a *ADBManager) GetInstalledVersion(packageID string, deviceID string) (str
 			}
 		}
 	}
-	
+
 	if versionName == "" && versionCode == 0 {
 		return "", 0, fmt.Errorf("package not found or not installed")
 	}
-	
+
 	return versionName, versionCode, nil
 }
 
@@ -504,56 +504,56 @@ func (a *ADBManager) SelectDevice() (string, error) {
 		fmt.Printf("🔧 Using default device: %s\n", a.config.ADB.DefaultDevice)
 		return a.config.ADB.DefaultDevice, nil
 	}
-	
+
 	status, err := a.GetDeviceStatus()
 	if err != nil {
 		return "", fmt.Errorf("failed to get device status: %w", err)
 	}
-	
+
 	// Show device status overview
 	a.printDeviceStatus(status)
-	
+
 	if len(status.Online) == 0 {
 		return "", fmt.Errorf("no online devices available")
 	}
-	
+
 	if len(status.Online) == 1 {
 		device := status.Online[0]
 		fmt.Printf("📱 Using device: %s\n", a.formatDeviceName(device))
 		return device.ID, nil
 	}
-	
+
 	// Multiple devices, show selection interface
 	fmt.Println("\n📱 Multiple devices available:")
 	fmt.Println("=" + strings.Repeat("=", 60))
-	
+
 	for i, device := range status.Online {
 		fmt.Printf("%d. %s\n", i+1, a.formatDeviceDetails(device))
 	}
-	
+
 	fmt.Println("=" + strings.Repeat("=", 60))
 	fmt.Print("Select device [1]: ")
-	
+
 	reader := bufio.NewReader(os.Stdin)
 	input, err := reader.ReadString('\n')
 	if err != nil {
 		return "", fmt.Errorf("failed to read input: %w", err)
 	}
-	
+
 	choice := 1 // default
 	if trimmed := strings.TrimSpace(input); trimmed != "" {
 		if parsed, parseErr := strconv.Atoi(trimmed); parseErr == nil {
 			choice = parsed
 		}
 	}
-	
+
 	if choice < 1 || choice > len(status.Online) {
 		choice = 1
 	}
-	
+
 	selectedDevice := status.Online[choice-1]
 	fmt.Printf("✅ Selected: %s\n", a.formatDeviceName(selectedDevice))
-	
+
 	return selectedDevice.ID, nil
 }
 
@@ -561,16 +561,16 @@ func (a *ADBManager) SelectDevice() (string, error) {
 func (a *ADBManager) printDeviceStatus(status *DeviceStatus) {
 	fmt.Printf("📊 Device Status Overview:\n")
 	fmt.Printf("   🟢 Online: %d\n", len(status.Online))
-	
+
 	if len(status.Offline) > 0 {
 		fmt.Printf("   🔴 Offline: %d\n", len(status.Offline))
 	}
-	
+
 	if len(status.Unauthorized) > 0 {
 		fmt.Printf("   🔒 Unauthorized: %d\n", len(status.Unauthorized))
 		fmt.Printf("       💡 Enable USB debugging and authorize this computer\n")
 	}
-	
+
 	fmt.Printf("   📱 Total: %d\n", status.Total)
 }
 
@@ -582,18 +582,18 @@ func (a *ADBManager) formatDeviceName(device Device) string {
 		}
 		return fmt.Sprintf("%s (%s)", device.Model, device.ID)
 	}
-	
+
 	if device.IsEmulator {
 		return fmt.Sprintf("Emulator (%s)", device.ID)
 	}
-	
+
 	return device.ID
 }
 
 // formatDeviceDetails returns detailed device information for selection
 func (a *ADBManager) formatDeviceDetails(device Device) string {
 	details := a.formatDeviceName(device)
-	
+
 	// Add Android version info
 	if device.AndroidVer != "" {
 		details += fmt.Sprintf(" - Android %s", device.AndroidVer)
@@ -601,7 +601,7 @@ func (a *ADBManager) formatDeviceDetails(device Device) string {
 			details += fmt.Sprintf(" (API %d)", device.AndroidAPI)
 		}
 	}
-	
+
 	// Add manufacturer/brand info
 	if device.Manufacturer != "" && device.Brand != "" && device.Manufacturer != device.Brand {
 		details += fmt.Sprintf(" - %s %s", device.Manufacturer, device.Brand)
@@ -610,7 +610,7 @@ func (a *ADBManager) formatDeviceDetails(device Device) string {
 	} else if device.Manufacturer != "" {
 		details += fmt.Sprintf(" - %s", device.Manufacturer)
 	}
-	
+
 	return details
 }
 
@@ -620,31 +620,31 @@ func (a *ADBManager) GetDeviceInfo(deviceID string) (*Device, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	for _, device := range devices {
 		if device.ID == deviceID {
 			return &device, nil
 		}
 	}
-	
+
 	return nil, fmt.Errorf("device %s not found", deviceID)
 }
 
 // WaitForDevice waits for a device to come online
 func (a *ADBManager) WaitForDevice(deviceID string, timeout time.Duration) error {
 	fmt.Printf("⏳ Waiting for device %s to come online...\n", deviceID)
-	
+
 	start := time.Now()
 	for time.Since(start) < timeout {
 		if err := a.validateDeviceOnline(deviceID); err == nil {
 			fmt.Printf("✅ Device %s is now online\n", deviceID)
 			return nil
 		}
-		
+
 		time.Sleep(2 * time.Second)
 		fmt.Print(".")
 	}
-	
+
 	fmt.Println()
 	return fmt.Errorf("timeout waiting for device %s to come online", deviceID)
 }

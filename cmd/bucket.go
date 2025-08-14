@@ -74,7 +74,7 @@ var bucketAddCmd = &cobra.Command{
   - HTTP/HTTPS URL: https://example.com/repo
   - Local directory path: /path/to/local/repo
   - Relative path: ./local-repo`,
-	Args:  cobra.RangeArgs(2, 3),
+	Args: cobra.RangeArgs(2, 3),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name := args[0]
 		urlOrPath := args[1]
@@ -225,12 +225,12 @@ var bucketHealthCmd = &cobra.Command{
 			// Check specific bucket
 			name := args[0]
 			fmt.Printf("🔍 Checking health of bucket '%s'...\n", name)
-			
+
 			health, err := bucketMgr.CheckBucketHealth(name)
 			if err != nil {
 				fmt.Printf("❌ Health check failed: %v\n", err)
 			}
-			
+
 			if health != nil {
 				printSingleBucketHealth(health)
 			}
@@ -239,7 +239,7 @@ var bucketHealthCmd = &cobra.Command{
 			fmt.Println("🔍 Checking health of all enabled buckets...")
 			bucketMgr.CheckAllHealth()
 			bucketMgr.PrintHealthStatus()
-			
+
 			// Print summary
 			summary := bucketMgr.GetHealthSummary()
 			fmt.Printf("\n📊 Health Summary:\n")
@@ -264,30 +264,30 @@ var bucketStatusCmd = &cobra.Command{
 		}
 
 		bucketMgr := client.NewBucketManager(config)
-		
+
 		fmt.Println("📊 Bucket Status Report")
 		fmt.Println("======================")
-		
+
 		// Show configuration summary
 		totalBuckets := len(config.Buckets)
 		enabledBuckets := len(config.GetEnabledBuckets())
-		
+
 		fmt.Printf("\n📋 Configuration:\n")
 		fmt.Printf("   Total buckets: %d\n", totalBuckets)
 		fmt.Printf("   Enabled buckets: %d\n", enabledBuckets)
 		fmt.Printf("   Default bucket: %s\n", config.DefaultBucket)
 		fmt.Printf("   Cache directory: %s\n", config.Client.CacheDir)
 		fmt.Printf("   Cache TTL: %d seconds\n", config.Client.CacheTTL)
-		
+
 		// Check health of all buckets
 		fmt.Printf("\n🏥 Performing health checks...\n")
 		bucketMgr.CheckAllHealth()
 		bucketMgr.PrintHealthStatus()
-		
+
 		// Show cache status
 		fmt.Printf("\n💾 Cache Status:\n")
 		showCacheStatus(config)
-		
+
 		return nil
 	},
 }
@@ -322,7 +322,7 @@ func setBucketEnabled(name string, enabled bool) error {
 func printSingleBucketHealth(health *client.BucketHealth) {
 	fmt.Printf("\n🏥 Health Report for '%s':\n", health.Name)
 	fmt.Printf("   URL: %s\n", health.URL)
-	
+
 	statusIcon := "❓"
 	switch health.Status {
 	case "healthy":
@@ -332,23 +332,23 @@ func printSingleBucketHealth(health *client.BucketHealth) {
 	case "unhealthy":
 		statusIcon = "❌"
 	}
-	
+
 	fmt.Printf("   Status: %s %s\n", statusIcon, health.Status)
 	fmt.Printf("   Last Check: %s\n", health.LastCheck.Format("2006-01-02 15:04:05"))
-	
+
 	if !health.LastSuccess.IsZero() {
 		fmt.Printf("   Last Success: %s\n", health.LastSuccess.Format("2006-01-02 15:04:05"))
 	} else {
 		fmt.Printf("   Last Success: Never\n")
 	}
-	
+
 	if health.ResponseTime > 0 {
 		fmt.Printf("   Response Time: %dms\n", health.ResponseTime)
 	}
-	
+
 	fmt.Printf("   Error Count: %d\n", health.ErrorCount)
 	fmt.Printf("   Consecutive Fails: %d\n", health.ConsecutiveFails)
-	
+
 	if health.LastError != "" {
 		fmt.Printf("   Last Error: %s\n", health.LastError)
 	}
@@ -357,38 +357,38 @@ func printSingleBucketHealth(health *client.BucketHealth) {
 // showCacheStatus shows cache file information
 func showCacheStatus(config *client.Config) {
 	cacheDir := config.Client.CacheDir
-	
+
 	if _, err := os.Stat(cacheDir); os.IsNotExist(err) {
 		fmt.Printf("   Cache directory does not exist: %s\n", cacheDir)
 		return
 	}
-	
+
 	entries, err := os.ReadDir(cacheDir)
 	if err != nil {
 		fmt.Printf("   Error reading cache directory: %v\n", err)
 		return
 	}
-	
+
 	var totalSize int64
 	var cacheFiles []string
-	
+
 	for _, entry := range entries {
 		if entry.IsDir() {
 			continue
 		}
-		
+
 		if strings.HasSuffix(entry.Name(), ".json") {
 			cacheFiles = append(cacheFiles, entry.Name())
-			
+
 			if info, err := entry.Info(); err == nil {
 				totalSize += info.Size()
 			}
 		}
 	}
-	
+
 	fmt.Printf("   Cache files: %d\n", len(cacheFiles))
 	fmt.Printf("   Total cache size: %s\n", formatBytes(totalSize))
-	
+
 	if len(cacheFiles) > 0 {
 		fmt.Printf("   Files: %s\n", strings.Join(cacheFiles, ", "))
 	}
@@ -407,7 +407,7 @@ func validateAndNormalizeBucketSource(source string) (string, string, error) {
 		if err != nil {
 			return "", "", err
 		}
-		
+
 		// Convert to file:// URL for consistency
 		fileURL := "file://" + normalizedPath
 		return fileURL, "local", nil
@@ -422,27 +422,27 @@ func isLocalPath(source string) bool {
 	if strings.HasPrefix(source, "/") || strings.HasPrefix(source, "\\") {
 		return true
 	}
-	
+
 	// Windows drive letters
 	if len(source) >= 3 && source[1] == ':' && (source[2] == '\\' || source[2] == '/') {
 		return true
 	}
-	
+
 	// Relative paths
 	if strings.HasPrefix(source, "./") || strings.HasPrefix(source, "../") {
 		return true
 	}
-	
+
 	// Current directory reference
 	if source == "." {
 		return true
 	}
-	
+
 	// Check if it exists as a directory
 	if info, err := os.Stat(source); err == nil && info.IsDir() {
 		return true
 	}
-	
+
 	return false
 }
 

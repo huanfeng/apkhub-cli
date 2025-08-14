@@ -14,7 +14,7 @@ This includes initializing, scanning, maintaining, and exporting repository data
 
 func init() {
 	rootCmd.AddCommand(repoCmd)
-	
+
 	// Repository management commands will be added as subcommands
 	// These commands were previously at the root level
 }

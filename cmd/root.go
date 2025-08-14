@@ -12,12 +12,12 @@ import (
 )
 
 var (
-	cfgFile    string
-	workDir    string
-	verbose    bool
-	debug      bool
-	logFile    string
-	noColor    bool
+	cfgFile string
+	workDir string
+	verbose bool
+	debug   bool
+	logFile string
+	noColor bool
 )
 
 var rootCmd = &cobra.Command{
@@ -47,7 +47,7 @@ func Execute() {
 func initializeGlobalSystems() error {
 	// Configure logger
 	logConfig := utils.DefaultLoggerConfig()
-	
+
 	// Set log level based on flags
 	if debug {
 		logConfig.Level = utils.LogLevelDebug
@@ -56,10 +56,10 @@ func initializeGlobalSystems() error {
 	} else {
 		logConfig.Level = utils.LogLevelWarn
 	}
-	
+
 	// Configure color output
 	logConfig.EnableColor = !noColor
-	
+
 	// Configure file output if specified
 	if logFile != "" {
 		logConfig.EnableFile = true
@@ -69,16 +69,16 @@ func initializeGlobalSystems() error {
 			logConfig.FilePath = filepath.Join(workDir, logFile)
 		}
 	}
-	
+
 	// Initialize global logger
 	if err := utils.InitGlobalLogger(logConfig); err != nil {
 		return fmt.Errorf("failed to initialize logger: %w", err)
 	}
-	
+
 	// Initialize global error handler
 	logger := utils.GetGlobalLogger()
 	errors.InitGlobalErrorHandler(logger)
-	
+
 	// Log initialization
 	if debug {
 		logger.Debug("Global systems initialized")
@@ -86,7 +86,7 @@ func initializeGlobalSystems() error {
 		logger.Debug("Config file: %s", cfgFile)
 		logger.Debug("Log level: %s", logConfig.Level.String())
 	}
-	
+
 	return nil
 }
 

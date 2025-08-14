@@ -137,6 +137,6 @@ func SaveConfig(cfg *models.Config, path string) error {
 	viper.Set("scanning.include_pattern", cfg.Scanning.IncludePattern)
 	viper.Set("scanning.exclude_pattern", cfg.Scanning.ExcludePattern)
 	viper.Set("scanning.parse_apk_info", cfg.Scanning.ParseAPKInfo)
-	
+
 	return viper.WriteConfigAs(path)
 }

@@ -53,7 +53,7 @@ var cacheCleanCmd = &cobra.Command{
 		cacheManager := client.NewCacheManager(config)
 
 		fmt.Println("🧹 Cleaning expired cache entries...")
-		
+
 		// Clean expired entries
 		removed, err := cacheManager.CleanExpired()
 		if err != nil {
@@ -97,7 +97,7 @@ var cacheClearCmd = &cobra.Command{
 		}
 
 		fmt.Println("🗑️  Clearing all cache entries...")
-		
+
 		// Clear cache
 		if err := cacheManager.Clear(); err != nil {
 			return fmt.Errorf("failed to clear cache: %w", err)

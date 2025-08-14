@@ -116,10 +116,10 @@ func (e *ApkHubError) SetRetryable(retryable bool) *ApkHubError {
 // FormatDetailed returns a detailed error message with context and suggestions
 func (e *ApkHubError) FormatDetailed() string {
 	var builder strings.Builder
-	
+
 	// Error header
 	builder.WriteString(fmt.Sprintf("❌ %s Error [%s]: %s\n", e.Type.String(), e.Code, e.Message))
-	
+
 	// Context
 	if len(e.Context) > 0 {
 		builder.WriteString("\n📋 Context:\n")
@@ -127,12 +127,12 @@ func (e *ApkHubError) FormatDetailed() string {
 			builder.WriteString(fmt.Sprintf("   %s: %s\n", key, value))
 		}
 	}
-	
+
 	// Underlying cause
 	if e.Cause != nil {
 		builder.WriteString(fmt.Sprintf("\n🔍 Underlying cause: %v\n", e.Cause))
 	}
-	
+
 	// Suggestions
 	if len(e.Suggestions) > 0 {
 		builder.WriteString("\n💡 Suggestions:\n")
@@ -140,12 +140,12 @@ func (e *ApkHubError) FormatDetailed() string {
 			builder.WriteString(fmt.Sprintf("   • %s\n", suggestion))
 		}
 	}
-	
+
 	// Retry information
 	if e.Retryable {
 		builder.WriteString("\n🔄 This operation can be retried\n")
 	}
-	
+
 	return builder.String()
 }
 
@@ -177,25 +177,25 @@ func WrapError(err error, errorType ErrorType, code, message string) *ApkHubErro
 // captureStack captures the current stack trace
 func captureStack() []string {
 	var stack []string
-	
+
 	// Skip the first few frames (this function and error creation)
 	for i := 2; i < 10; i++ {
 		pc, file, line, ok := runtime.Caller(i)
 		if !ok {
 			break
 		}
-		
+
 		fn := runtime.FuncForPC(pc)
 		if fn == nil {
 			continue
 		}
-		
+
 		// Only include frames from our project
 		if strings.Contains(file, "apkhub-cli") {
 			stack = append(stack, fmt.Sprintf("%s:%d %s", file, line, fn.Name()))
 		}
 	}
-	
+
 	return stack
 }
 
@@ -315,11 +315,11 @@ type Logger interface {
 
 // ErrorStats tracks error statistics
 type ErrorStats struct {
-	TotalErrors   int                    `json:"total_errors"`
-	ErrorsByType  map[ErrorType]int      `json:"errors_by_type"`
-	ErrorsByCode  map[string]int         `json:"errors_by_code"`
-	LastError     *ApkHubError           `json:"last_error,omitempty"`
-	LastErrorTime time.Time              `json:"last_error_time"`
+	TotalErrors   int               `json:"total_errors"`
+	ErrorsByType  map[ErrorType]int `json:"errors_by_type"`
+	ErrorsByCode  map[string]int    `json:"errors_by_code"`
+	LastError     *ApkHubError      `json:"last_error,omitempty"`
+	LastErrorTime time.Time         `json:"last_error_time"`
 }
 
 // NewErrorHandler creates a new error handler
@@ -338,7 +338,7 @@ func (eh *ErrorHandler) Handle(err error) {
 	if err == nil {
 		return
 	}
-	
+
 	// Convert to ApkHubError if needed
 	var apkErr *ApkHubError
 	if e, ok := err.(*ApkHubError); ok {
@@ -346,14 +346,14 @@ func (eh *ErrorHandler) Handle(err error) {
 	} else {
 		apkErr = WrapError(err, ErrorTypeUnknown, "UNKNOWN", err.Error())
 	}
-	
+
 	// Update statistics
 	eh.updateStats(apkErr)
-	
+
 	// Log the error
 	if eh.logger != nil {
 		eh.logger.Error("Error occurred: %s [%s] %s", apkErr.Type.String(), apkErr.Code, apkErr.Message)
-		
+
 		// Log context if available
 		if len(apkErr.Context) > 0 {
 			for key, value := range apkErr.Context {
@@ -368,7 +368,7 @@ func (eh *ErrorHandler) HandleWithRecovery(err error) *ApkHubError {
 	if err == nil {
 		return nil
 	}
-	
+
 	// Convert to ApkHubError if needed
 	var apkErr *ApkHubError
 	if e, ok := err.(*ApkHubError); ok {
@@ -376,13 +376,13 @@ func (eh *ErrorHandler) HandleWithRecovery(err error) *ApkHubError {
 	} else {
 		apkErr = WrapError(err, ErrorTypeUnknown, "UNKNOWN", err.Error())
 	}
-	
+
 	// Add recovery suggestions based on error type
 	eh.addRecoverySuggestions(apkErr)
-	
+
 	// Handle the error
 	eh.Handle(apkErr)
-	
+
 	return apkErr
 }
 

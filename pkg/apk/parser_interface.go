@@ -23,11 +23,11 @@ type ParserInfo struct {
 
 // ParseResult contains the result of parsing with metadata
 type ParseResult struct {
-	APKInfo   *APKInfo
-	Parser    string
-	Duration  time.Duration
-	Warnings  []string
-	Errors    []string
+	APKInfo  *APKInfo
+	Parser   string
+	Duration time.Duration
+	Warnings []string
+	Errors   []string
 }
 
 // ParserChain manages multiple APK parsers

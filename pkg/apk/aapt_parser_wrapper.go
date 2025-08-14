@@ -85,12 +85,12 @@ func (p *AAPTParserWrapper) ParseAPK(apkPath string) (*APKInfo, error) {
 func (p *AAPTParserWrapper) GetParserInfo() ParserInfo {
 	// Check if AAPT is available
 	available := p.parser.CheckAAPT() == nil
-	
+
 	capabilities := []string{"apk", "manifest", "permissions", "features"}
 	if available {
 		capabilities = append(capabilities, "native_abis", "densities")
 	}
-	
+
 	return ParserInfo{
 		Name:         "AAPT",
 		Version:      "unknown", // We don't easily get AAPT version

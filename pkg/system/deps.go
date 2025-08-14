@@ -115,7 +115,7 @@ func (dm *DefaultDependencyManager) CheckDependency(name string) DependencyStatu
 
 	// Perform actual check
 	status := dm.checkDependencyActual(def)
-	
+
 	// Update cache
 	dm.cacheMu.Lock()
 	dm.cache[name] = status
@@ -245,7 +245,7 @@ func (dm *DefaultDependencyManager) CheckForCommand(command string) []Dependency
 // CheckAll checks all known dependencies
 func (dm *DefaultDependencyManager) CheckAll() map[string]DependencyStatus {
 	result := make(map[string]DependencyStatus)
-	
+
 	for name := range dependencies {
 		result[name] = dm.CheckDependency(name)
 	}

@@ -86,7 +86,7 @@ It checks:
 			fmt.Println("✅ All checks passed! Your system is ready to use ApkHub CLI.")
 		} else {
 			fmt.Printf("❌ Found %d issues that need attention:\n\n", len(issues))
-			
+
 			for i, issue := range issues {
 				fmt.Printf("%d. %s\n", i+1, issue)
 			}
@@ -102,7 +102,7 @@ It checks:
 				fmt.Println("\n🔧 Attempting to fix issues automatically...")
 				if err := attemptDoctorAutoFix(depManager, issues, suggestions); err != nil {
 					logger.Error("Auto-fix failed: %v", err)
-					return errors.WrapError(err, errors.ErrorTypeConfiguration, "AUTO_FIX_FAILED", 
+					return errors.WrapError(err, errors.ErrorTypeConfiguration, "AUTO_FIX_FAILED",
 						"Failed to automatically fix issues").
 						WithSuggestion("Try fixing the issues manually using the suggestions above")
 				}
@@ -122,16 +122,16 @@ It checks:
 // checkDependencies checks all required dependencies
 func checkDependencies(depManager system.DependencyManager, allPassed *bool, issues *[]string, suggestions *[]string) error {
 	depsMap := depManager.CheckAll()
-	
+
 	// Convert map to slice for easier processing
 	var deps []system.DependencyStatus
 	for _, dep := range depsMap {
 		deps = append(deps, dep)
 	}
-	
+
 	var missingRequired []string
 	var missingOptional []string
-	
+
 	for _, dep := range deps {
 		if dep.Available {
 			fmt.Printf("   ✅ %s: %s\n", dep.Name, dep.Version)
@@ -146,17 +146,17 @@ func checkDependencies(depManager system.DependencyManager, allPassed *bool, iss
 			}
 		}
 	}
-	
+
 	if len(missingRequired) > 0 {
 		*issues = append(*issues, fmt.Sprintf("Missing required dependencies: %s", strings.Join(missingRequired, ", ")))
 		*suggestions = append(*suggestions, "Install missing dependencies using your package manager")
 		*suggestions = append(*suggestions, "Run 'apkhub doctor --fix' to attempt automatic installation")
 	}
-	
+
 	if len(missingOptional) > 0 {
 		*suggestions = append(*suggestions, fmt.Sprintf("Consider installing optional dependencies for better functionality: %s", strings.Join(missingOptional, ", ")))
 	}
-	
+
 	return nil
 }
 
@@ -165,38 +165,38 @@ func checkSystemResources(resourceChecker *system.ResourceChecker, allPassed *bo
 	// Define minimum requirements
 	requirements := system.ResourceRequirement{
 		MinDiskSpace: 100 * 1024 * 1024, // 100 MB
-		MinMemory:    0,                  // Disable memory check for now
+		MinMemory:    0,                 // Disable memory check for now
 		RequiredDirs: []string{"."},
 	}
-	
+
 	// Check current directory and common paths
 	paths := []string{".", os.TempDir()}
 	if homeDir, err := os.UserHomeDir(); err == nil {
 		paths = append(paths, homeDir)
 	}
-	
+
 	result := resourceChecker.CheckResourceRequirements(requirements, paths)
-	
+
 	if result.SystemInfo != nil {
 		fmt.Printf("   💾 Memory: %.1f%% used\n", result.SystemInfo.Memory.UsedPct)
 		for _, disk := range result.SystemInfo.DiskSpaces {
-			fmt.Printf("   💿 Disk %s: %.1f%% used (%.2f GB available)\n", 
+			fmt.Printf("   💿 Disk %s: %.1f%% used (%.2f GB available)\n",
 				disk.Path, disk.UsedPct, float64(disk.Available)/(1024*1024*1024))
 		}
 	}
-	
+
 	if !result.Passed {
 		*allPassed = false
 		*issues = append(*issues, result.Errors...)
 		*suggestions = append(*suggestions, result.Suggestions...)
 	}
-	
+
 	if len(result.Warnings) > 0 {
 		for _, warning := range result.Warnings {
 			fmt.Printf("   ⚠️  %s\n", warning)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -204,19 +204,19 @@ func checkSystemResources(resourceChecker *system.ResourceChecker, allPassed *bo
 func checkConfiguration(allPassed *bool, issues *[]string, suggestions *[]string) error {
 	logger := utils.GetGlobalLogger()
 	configManager := system.NewConfigManager(logger)
-	
+
 	// Determine config file path
 	configPath := cfgFile
 	if configPath == "" {
 		configPath = "apkhub.yaml"
 	}
-	
+
 	// Validate configuration
 	result := configManager.ValidateConfig(configPath)
-	
+
 	if result.Valid {
 		fmt.Printf("   ✅ Configuration file: Valid (%s)\n", configPath)
-		
+
 		// Show details if available
 		if count, exists := result.Details["config_keys"]; exists {
 			fmt.Printf("   ℹ️  Configuration sections: %v\n", count)
@@ -227,26 +227,26 @@ func checkConfiguration(allPassed *bool, issues *[]string, suggestions *[]string
 	} else {
 		fmt.Printf("   ❌ Configuration file: Invalid (%s)\n", configPath)
 		*allPassed = false
-		
+
 		// Add errors to issues
 		for _, err := range result.Errors {
 			*issues = append(*issues, fmt.Sprintf("Config error: %s", err))
 		}
-		
+
 		// Add suggestions
 		*suggestions = append(*suggestions, result.Suggestions...)
 	}
-	
+
 	// Show warnings
 	for _, warning := range result.Warnings {
 		fmt.Printf("   ⚠️  %s\n", warning)
 	}
-	
+
 	// Add warnings as suggestions if not already failing
 	if result.Valid && len(result.Warnings) > 0 {
 		*suggestions = append(*suggestions, "Address configuration warnings for better reliability")
 	}
-	
+
 	return nil
 }
 
@@ -257,16 +257,16 @@ func checkFileSystemAccess(resourceChecker *system.ResourceChecker, allPassed *b
 		{Path: ".", RequireRead: true, RequireWrite: true},
 		{Path: os.TempDir(), RequireRead: true, RequireWrite: true},
 	}
-	
+
 	// Add home directory if available
 	if homeDir, err := os.UserHomeDir(); err == nil {
 		checks = append(checks, system.PermissionCheck{
 			Path: homeDir, RequireRead: true, RequireWrite: false,
 		})
 	}
-	
+
 	permIssues := resourceChecker.CheckPermissions(checks)
-	
+
 	if len(permIssues) == 0 {
 		fmt.Printf("   ✅ File system access: OK\n")
 	} else {
@@ -278,7 +278,7 @@ func checkFileSystemAccess(resourceChecker *system.ResourceChecker, allPassed *b
 		*suggestions = append(*suggestions, "Fix file/directory permissions")
 		*suggestions = append(*suggestions, "Ensure you have read/write access to working directory")
 	}
-	
+
 	return nil
 }
 
@@ -286,9 +286,9 @@ func checkFileSystemAccess(resourceChecker *system.ResourceChecker, allPassed *b
 func checkNetworkConnectivity(networkChecker *system.NetworkChecker, allPassed *bool, issues *[]string, suggestions *[]string) error {
 	// Test basic connectivity
 	basicStatus := networkChecker.CheckBasicConnectivity()
-	
+
 	if basicStatus.Connected {
-		fmt.Printf("   ✅ Basic connectivity: OK (%.2fms)\n", 
+		fmt.Printf("   ✅ Basic connectivity: OK (%.2fms)\n",
 			float64(basicStatus.Latency.Nanoseconds())/1000000)
 		fmt.Printf("   ✅ DNS resolution: %v\n", basicStatus.DNSWorking)
 		fmt.Printf("   ✅ HTTPS connectivity: %v\n", basicStatus.HTTPSWorking)
@@ -296,23 +296,23 @@ func checkNetworkConnectivity(networkChecker *system.NetworkChecker, allPassed *
 		fmt.Printf("   ❌ Basic connectivity: Failed - %s\n", basicStatus.Error)
 		*allPassed = false
 		*issues = append(*issues, fmt.Sprintf("Network connectivity failed: %s", basicStatus.Error))
-		
+
 		// Add specific suggestions based on error type
 		networkSuggestions := networkChecker.DiagnoseNetworkIssue(fmt.Errorf(basicStatus.Error))
 		*suggestions = append(*suggestions, networkSuggestions...)
-		
+
 		return nil // Don't fail completely, just report the issue
 	}
-	
+
 	// Test connectivity to common services
 	tests := system.GetDefaultConnectivityTests()
 	diagnostic := networkChecker.CheckConnectivity(tests)
-	
+
 	var failedTests []string
 	for name, result := range diagnostic.Results {
 		test := diagnostic.Tests[name]
 		if result.Connected {
-			fmt.Printf("   ✅ %s: OK (%.2fms)\n", name, 
+			fmt.Printf("   ✅ %s: OK (%.2fms)\n", name,
 				float64(result.Latency.Nanoseconds())/1000000)
 		} else {
 			status := "⚠️"
@@ -324,13 +324,13 @@ func checkNetworkConnectivity(networkChecker *system.NetworkChecker, allPassed *
 			failedTests = append(failedTests, name)
 		}
 	}
-	
+
 	if len(failedTests) > 0 {
-		*issues = append(*issues, fmt.Sprintf("Some network services unreachable: %s", 
+		*issues = append(*issues, fmt.Sprintf("Some network services unreachable: %s",
 			strings.Join(failedTests, ", ")))
 		*suggestions = append(*suggestions, diagnostic.Suggestions...)
 	}
-	
+
 	return nil
 }
 
@@ -338,19 +338,19 @@ func checkNetworkConnectivity(networkChecker *system.NetworkChecker, allPassed *
 func attemptDoctorAutoFix(depManager system.DependencyManager, issues []string, suggestions []string) error {
 	fmt.Println("🔧 Auto-fix is not fully implemented yet")
 	fmt.Println("   Please follow the manual suggestions provided above")
-	
+
 	// In a full implementation, this would:
 	// 1. Try to install missing dependencies
 	// 2. Create missing directories
 	// 3. Fix common permission issues
 	// 4. Generate default configuration files
-	
+
 	return nil
 }
 
 func init() {
 	rootCmd.AddCommand(doctorCmd)
-	
+
 	doctorCmd.Flags().BoolVar(&doctorFix, "fix", false, "Attempt to automatically fix detected issues")
 	doctorCmd.Flags().BoolVar(&doctorVerbose, "verbose", false, "Show detailed diagnostic information")
 	doctorCmd.Flags().StringVar(&doctorCheck, "check", "basic", "Type of check to perform: basic, all, network")

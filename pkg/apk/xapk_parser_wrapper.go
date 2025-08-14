@@ -30,17 +30,17 @@ func (p *XAPKParserWrapper) ParseAPK(apkPath string) (*APKInfo, error) {
 	if xapkInfo.APKInfo != nil {
 		// Mark as XAPK
 		xapkInfo.APKInfo.Features = append(xapkInfo.APKInfo.Features, "xapk")
-		
+
 		// Add split APK marker if multiple APKs
 		if len(xapkInfo.APKFiles) > 1 {
 			xapkInfo.APKInfo.Features = append(xapkInfo.APKInfo.Features, "split_apk")
 		}
-		
+
 		// Add OBB marker if OBB files present
 		if len(xapkInfo.OBBFiles) > 0 {
 			xapkInfo.APKInfo.Features = append(xapkInfo.APKInfo.Features, "has_obb")
 		}
-		
+
 		return xapkInfo.APKInfo, nil
 	}
 

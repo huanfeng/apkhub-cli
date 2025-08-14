@@ -12,15 +12,15 @@ import (
 )
 
 var (
-	searchBucket     string
-	searchMinSDK     int
-	searchCategory   string
-	searchLimit      int
-	searchSort       string
-	searchFormat     string
-	searchVerbose    bool
-	searchExact      bool
-	searchInstalled  bool
+	searchBucket    string
+	searchMinSDK    int
+	searchCategory  string
+	searchLimit     int
+	searchSort      string
+	searchFormat    string
+	searchVerbose   bool
+	searchExact     bool
+	searchInstalled bool
 )
 
 var searchCmd = &cobra.Command{
@@ -57,7 +57,7 @@ var searchCmd = &cobra.Command{
 		bucketMgr := client.NewBucketManager(config)
 		cacheManager := client.NewCacheManager(config)
 		offlineManager := client.NewOfflineManager(config, cacheManager)
-		
+
 		// Check if we're offline and handle accordingly
 		if offlineManager.IsOffline() {
 			fmt.Println("🔌 Network unavailable - searching cached data only")
@@ -65,7 +65,7 @@ var searchCmd = &cobra.Command{
 			if err != nil {
 				return fmt.Errorf("offline search failed: %w", err)
 			}
-			
+
 			// Display results based on format
 			switch searchFormat {
 			case "json":
@@ -76,7 +76,7 @@ var searchCmd = &cobra.Command{
 				return displayResultsDefault(results, searchVerbose)
 			}
 		}
-		
+
 		// Online mode - create search engine
 		searchEngine := client.NewSearchEngine(bucketMgr)
 
@@ -135,7 +135,7 @@ func displayResultsDefault(results []client.SearchResult, verbose bool) error {
 			fmt.Printf(" | Score: %.1f", result.Score)
 		}
 		fmt.Println()
-		
+
 		if result.Description != "" {
 			desc := result.Description
 			if len(desc) > 80 && !verbose {
@@ -143,11 +143,11 @@ func displayResultsDefault(results []client.SearchResult, verbose bool) error {
 			}
 			fmt.Printf("   %s\n", desc)
 		}
-		
+
 		if verbose && result.Category != "" {
 			fmt.Printf("   Category: %s\n", result.Category)
 		}
-		
+
 		fmt.Println()
 	}
 
@@ -158,7 +158,7 @@ func displayResultsDefault(results []client.SearchResult, verbose bool) error {
 	fmt.Println("💡 Next steps:")
 	fmt.Println("   • Use 'apkhub info <package-id>' for detailed information")
 	fmt.Println("   • Use 'apkhub install <package-id>' to install an app")
-	
+
 	return nil
 }
 
@@ -170,17 +170,17 @@ func displayResultsTable(results []client.SearchResult, verbose bool) error {
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	
+
 	if verbose {
 		fmt.Fprintln(w, "PACKAGE ID\tNAME\tVERSION\tBUCKET\tCATEGORY\tSCORE\tDESCRIPTION")
 		fmt.Fprintln(w, "----------\t----\t-------\t------\t--------\t-----\t-----------")
-		
+
 		for _, result := range results {
 			desc := result.Description
 			if len(desc) > 40 {
 				desc = desc[:37] + "..."
 			}
-			
+
 			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%.1f\t%s\n",
 				result.PackageID,
 				result.AppName,
@@ -194,13 +194,13 @@ func displayResultsTable(results []client.SearchResult, verbose bool) error {
 	} else {
 		fmt.Fprintln(w, "PACKAGE ID\tNAME\tVERSION\tBUCKET\tDESCRIPTION")
 		fmt.Fprintln(w, "----------\t----\t-------\t------\t-----------")
-		
+
 		for _, result := range results {
 			desc := result.Description
 			if len(desc) > 50 {
 				desc = desc[:47] + "..."
 			}
-			
+
 			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
 				result.PackageID,
 				result.AppName,
@@ -213,7 +213,7 @@ func displayResultsTable(results []client.SearchResult, verbose bool) error {
 
 	w.Flush()
 	fmt.Printf("\n%d result(s) found.\n", len(results))
-	
+
 	return nil
 }
 
@@ -223,12 +223,12 @@ func displayResultsJSON(results []client.SearchResult) error {
 		"total_results": len(results),
 		"results":       results,
 	}
-	
+
 	data, err := json.MarshalIndent(output, "", "  ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal JSON: %w", err)
 	}
-	
+
 	fmt.Println(string(data))
 	return nil
 }

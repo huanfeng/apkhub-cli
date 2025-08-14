@@ -64,11 +64,11 @@ type Logger interface {
 	Warn(msg string, args ...interface{})
 	Error(msg string, args ...interface{})
 	Fatal(msg string, args ...interface{})
-	
+
 	SetLevel(level LogLevel)
 	SetOutput(w io.Writer)
 	SetFormat(format LogFormat)
-	
+
 	WithField(key string, value interface{}) Logger
 	WithFields(fields map[string]interface{}) Logger
 }
@@ -84,13 +84,13 @@ const (
 
 // LoggerConfig contains logger configuration
 type LoggerConfig struct {
-	Level      LogLevel
-	Format     LogFormat
-	Output     io.Writer
-	EnableFile bool
-	FilePath   string
-	MaxSize    int64 // Max file size in bytes
-	MaxFiles   int   // Max number of log files to keep
+	Level       LogLevel
+	Format      LogFormat
+	Output      io.Writer
+	EnableFile  bool
+	FilePath    string
+	MaxSize     int64 // Max file size in bytes
+	MaxFiles    int   // Max number of log files to keep
 	EnableColor bool
 }
 
@@ -118,24 +118,24 @@ func NewLogger(config *LoggerConfig) (*ApkHubLogger, error) {
 	if config == nil {
 		config = DefaultLoggerConfig()
 	}
-	
+
 	logger := &ApkHubLogger{
 		config: config,
 		fields: make(map[string]interface{}),
 	}
-	
+
 	// Setup output
 	if err := logger.setupOutput(); err != nil {
 		return nil, fmt.Errorf("failed to setup logger output: %w", err)
 	}
-	
+
 	return logger, nil
 }
 
 // setupOutput configures the logger output
 func (l *ApkHubLogger) setupOutput() error {
 	var output io.Writer = l.config.Output
-	
+
 	// Setup file output if enabled
 	if l.config.EnableFile && l.config.FilePath != "" {
 		// Ensure directory exists
@@ -143,19 +143,19 @@ func (l *ApkHubLogger) setupOutput() error {
 		if err := os.MkdirAll(dir, 0755); err != nil {
 			return fmt.Errorf("failed to create log directory: %w", err)
 		}
-		
+
 		// Open log file
 		file, err := os.OpenFile(l.config.FilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 		if err != nil {
 			return fmt.Errorf("failed to open log file: %w", err)
 		}
-		
+
 		l.file = file
-		
+
 		// Use both stdout and file
 		output = io.MultiWriter(l.config.Output, file)
 	}
-	
+
 	l.logger = log.New(output, "", 0)
 	return nil
 }
@@ -200,10 +200,10 @@ func (l *ApkHubLogger) log(level LogLevel, msg string, args ...interface{}) {
 	if len(args) > 0 {
 		msg = fmt.Sprintf(msg, args...)
 	}
-	
+
 	// Create log entry
 	entry := l.createLogEntry(level, msg)
-	
+
 	// Output log entry
 	l.logger.Print(entry)
 }
@@ -211,7 +211,7 @@ func (l *ApkHubLogger) log(level LogLevel, msg string, args ...interface{}) {
 // createLogEntry creates a formatted log entry
 func (l *ApkHubLogger) createLogEntry(level LogLevel, msg string) string {
 	timestamp := time.Now().Format("2006-01-02 15:04:05")
-	
+
 	switch l.config.Format {
 	case LogFormatJSON:
 		return l.createJSONEntry(level, msg, timestamp)
@@ -225,15 +225,15 @@ func (l *ApkHubLogger) createLogEntry(level LogLevel, msg string) string {
 // createTextEntry creates a text format log entry
 func (l *ApkHubLogger) createTextEntry(level LogLevel, msg string, timestamp string) string {
 	var builder strings.Builder
-	
+
 	// Add color if enabled
 	if l.config.EnableColor {
 		builder.WriteString(level.ColorCode())
 	}
-	
+
 	// Add timestamp and level
 	builder.WriteString(fmt.Sprintf("[%s] %s", timestamp, level.String()))
-	
+
 	// Add fields if any
 	if len(l.fields) > 0 {
 		builder.WriteString(" {")
@@ -247,15 +247,15 @@ func (l *ApkHubLogger) createTextEntry(level LogLevel, msg string, timestamp str
 		}
 		builder.WriteString("}")
 	}
-	
+
 	// Add message
 	builder.WriteString(fmt.Sprintf(" %s", msg))
-	
+
 	// Reset color if enabled
 	if l.config.EnableColor {
 		builder.WriteString("\033[0m")
 	}
-	
+
 	return builder.String()
 }
 
@@ -263,19 +263,19 @@ func (l *ApkHubLogger) createTextEntry(level LogLevel, msg string, timestamp str
 func (l *ApkHubLogger) createCompactEntry(level LogLevel, msg string, timestamp string) string {
 	levelChar := string(level.String()[0])
 	timeShort := timestamp[11:19] // Just time part
-	
+
 	var builder strings.Builder
-	
+
 	if l.config.EnableColor {
 		builder.WriteString(level.ColorCode())
 	}
-	
+
 	builder.WriteString(fmt.Sprintf("%s %s %s", levelChar, timeShort, msg))
-	
+
 	if l.config.EnableColor {
 		builder.WriteString("\033[0m")
 	}
-	
+
 	return builder.String()
 }
 
@@ -286,18 +286,18 @@ func (l *ApkHubLogger) createJSONEntry(level LogLevel, msg string, timestamp str
 		"level":     level.String(),
 		"message":   msg,
 	}
-	
+
 	// Add fields
 	for k, v := range l.fields {
 		entry[k] = v
 	}
-	
+
 	// Simple JSON formatting (avoiding external dependencies)
 	var parts []string
 	for k, v := range entry {
 		parts = append(parts, fmt.Sprintf(`"%s":"%v"`, k, v))
 	}
-	
+
 	return fmt.Sprintf("{%s}", strings.Join(parts, ","))
 }
 
@@ -325,15 +325,15 @@ func (l *ApkHubLogger) WithField(key string, value interface{}) Logger {
 		fields: make(map[string]interface{}),
 		file:   l.file,
 	}
-	
+
 	// Copy existing fields
 	for k, v := range l.fields {
 		newLogger.fields[k] = v
 	}
-	
+
 	// Add new field
 	newLogger.fields[key] = value
-	
+
 	return newLogger
 }
 
@@ -345,17 +345,17 @@ func (l *ApkHubLogger) WithFields(fields map[string]interface{}) Logger {
 		fields: make(map[string]interface{}),
 		file:   l.file,
 	}
-	
+
 	// Copy existing fields
 	for k, v := range l.fields {
 		newLogger.fields[k] = v
 	}
-	
+
 	// Add new fields
 	for k, v := range fields {
 		newLogger.fields[k] = v
 	}
-	
+
 	return newLogger
 }
 

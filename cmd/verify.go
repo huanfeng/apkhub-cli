@@ -26,7 +26,7 @@ var verifyCmd = &cobra.Command{
 	Long:  `Verify the integrity of the APK repository by checking files, metadata, and structure.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		verifyStart := time.Now()
-		
+
 		if !verifyQuiet {
 			fmt.Println("🔍 Starting repository verification...")
 			fmt.Println(strings.Repeat("=", 50))
@@ -43,17 +43,17 @@ var verifyCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		
+
 		// Show results
 		showVerificationResults(result, time.Since(verifyStart))
-		
+
 		// Auto-fix if requested
 		if verifyFix && len(result.Issues) > 0 {
 			fmt.Println("\n🔧 Attempting to fix issues...")
 			fixResult := attemptAutoFix(cfg, result)
 			showFixResults(fixResult)
 		}
-		
+
 		// Generate report if requested
 		if verifyReport != "" {
 			if err := generateVerificationReport(result, verifyReport); err != nil {
@@ -78,12 +78,12 @@ type VerificationIssue struct {
 
 // VerificationResult contains the results of repository verification
 type VerificationResult struct {
-	RepositoryName string               `json:"repository_name"`
-	VerifiedAt     time.Time            `json:"verified_at"`
-	TotalFiles     int                  `json:"total_files"`
-	ValidFiles     int                  `json:"valid_files"`
-	Issues         []VerificationIssue  `json:"issues"`
-	Statistics     VerificationStats    `json:"statistics"`
+	RepositoryName string              `json:"repository_name"`
+	VerifiedAt     time.Time           `json:"verified_at"`
+	TotalFiles     int                 `json:"total_files"`
+	ValidFiles     int                 `json:"valid_files"`
+	Issues         []VerificationIssue `json:"issues"`
+	Statistics     VerificationStats   `json:"statistics"`
 }
 
 // VerificationStats contains verification statistics
@@ -341,7 +341,7 @@ func checkAPKFiles(cfg *models.Config, manifest *ManifestData) ([]VerificationIs
 			if entry.IsDir() {
 				continue
 			}
-			
+
 			filename := entry.Name()
 			if strings.HasSuffix(strings.ToLower(filename), ".apk") {
 				apkPath := filepath.Join(apkDir, filename)
@@ -382,7 +382,7 @@ func checkOrphanedFiles(cfg *models.Config, manifest *ManifestData) []Verificati
 	// For now, we'll do a basic check for APK files
 	// In a more complete implementation, we'd parse the manifest packages
 	// and check against the actual files referenced
-	
+
 	// Check APK directory for any obvious issues
 	apkDir := "apks"
 	if entries, err := os.ReadDir(apkDir); err == nil {
@@ -391,13 +391,13 @@ func checkOrphanedFiles(cfg *models.Config, manifest *ManifestData) []Verificati
 			if entry.IsDir() {
 				continue
 			}
-			
+
 			filename := entry.Name()
 			if strings.HasSuffix(strings.ToLower(filename), ".apk") {
 				apkCount++
 			}
 		}
-		
+
 		// Basic consistency check
 		if apkCount != manifest.TotalAPKs {
 			issues = append(issues, VerificationIssue{
@@ -440,7 +440,7 @@ func performDeepVerification(cfg *models.Config, manifest *ManifestData) []Verif
 					iconCount++
 				}
 			}
-			
+
 			if iconCount == 0 {
 				issues = append(issues, VerificationIssue{
 					Type:        "icon",
@@ -497,12 +497,12 @@ func showVerificationResults(result *VerificationResult, duration time.Duration)
 	fmt.Println("\n" + strings.Repeat("=", 60))
 	fmt.Println("📊 VERIFICATION RESULTS")
 	fmt.Println(strings.Repeat("=", 60))
-	
+
 	fmt.Printf("⏱️  Verification time: %v\n", duration)
 	fmt.Printf("📁 Total files: %d\n", result.TotalFiles)
 	fmt.Printf("✅ Valid files: %d\n", result.ValidFiles)
 	fmt.Printf("❌ Issues found: %d\n", len(result.Issues))
-	
+
 	if len(result.Issues) > 0 {
 		fmt.Println("\n📋 ISSUE BREAKDOWN:")
 		fmt.Printf("   Missing files: %d\n", result.Statistics.MissingFiles)
@@ -510,28 +510,28 @@ func showVerificationResults(result *VerificationResult, duration time.Duration)
 		fmt.Printf("   Orphaned files: %d\n", result.Statistics.OrphanedFiles)
 		fmt.Printf("   Invalid metadata: %d\n", result.Statistics.InvalidMetadata)
 		fmt.Printf("   Missing icons: %d\n", result.Statistics.MissingIcons)
-		
+
 		fmt.Println("\n🔍 DETAILED ISSUES:")
 		for i, issue := range result.Issues {
 			severity := "❌"
 			if issue.Severity == "warning" {
 				severity = "⚠️ "
 			}
-			
+
 			fixable := ""
 			if issue.Fixable {
 				fixable = " (fixable)"
 			}
-			
+
 			fmt.Printf("   %d. %s %s%s\n", i+1, severity, issue.Description, fixable)
 			if issue.File != "" {
 				fmt.Printf("      File: %s\n", issue.File)
 			}
 		}
 	}
-	
+
 	fmt.Println(strings.Repeat("=", 60))
-	
+
 	if len(result.Issues) == 0 {
 		fmt.Println("🎉 Repository verification passed! No issues found.")
 	} else {
@@ -541,11 +541,11 @@ func showVerificationResults(result *VerificationResult, duration time.Duration)
 				fixableCount++
 			}
 		}
-		
+
 		if fixableCount > 0 {
 			fmt.Printf("💡 %d issues can be automatically fixed with --fix flag\n", fixableCount)
 		}
-		
+
 		fmt.Println("⚠️  Repository has integrity issues that need attention.")
 	}
 }
@@ -572,7 +572,7 @@ func attemptAutoFix(cfg *models.Config, result *VerificationResult) *FixResult {
 			} else {
 				fixResult.Fixed = append(fixResult.Fixed, fmt.Sprintf("Created directory: %s", issue.File))
 			}
-			
+
 		case "orphan":
 			// Remove orphaned files (with confirmation)
 			fmt.Printf("Remove orphaned file %s? [y/N]: ", issue.File)
@@ -588,7 +588,7 @@ func attemptAutoFix(cfg *models.Config, result *VerificationResult) *FixResult {
 			} else {
 				fixResult.Skipped = append(fixResult.Skipped, fmt.Sprintf("Skipped removal of: %s", issue.File))
 			}
-			
+
 		default:
 			fixResult.Skipped = append(fixResult.Skipped, issue.Description)
 		}
@@ -602,28 +602,28 @@ func showFixResults(result *FixResult) {
 	fmt.Println("\n" + strings.Repeat("=", 50))
 	fmt.Println("🔧 AUTO-FIX RESULTS")
 	fmt.Println(strings.Repeat("=", 50))
-	
+
 	if len(result.Fixed) > 0 {
 		fmt.Printf("✅ FIXED (%d):\n", len(result.Fixed))
 		for _, fix := range result.Fixed {
 			fmt.Printf("   • %s\n", fix)
 		}
 	}
-	
+
 	if len(result.Failed) > 0 {
 		fmt.Printf("\n❌ FAILED (%d):\n", len(result.Failed))
 		for _, fail := range result.Failed {
 			fmt.Printf("   • %s\n", fail)
 		}
 	}
-	
+
 	if len(result.Skipped) > 0 {
 		fmt.Printf("\n⏭️  SKIPPED (%d):\n", len(result.Skipped))
 		for _, skip := range result.Skipped {
 			fmt.Printf("   • %s\n", skip)
 		}
 	}
-	
+
 	fmt.Println(strings.Repeat("=", 50))
 }
 
@@ -633,7 +633,7 @@ func generateVerificationReport(result *VerificationResult, filename string) err
 	if err != nil {
 		return err
 	}
-	
+
 	return os.WriteFile(filename, data, 0644)
 }
 

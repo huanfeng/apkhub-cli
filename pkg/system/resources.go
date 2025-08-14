@@ -30,12 +30,12 @@ func NewResourceChecker(logger Logger) *ResourceChecker {
 
 // DiskSpaceInfo contains disk space information
 type DiskSpaceInfo struct {
-	Path      string `json:"path"`
-	Total     uint64 `json:"total"`     // Total space in bytes
-	Free      uint64 `json:"free"`      // Free space in bytes
-	Available uint64 `json:"available"` // Available space in bytes
-	Used      uint64 `json:"used"`      // Used space in bytes
-	UsedPct   float64 `json:"used_pct"` // Used percentage
+	Path      string  `json:"path"`
+	Total     uint64  `json:"total"`     // Total space in bytes
+	Free      uint64  `json:"free"`      // Free space in bytes
+	Available uint64  `json:"available"` // Available space in bytes
+	Used      uint64  `json:"used"`      // Used space in bytes
+	UsedPct   float64 `json:"used_pct"`  // Used percentage
 }
 
 // MemoryInfo contains memory information
@@ -61,28 +61,28 @@ type SystemResourceInfo struct {
 
 // ResourceRequirement defines resource requirements for operations
 type ResourceRequirement struct {
-	MinDiskSpace uint64 // Minimum disk space in bytes
-	MinMemory    uint64 // Minimum memory in bytes
-	RequiredDirs []string // Required directories
+	MinDiskSpace  uint64            // Minimum disk space in bytes
+	MinMemory     uint64            // Minimum memory in bytes
+	RequiredDirs  []string          // Required directories
 	RequiredPerms []PermissionCheck // Required permissions
 }
 
 // PermissionCheck defines a permission check
 type PermissionCheck struct {
-	Path        string `json:"path"`
-	RequireRead bool   `json:"require_read"`
-	RequireWrite bool  `json:"require_write"`
-	RequireExec bool   `json:"require_exec"`
+	Path         string `json:"path"`
+	RequireRead  bool   `json:"require_read"`
+	RequireWrite bool   `json:"require_write"`
+	RequireExec  bool   `json:"require_exec"`
 }
 
 // ResourceCheckResult contains the result of a resource check
 type ResourceCheckResult struct {
-	Passed      bool                    `json:"passed"`
-	Warnings    []string                `json:"warnings"`
-	Errors      []string                `json:"errors"`
-	Suggestions []string                `json:"suggestions"`
-	Details     map[string]interface{}  `json:"details"`
-	SystemInfo  *SystemResourceInfo     `json:"system_info"`
+	Passed      bool                   `json:"passed"`
+	Warnings    []string               `json:"warnings"`
+	Errors      []string               `json:"errors"`
+	Suggestions []string               `json:"suggestions"`
+	Details     map[string]interface{} `json:"details"`
+	SystemInfo  *SystemResourceInfo    `json:"system_info"`
 }
 
 // CheckDiskSpace checks disk space for a given path
@@ -92,20 +92,20 @@ func (rc *ResourceChecker) CheckDiskSpace(path string) (*DiskSpaceInfo, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to get absolute path: %w", err)
 	}
-	
+
 	// Get disk usage statistics
 	var stat syscall.Statfs_t
 	if err := syscall.Statfs(absPath, &stat); err != nil {
 		return nil, fmt.Errorf("failed to get disk statistics: %w", err)
 	}
-	
+
 	// Calculate disk space information
 	total := stat.Blocks * uint64(stat.Bsize)
 	free := stat.Bfree * uint64(stat.Bsize)
 	available := stat.Bavail * uint64(stat.Bsize)
 	used := total - free
 	usedPct := float64(used) / float64(total) * 100
-	
+
 	info := &DiskSpaceInfo{
 		Path:      absPath,
 		Total:     total,
@@ -114,12 +114,12 @@ func (rc *ResourceChecker) CheckDiskSpace(path string) (*DiskSpaceInfo, error) {
 		Used:      used,
 		UsedPct:   usedPct,
 	}
-	
+
 	if rc.logger != nil {
-		rc.logger.Debug("Disk space for %s: %.2f%% used (%.2f GB / %.2f GB)", 
+		rc.logger.Debug("Disk space for %s: %.2f%% used (%.2f GB / %.2f GB)",
 			absPath, usedPct, float64(used)/(1024*1024*1024), float64(total)/(1024*1024*1024))
 	}
-	
+
 	return info, nil
 }
 
@@ -127,7 +127,7 @@ func (rc *ResourceChecker) CheckDiskSpace(path string) (*DiskSpaceInfo, error) {
 func (rc *ResourceChecker) CheckMemory() (*MemoryInfo, error) {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
-	
+
 	// Note: This is a simplified memory check using Go runtime stats
 	// For more accurate system memory info, we would need platform-specific code
 	info := &MemoryInfo{
@@ -136,24 +136,24 @@ func (rc *ResourceChecker) CheckMemory() (*MemoryInfo, error) {
 		Available: m.Sys - m.Alloc,
 		UsedPct:   float64(m.Alloc) / float64(m.Sys) * 100,
 	}
-	
+
 	if rc.logger != nil {
-		rc.logger.Debug("Memory usage: %.2f%% (%.2f MB / %.2f MB)", 
+		rc.logger.Debug("Memory usage: %.2f%% (%.2f MB / %.2f MB)",
 			info.UsedPct, float64(info.Used)/(1024*1024), float64(info.Total)/(1024*1024))
 	}
-	
+
 	return info, nil
 }
 
 // CheckPermissions checks file/directory permissions
 func (rc *ResourceChecker) CheckPermissions(checks []PermissionCheck) []string {
 	var issues []string
-	
+
 	for _, check := range checks {
 		if rc.logger != nil {
 			rc.logger.Debug("Checking permissions for: %s", check.Path)
 		}
-		
+
 		// Check if path exists
 		info, err := os.Stat(check.Path)
 		if err != nil {
@@ -164,23 +164,23 @@ func (rc *ResourceChecker) CheckPermissions(checks []PermissionCheck) []string {
 			}
 			continue
 		}
-		
+
 		mode := info.Mode()
-		
+
 		// Check read permission
 		if check.RequireRead {
 			if err := rc.checkReadPermission(check.Path); err != nil {
 				issues = append(issues, fmt.Sprintf("No read permission for %s: %v", check.Path, err))
 			}
 		}
-		
+
 		// Check write permission
 		if check.RequireWrite {
 			if err := rc.checkWritePermission(check.Path, info.IsDir()); err != nil {
 				issues = append(issues, fmt.Sprintf("No write permission for %s: %v", check.Path, err))
 			}
 		}
-		
+
 		// Check execute permission
 		if check.RequireExec && !info.IsDir() {
 			if mode&0111 == 0 {
@@ -188,7 +188,7 @@ func (rc *ResourceChecker) CheckPermissions(checks []PermissionCheck) []string {
 			}
 		}
 	}
-	
+
 	return issues
 }
 
@@ -234,12 +234,12 @@ func (rc *ResourceChecker) GetSystemResourceInfo(paths []string) (*SystemResourc
 		CPUCount:     runtime.NumCPU(),
 		DiskSpaces:   []DiskSpaceInfo{},
 	}
-	
+
 	// Get memory info
 	if memInfo, err := rc.CheckMemory(); err == nil {
 		info.Memory = memInfo
 	}
-	
+
 	// Get disk space info for specified paths
 	checkedPaths := make(map[string]bool)
 	for _, path := range paths {
@@ -247,29 +247,29 @@ func (rc *ResourceChecker) GetSystemResourceInfo(paths []string) (*SystemResourc
 		if err != nil {
 			continue
 		}
-		
+
 		// Avoid checking the same path multiple times
 		if checkedPaths[absPath] {
 			continue
 		}
 		checkedPaths[absPath] = true
-		
+
 		if diskInfo, err := rc.CheckDiskSpace(absPath); err == nil {
 			info.DiskSpaces = append(info.DiskSpaces, *diskInfo)
 		}
 	}
-	
+
 	// Get directory information
 	if wd, err := os.Getwd(); err == nil {
 		info.WorkingDir = wd
 	}
-	
+
 	info.TempDir = os.TempDir()
-	
+
 	if homeDir, err := os.UserHomeDir(); err == nil {
 		info.HomeDir = homeDir
 	}
-	
+
 	return info, nil
 }
 
@@ -282,7 +282,7 @@ func (rc *ResourceChecker) CheckResourceRequirements(req ResourceRequirement, pa
 		Suggestions: []string{},
 		Details:     make(map[string]interface{}),
 	}
-	
+
 	// Get system info
 	systemInfo, err := rc.GetSystemResourceInfo(paths)
 	if err != nil {
@@ -291,22 +291,22 @@ func (rc *ResourceChecker) CheckResourceRequirements(req ResourceRequirement, pa
 	} else {
 		result.SystemInfo = systemInfo
 	}
-	
+
 	// Check disk space requirements
 	if req.MinDiskSpace > 0 {
 		rc.checkDiskSpaceRequirement(req.MinDiskSpace, systemInfo, result)
 	}
-	
+
 	// Check memory requirements
 	if req.MinMemory > 0 {
 		rc.checkMemoryRequirement(req.MinMemory, systemInfo, result)
 	}
-	
+
 	// Check required directories
 	if len(req.RequiredDirs) > 0 {
 		rc.checkRequiredDirectories(req.RequiredDirs, result)
 	}
-	
+
 	// Check permissions
 	if len(req.RequiredPerms) > 0 {
 		permIssues := rc.CheckPermissions(req.RequiredPerms)
@@ -316,7 +316,7 @@ func (rc *ResourceChecker) CheckResourceRequirements(req ResourceRequirement, pa
 			result.Suggestions = append(result.Suggestions, "Fix file/directory permissions")
 		}
 	}
-	
+
 	return result
 }
 
@@ -326,25 +326,25 @@ func (rc *ResourceChecker) checkDiskSpaceRequirement(minSpace uint64, systemInfo
 		result.Warnings = append(result.Warnings, "Could not check disk space")
 		return
 	}
-	
+
 	minSpaceMB := float64(minSpace) / (1024 * 1024)
 	result.Details["min_disk_space_mb"] = minSpaceMB
-	
+
 	for _, diskInfo := range systemInfo.DiskSpaces {
 		availableMB := float64(diskInfo.Available) / (1024 * 1024)
 		result.Details[fmt.Sprintf("available_space_%s_mb", diskInfo.Path)] = availableMB
-		
+
 		if diskInfo.Available < minSpace {
-			result.Errors = append(result.Errors, 
-				fmt.Sprintf("Insufficient disk space on %s: %.2f MB available, %.2f MB required", 
+			result.Errors = append(result.Errors,
+				fmt.Sprintf("Insufficient disk space on %s: %.2f MB available, %.2f MB required",
 					diskInfo.Path, availableMB, minSpaceMB))
 			result.Passed = false
-			result.Suggestions = append(result.Suggestions, 
-				fmt.Sprintf("Free up at least %.2f MB of disk space on %s", 
+			result.Suggestions = append(result.Suggestions,
+				fmt.Sprintf("Free up at least %.2f MB of disk space on %s",
 					minSpaceMB-availableMB, diskInfo.Path))
 		} else if diskInfo.Available < minSpace*2 {
 			// Warn if less than 2x the required space
-			result.Warnings = append(result.Warnings, 
+			result.Warnings = append(result.Warnings,
 				fmt.Sprintf("Low disk space on %s: %.2f MB available", diskInfo.Path, availableMB))
 		}
 	}
@@ -356,21 +356,21 @@ func (rc *ResourceChecker) checkMemoryRequirement(minMemory uint64, systemInfo *
 		result.Warnings = append(result.Warnings, "Could not check memory usage")
 		return
 	}
-	
+
 	minMemoryMB := float64(minMemory) / (1024 * 1024)
 	availableMB := float64(systemInfo.Memory.Available) / (1024 * 1024)
-	
+
 	result.Details["min_memory_mb"] = minMemoryMB
 	result.Details["available_memory_mb"] = availableMB
-	
+
 	if systemInfo.Memory.Available < minMemory {
-		result.Errors = append(result.Errors, 
-			fmt.Sprintf("Insufficient memory: %.2f MB available, %.2f MB required", 
+		result.Errors = append(result.Errors,
+			fmt.Sprintf("Insufficient memory: %.2f MB available, %.2f MB required",
 				availableMB, minMemoryMB))
 		result.Passed = false
 		result.Suggestions = append(result.Suggestions, "Close other applications to free up memory")
 	} else if systemInfo.Memory.Available < minMemory*2 {
-		result.Warnings = append(result.Warnings, 
+		result.Warnings = append(result.Warnings,
 			fmt.Sprintf("Low memory: %.2f MB available", availableMB))
 	}
 }
@@ -399,23 +399,23 @@ func (rc *ResourceChecker) FormatResourceInfo(info *SystemResourceInfo) string {
 	if info == nil {
 		return "No system information available"
 	}
-	
+
 	output := fmt.Sprintf("System Information (as of %s):\n", info.Timestamp.Format("2006-01-02 15:04:05"))
 	output += fmt.Sprintf("  OS: %s\n", info.OS)
 	output += fmt.Sprintf("  Architecture: %s\n", info.Architecture)
 	output += fmt.Sprintf("  CPU Cores: %d\n", info.CPUCount)
-	
+
 	if info.Memory != nil {
-		output += fmt.Sprintf("  Memory: %.2f MB used / %.2f MB total (%.1f%%)\n", 
-			float64(info.Memory.Used)/(1024*1024), 
-			float64(info.Memory.Total)/(1024*1024), 
+		output += fmt.Sprintf("  Memory: %.2f MB used / %.2f MB total (%.1f%%)\n",
+			float64(info.Memory.Used)/(1024*1024),
+			float64(info.Memory.Total)/(1024*1024),
 			info.Memory.UsedPct)
 	}
-	
+
 	if len(info.DiskSpaces) > 0 {
 		output += "  Disk Usage:\n"
 		for _, disk := range info.DiskSpaces {
-			output += fmt.Sprintf("    %s: %.2f GB used / %.2f GB total (%.1f%%) - %.2f GB available\n", 
+			output += fmt.Sprintf("    %s: %.2f GB used / %.2f GB total (%.1f%%) - %.2f GB available\n",
 				disk.Path,
 				float64(disk.Used)/(1024*1024*1024),
 				float64(disk.Total)/(1024*1024*1024),
@@ -423,10 +423,10 @@ func (rc *ResourceChecker) FormatResourceInfo(info *SystemResourceInfo) string {
 				float64(disk.Available)/(1024*1024*1024))
 		}
 	}
-	
+
 	output += fmt.Sprintf("  Working Directory: %s\n", info.WorkingDir)
 	output += fmt.Sprintf("  Temp Directory: %s\n", info.TempDir)
 	output += fmt.Sprintf("  Home Directory: %s\n", info.HomeDir)
-	
+
 	return output
 }

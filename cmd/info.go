@@ -18,7 +18,7 @@ var infoCmd = &cobra.Command{
 	Short: "Show detailed information about an application",
 	Long: `Show detailed information about an application including all available versions.
 You can specify either a package ID to get info from repositories, or a local APK file path.`,
-	Args:  cobra.ExactArgs(1),
+	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		target := args[0]
 
@@ -145,18 +145,18 @@ func isLocalAPKFile(target string) bool {
 	if strings.HasSuffix(strings.ToLower(target), ".apk") {
 		return true
 	}
-	
+
 	// Check if it's an existing file
 	if info, err := os.Stat(target); err == nil && !info.IsDir() {
 		return true
 	}
-	
+
 	// Check for other APK-related extensions
 	lowerTarget := strings.ToLower(target)
 	if strings.HasSuffix(lowerTarget, ".xapk") || strings.HasSuffix(lowerTarget, ".apkm") {
 		return true
 	}
-	
+
 	return false
 }
 
@@ -170,19 +170,19 @@ func showLocalAPKInfo(apkPath string) error {
 		}
 		return fmt.Errorf("cannot access APK file: %w", err)
 	}
-	
+
 	if info.IsDir() {
 		return fmt.Errorf("path is a directory, not a file: %s", apkPath)
 	}
-	
+
 	fmt.Printf("=== Local APK File Information ===\n\n")
 	fmt.Printf("File Path: %s\n", apkPath)
 	fmt.Printf("File Size: %.2f MB\n", float64(info.Size())/(1024*1024))
 	fmt.Printf("Modified: %s\n", info.ModTime().Format("2006-01-02 15:04:05"))
-	
+
 	// Try to parse APK
 	fmt.Println("\n=== APK Analysis ===\n")
-	
+
 	parser := apk.NewParser(".")
 	apkInfo, err := parser.ParseAPK(apkPath)
 	if err != nil {
@@ -194,7 +194,7 @@ func showLocalAPKInfo(apkPath string) error {
 		fmt.Println("\n💡 Try running 'apkhub doctor' to check dependencies")
 		return nil
 	}
-	
+
 	// Display APK information
 	fmt.Printf("Package ID: %s\n", apkInfo.PackageID)
 	if appName := getDefaultName(apkInfo.AppName); appName != "" {
@@ -202,18 +202,18 @@ func showLocalAPKInfo(apkPath string) error {
 	}
 	fmt.Printf("Version: %s (Code: %d)\n", apkInfo.Version, apkInfo.VersionCode)
 	fmt.Printf("Min SDK: %d, Target SDK: %d\n", apkInfo.MinSDK, apkInfo.TargetSDK)
-	
+
 	if len(apkInfo.ABIs) > 0 {
 		fmt.Printf("Architectures: %s\n", strings.Join(apkInfo.ABIs, ", "))
 	}
-	
+
 	// Permissions
 	if len(apkInfo.Permissions) > 0 {
 		fmt.Printf("\n=== Permissions (%d) ===\n\n", len(apkInfo.Permissions))
-		
+
 		// Group permissions by category
 		permGroups := groupPermissions(apkInfo.Permissions)
-		
+
 		for category, perms := range permGroups {
 			fmt.Printf("%s:\n", category)
 			for _, perm := range perms {
@@ -222,7 +222,7 @@ func showLocalAPKInfo(apkPath string) error {
 			fmt.Println()
 		}
 	}
-	
+
 	// Features
 	if len(apkInfo.Features) > 0 {
 		fmt.Printf("=== Features (%d) ===\n\n", len(apkInfo.Features))
@@ -231,38 +231,38 @@ func showLocalAPKInfo(apkPath string) error {
 		}
 		fmt.Println()
 	}
-	
+
 	// File analysis
 	fmt.Printf("=== File Analysis ===\n\n")
 	fmt.Printf("SHA256: %s\n", apkInfo.SHA256)
 	if apkInfo.SignatureInfo != nil && apkInfo.SignatureInfo.SHA256 != "" {
 		fmt.Printf("Signature SHA256: %s\n", apkInfo.SignatureInfo.SHA256)
 	}
-	
+
 	// Installation commands
 	fmt.Printf("\n=== Installation Commands ===\n\n")
 	fmt.Printf("Install: apkhub install \"%s\"\n", apkPath)
 	fmt.Printf("Install with options: apkhub install \"%s\" --device <device-id>\n", apkPath)
-	
+
 	return nil
 }
 
 // groupPermissions groups permissions by category for better display
 func groupPermissions(permissions []string) map[string][]string {
 	groups := make(map[string][]string)
-	
+
 	for _, perm := range permissions {
 		category := categorizePermission(perm)
 		groups[category] = append(groups[category], perm)
 	}
-	
+
 	return groups
 }
 
 // categorizePermission categorizes a permission for display
 func categorizePermission(permission string) string {
 	perm := strings.ToLower(permission)
-	
+
 	if strings.Contains(perm, "camera") {
 		return "📷 Camera"
 	} else if strings.Contains(perm, "location") || strings.Contains(perm, "gps") {

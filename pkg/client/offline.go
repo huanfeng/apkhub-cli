@@ -12,11 +12,11 @@ import (
 
 // OfflineManager handles offline mode detection and fallback strategies
 type OfflineManager struct {
-	config         *Config
-	cacheManager   *CacheManager
-	isOffline      bool
-	lastCheck      time.Time
-	checkInterval  time.Duration
+	config        *Config
+	cacheManager  *CacheManager
+	isOffline     bool
+	lastCheck     time.Time
+	checkInterval time.Duration
 }
 
 // NewOfflineManager creates a new offline manager
@@ -34,28 +34,28 @@ func (o *OfflineManager) IsOffline() bool {
 	if time.Since(o.lastCheck) > o.checkInterval {
 		o.checkConnectivity()
 	}
-	
+
 	return o.isOffline
 }
 
 // checkConnectivity performs a connectivity check
 func (o *OfflineManager) checkConnectivity() {
 	o.lastCheck = time.Now()
-	
+
 	// Try to connect to a reliable host
 	hosts := []string{
-		"8.8.8.8:53",     // Google DNS
-		"1.1.1.1:53",     // Cloudflare DNS
+		"8.8.8.8:53",        // Google DNS
+		"1.1.1.1:53",        // Cloudflare DNS
 		"208.67.222.222:53", // OpenDNS
 	}
-	
+
 	for _, host := range hosts {
 		if o.canConnect(host) {
 			o.isOffline = false
 			return
 		}
 	}
-	
+
 	o.isOffline = true
 }
 
@@ -77,28 +77,28 @@ func (o *OfflineManager) GetOfflineManifest(bucketName string) (*models.Manifest
 	if err != nil {
 		return nil, fmt.Errorf("failed to get cached manifest: %w", err)
 	}
-	
+
 	if manifest == nil {
 		return nil, fmt.Errorf("no cached manifest available for bucket '%s'", bucketName)
 	}
-	
+
 	if isStale {
 		fmt.Printf("⚠️  Using stale cached data for bucket '%s' (offline mode)\n", bucketName)
 	}
-	
+
 	return manifest, nil
 }
 
 // GetOfflineSearch performs search using cached data
 func (o *OfflineManager) GetOfflineSearch(query string, options SearchOptions) ([]SearchResult, error) {
 	fmt.Println("🔌 Operating in offline mode - using cached data")
-	
+
 	// Get merged offline manifest
 	manifest, err := o.getMergedOfflineManifest()
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Create a temporary search engine and perform search directly
 	return o.performOfflineSearch(query, options, manifest)
 }
@@ -112,19 +112,19 @@ func (o *OfflineManager) getMergedOfflineManifest() (*models.ManifestIndex, erro
 		UpdatedAt:   time.Now(),
 		Packages:    make(map[string]*models.AppPackage),
 	}
-	
+
 	enabledBuckets := o.config.GetEnabledBuckets()
 	availableBuckets := 0
-	
+
 	for bucketName := range enabledBuckets {
 		manifest, err := o.GetOfflineManifest(bucketName)
 		if err != nil {
 			fmt.Printf("⚠️  Skipping bucket '%s': %v\n", bucketName, err)
 			continue
 		}
-		
+
 		availableBuckets++
-		
+
 		// Merge packages (simplified version)
 		for pkgID, pkg := range manifest.Packages {
 			if existing, exists := merged.Packages[pkgID]; exists {
@@ -155,17 +155,17 @@ func (o *OfflineManager) getMergedOfflineManifest() (*models.ManifestIndex, erro
 				merged.Packages[pkgID] = clonedPkg
 			}
 		}
-		
+
 		merged.TotalAPKs += manifest.TotalAPKs
 		merged.TotalSize += manifest.TotalSize
 	}
-	
+
 	if availableBuckets == 0 {
 		return nil, fmt.Errorf("no cached manifests available for offline mode")
 	}
-	
+
 	fmt.Printf("📦 Loaded %d packages from %d cached bucket(s)\n", len(merged.Packages), availableBuckets)
-	
+
 	return merged, nil
 }
 
@@ -196,7 +196,7 @@ func (o *OfflineManager) performOfflineSearch(query string, options SearchOption
 		appName := getDefaultName(pkg.Name)
 		latestVersion := ""
 		var latestVersionInfo *models.AppVersion
-		
+
 		if pkg.Latest != "" {
 			if version, exists := pkg.Versions[pkg.Latest]; exists {
 				latestVersionInfo = version
@@ -293,7 +293,7 @@ func (o *OfflineManager) calculateOfflineScore(query string, pkgID string, pkg *
 // calculateExactOfflineScore calculates score for exact matching
 func (o *OfflineManager) calculateExactOfflineScore(query string, pkgID string, pkg *models.AppPackage) float64 {
 	query = strings.ToLower(query)
-	
+
 	// Exact package ID match
 	if strings.EqualFold(pkgID, query) {
 		return 100.0
@@ -348,22 +348,22 @@ func (o *OfflineManager) CheckOfflineCapabilities() (*OfflineCapabilities, error
 		TotalPackages:    0,
 		LastUpdate:       time.Time{},
 	}
-	
+
 	// Check each enabled bucket for cached data
 	enabledBuckets := o.config.GetEnabledBuckets()
-	
+
 	for bucketName := range enabledBuckets {
 		if manifest, _, err := o.cacheManager.GetManifest(bucketName, true); err == nil && manifest != nil {
 			capabilities.AvailableBuckets = append(capabilities.AvailableBuckets, bucketName)
 			capabilities.TotalPackages += len(manifest.Packages)
-			
+
 			// Track most recent update
 			if manifest.UpdatedAt.After(capabilities.LastUpdate) {
 				capabilities.LastUpdate = manifest.UpdatedAt
 			}
 		}
 	}
-	
+
 	return capabilities, nil
 }
 
@@ -381,10 +381,10 @@ func (o *OfflineManager) PrintOfflineStatus() error {
 	if err != nil {
 		return err
 	}
-	
+
 	fmt.Println("🔌 Offline Mode Status:")
 	fmt.Println("========================")
-	
+
 	if capabilities.IsOffline {
 		fmt.Println("   Status: 🔴 OFFLINE")
 		fmt.Println("   Mode: Using cached data only")
@@ -392,12 +392,12 @@ func (o *OfflineManager) PrintOfflineStatus() error {
 		fmt.Println("   Status: 🟢 ONLINE")
 		fmt.Println("   Mode: Live data with cache fallback")
 	}
-	
+
 	fmt.Printf("   Available buckets: %d\n", len(capabilities.AvailableBuckets))
 	if len(capabilities.AvailableBuckets) > 0 {
 		fmt.Printf("   Buckets: %s\n", fmt.Sprintf("%v", capabilities.AvailableBuckets))
 		fmt.Printf("   Total packages: %d\n", capabilities.TotalPackages)
-		
+
 		if !capabilities.LastUpdate.IsZero() {
 			fmt.Printf("   Last update: %s\n", capabilities.LastUpdate.Format("2006-01-02 15:04:05"))
 		}
@@ -405,6 +405,6 @@ func (o *OfflineManager) PrintOfflineStatus() error {
 		fmt.Println("   ⚠️  No cached data available")
 		fmt.Println("   💡 Run 'apkhub bucket update' when online to cache data")
 	}
-	
+
 	return nil
 }

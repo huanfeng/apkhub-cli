@@ -97,10 +97,10 @@ func (e *IconExtractor) extractIconFromZip(apkPath string) ([]byte, string, erro
 
 	// If no standard icon found, search for any launcher icon
 	for _, file := range reader.File {
-		if strings.Contains(file.Name, "ic_launcher") && 
-		   (strings.HasSuffix(file.Name, ".png") || strings.HasSuffix(file.Name, ".webp")) &&
-		   !strings.Contains(file.Name, "_foreground") &&
-		   !strings.Contains(file.Name, "_background") {
+		if strings.Contains(file.Name, "ic_launcher") &&
+			(strings.HasSuffix(file.Name, ".png") || strings.HasSuffix(file.Name, ".webp")) &&
+			!strings.Contains(file.Name, "_foreground") &&
+			!strings.Contains(file.Name, "_background") {
 			rc, err := file.Open()
 			if err != nil {
 				continue
@@ -118,7 +118,6 @@ func (e *IconExtractor) extractIconFromZip(apkPath string) ([]byte, string, erro
 
 	return nil, "", fmt.Errorf("no launcher icon found in APK")
 }
-
 
 // processIcon processes and resizes the icon
 func (e *IconExtractor) processIcon(iconData []byte, ext string) ([]byte, string, error) {

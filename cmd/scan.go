@@ -35,7 +35,7 @@ var scanCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Record scan start time
 		scanStart := time.Now()
-		
+
 		directory := args[0]
 
 		// Check dependencies
@@ -97,7 +97,7 @@ var scanCmd = &cobra.Command{
 
 		// Initialize progress tracking
 		progress := utils.NewProgressTracker("Scanning APKs", 0, false)
-		
+
 		// Initialize counters
 		var (
 			scannedFiles  = 0
@@ -105,7 +105,7 @@ var scanCmd = &cobra.Command{
 			updatedAPKs   = 0
 			unchangedAPKs = 0
 		)
-		
+
 		// First pass: count total files
 		if showProgress {
 			fmt.Printf("🔍 Counting files to process...\n")
@@ -146,7 +146,7 @@ var scanCmd = &cobra.Command{
 			}
 
 			filename := filepath.Base(path)
-			
+
 			// Skip files that look like they're already normalized (to avoid processing repository files)
 			if isNormalizedFilename(filename) {
 				fmt.Printf("Skip (normalized): %s\n", filename)
@@ -171,7 +171,7 @@ var scanCmd = &cobra.Command{
 					return nil
 				}
 			}
-			
+
 			// Quick hash check to detect if this file is already processed (by SHA256)
 			if !fullScan {
 				quickHash, err := calculateQuickHash(path)
@@ -298,36 +298,36 @@ func getScanMode() string {
 func isNormalizedFilename(filename string) bool {
 	// Remove extension
 	name := strings.TrimSuffix(filename, filepath.Ext(filename))
-	
+
 	// Check if it matches the normalized pattern: packageid_versioncode_signature_variant
 	parts := strings.Split(name, "_")
-	
+
 	// Must have at least 3 parts and the pattern should be very specific
 	if len(parts) < 3 {
 		return false
 	}
-	
+
 	// Check if it has a package-like first part (contains dots)
 	if !strings.Contains(parts[0], ".") {
 		return false
 	}
-	
+
 	// Look for the specific pattern where we have:
 	// 1. Package ID (with dots)
 	// 2. Version code (numeric) OR "0" (from Basic parser)
 	// 3. ABI or other variant
-	
+
 	// If second part is "0", it's likely from Basic parser normalization
 	if len(parts) >= 3 && parts[1] == "0" {
 		return true
 	}
-	
+
 	// Check for very long version codes (original files usually have shorter version codes)
 	if len(parts) >= 2 && isNumericString(parts[1]) && len(parts[1]) > 8 {
 		// This is likely an original file with a long version code
 		return false
 	}
-	
+
 	// If we have multiple ABI-like suffixes, it's likely a normalized file that got re-processed
 	abiCount := 0
 	commonABIs := []string{"armeabiv7a", "arm64v8a", "x86", "x8664", "universal"}
@@ -339,12 +339,12 @@ func isNormalizedFilename(filename string) bool {
 			}
 		}
 	}
-	
+
 	// If we have multiple ABI parts, it's likely a re-processed file
 	if abiCount > 1 {
 		return true
 	}
-	
+
 	return false
 }
 
@@ -403,26 +403,26 @@ func checkScanDependencies() error {
 // countTotalAPKFiles counts APK files in directory
 func countTotalAPKFiles(dir string, recursive bool) int {
 	count := 0
-	
+
 	filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return nil
 		}
-		
+
 		if info.IsDir() {
 			if !recursive && path != dir {
 				return filepath.SkipDir
 			}
 			return nil
 		}
-		
+
 		if strings.HasSuffix(strings.ToLower(info.Name()), ".apk") {
 			count++
 		}
-		
+
 		return nil
 	})
-	
+
 	return count
 }
 
@@ -431,26 +431,26 @@ func showScanResults(scanned, newAPKs, updated, unchanged, errors int, errorMess
 	fmt.Println("\n" + strings.Repeat("=", 50))
 	fmt.Println("📊 SCAN RESULTS")
 	fmt.Println(strings.Repeat("=", 50))
-	
+
 	// Summary statistics
 	fmt.Printf("⏱️  Total time: %v\n", duration)
 	fmt.Printf("📁 Files scanned: %d\n", scanned)
 	fmt.Printf("🆕 New APKs: %d\n", newAPKs)
 	fmt.Printf("🔄 Updated APKs: %d\n", updated)
 	fmt.Printf("⏭️  Unchanged APKs: %d\n", unchanged)
-	
+
 	if errors > 0 {
 		fmt.Printf("❌ Errors: %d\n", errors)
 	} else {
 		fmt.Printf("✅ Errors: 0\n")
 	}
-	
+
 	// Performance metrics
 	if scanned > 0 {
 		avgTime := duration / time.Duration(scanned)
 		fmt.Printf("📈 Average time per file: %v\n", avgTime)
 	}
-	
+
 	// Show errors if any
 	if errors > 0 {
 		fmt.Printf("\n❌ ERRORS ENCOUNTERED (%d):\n", errors)
@@ -458,15 +458,15 @@ func showScanResults(scanned, newAPKs, updated, unchanged, errors int, errorMess
 		for i, errMsg := range errorMessages {
 			fmt.Printf("   %d. %s\n", i+1, errMsg)
 		}
-		
+
 		fmt.Println("\n💡 TROUBLESHOOTING TIPS:")
 		fmt.Println("   • Run 'apkhub doctor' to check dependencies")
 		fmt.Println("   • Use --verbose flag for detailed error information")
 		fmt.Println("   • Ensure APK files are not corrupted")
 	}
-	
+
 	fmt.Println(strings.Repeat("=", 50))
-	
+
 	if errors == 0 {
 		fmt.Println("🎉 Repository updated successfully!")
 	} else if newAPKs > 0 || updated > 0 {

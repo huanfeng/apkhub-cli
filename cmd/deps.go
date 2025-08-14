@@ -98,7 +98,7 @@ func checkCommandDependencies(depManager system.DependencyManager, installer sys
 		allMissing := append(missingRequired, missingOptional...)
 		for _, depName := range allMissing {
 			fmt.Printf("\n🔧 %s:\n", depName)
-			
+
 			steps := installer.GetPlatformInstructions(depName)
 			for i, step := range steps {
 				if step.Manual {
@@ -175,7 +175,7 @@ func checkAllDependencies(depManager system.DependencyManager, installer system.
 	// Summary
 	fmt.Println("\n📊 Summary:")
 	fmt.Println("===========")
-	
+
 	available := 0
 	total := len(allDeps)
 	for _, dep := range allDeps {

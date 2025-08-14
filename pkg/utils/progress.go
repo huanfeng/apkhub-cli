@@ -60,7 +60,7 @@ func NewProgressBar(config *ProgressConfig) *ProgressBar {
 	if config == nil {
 		config = DefaultProgressConfig()
 	}
-	
+
 	return &ProgressBar{
 		total:       config.Total,
 		width:       config.Width,
@@ -81,12 +81,12 @@ func NewProgressBar(config *ProgressConfig) *ProgressBar {
 func (p *ProgressBar) Set(current int64) {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
-	
+
 	p.current = current
 	if current >= p.total {
 		p.finished = true
 	}
-	
+
 	p.render()
 }
 
@@ -94,12 +94,12 @@ func (p *ProgressBar) Set(current int64) {
 func (p *ProgressBar) Add(delta int64) {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
-	
+
 	p.current += delta
 	if p.current >= p.total {
 		p.finished = true
 	}
-	
+
 	p.render()
 }
 
@@ -112,7 +112,7 @@ func (p *ProgressBar) Increment() {
 func (p *ProgressBar) SetTotal(total int64) {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
-	
+
 	p.total = total
 	p.render()
 }
@@ -121,7 +121,7 @@ func (p *ProgressBar) SetTotal(total int64) {
 func (p *ProgressBar) SetPrefix(prefix string) {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
-	
+
 	p.prefix = prefix
 	p.render()
 }
@@ -130,7 +130,7 @@ func (p *ProgressBar) SetPrefix(prefix string) {
 func (p *ProgressBar) SetSuffix(suffix string) {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
-	
+
 	p.suffix = suffix
 	p.render()
 }
@@ -139,7 +139,7 @@ func (p *ProgressBar) SetSuffix(suffix string) {
 func (p *ProgressBar) Finish() {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
-	
+
 	p.current = p.total
 	p.finished = true
 	p.render()
@@ -154,19 +154,19 @@ func (p *ProgressBar) render() {
 		return
 	}
 	p.lastUpdate = now
-	
+
 	// Calculate percentage
 	var percent float64
 	if p.total > 0 {
 		percent = float64(p.current) / float64(p.total) * 100
 	}
-	
+
 	// Build progress bar
 	var bar string
 	if p.showBar {
 		bar = p.buildBar(percent)
 	}
-	
+
 	// Build components
 	components := map[string]string{
 		"{prefix}":  p.prefix,
@@ -178,16 +178,16 @@ func (p *ProgressBar) render() {
 		"{current}": fmt.Sprintf("%d", p.current),
 		"{total}":   fmt.Sprintf("%d", p.total),
 	}
-	
+
 	// Apply template
 	output := p.template
 	for placeholder, value := range components {
 		output = strings.ReplaceAll(output, placeholder, value)
 	}
-	
+
 	// Clean up extra spaces
 	output = strings.Join(strings.Fields(output), " ")
-	
+
 	// Output with carriage return for overwriting
 	fmt.Fprintf(p.output, "\r%s", output)
 }
@@ -197,15 +197,15 @@ func (p *ProgressBar) buildBar(percent float64) string {
 	if p.width <= 0 {
 		return ""
 	}
-	
+
 	filled := int(percent / 100 * float64(p.width))
 	if filled > p.width {
 		filled = p.width
 	}
-	
+
 	bar := strings.Repeat("█", filled)
 	empty := strings.Repeat("░", p.width-filled)
-	
+
 	return fmt.Sprintf("[%s%s]", bar, empty)
 }
 
@@ -222,12 +222,12 @@ func (p *ProgressBar) buildSpeed() string {
 	if !p.showSpeed {
 		return ""
 	}
-	
+
 	elapsed := time.Since(p.startTime).Seconds()
 	if elapsed <= 0 {
 		return ""
 	}
-	
+
 	speed := float64(p.current) / elapsed
 	return fmt.Sprintf("%.1f/s", speed)
 }
@@ -237,14 +237,14 @@ func (p *ProgressBar) buildETA(percent float64) string {
 	if !p.showETA || percent <= 0 {
 		return ""
 	}
-	
+
 	elapsed := time.Since(p.startTime)
 	if elapsed.Seconds() <= 0 {
 		return ""
 	}
-	
+
 	remaining := time.Duration(float64(elapsed) * (100 - percent) / percent)
-	
+
 	if remaining < time.Minute {
 		return fmt.Sprintf("ETA: %ds", int(remaining.Seconds()))
 	} else if remaining < time.Hour {
@@ -289,7 +289,7 @@ func NewSpinner(config *SpinnerConfig) *Spinner {
 	if config == nil {
 		config = DefaultSpinnerConfig()
 	}
-	
+
 	return &Spinner{
 		chars:    config.Chars,
 		prefix:   config.Prefix,
@@ -303,11 +303,11 @@ func NewSpinner(config *SpinnerConfig) *Spinner {
 func (s *Spinner) Start() {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	
+
 	if s.running {
 		return
 	}
-	
+
 	s.running = true
 	go s.spin()
 }
@@ -316,14 +316,14 @@ func (s *Spinner) Start() {
 func (s *Spinner) Stop() {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	
+
 	if !s.running {
 		return
 	}
-	
+
 	s.running = false
 	s.stopChan <- true
-	
+
 	// Clear the spinner line
 	fmt.Fprintf(s.output, "\r%s\r", strings.Repeat(" ", len(s.prefix)+len(s.suffix)+10))
 }
@@ -346,7 +346,7 @@ func (s *Spinner) SetSuffix(suffix string) {
 func (s *Spinner) spin() {
 	ticker := time.NewTicker(100 * time.Millisecond)
 	defer ticker.Stop()
-	
+
 	for {
 		select {
 		case <-s.stopChan:
@@ -357,7 +357,7 @@ func (s *Spinner) spin() {
 				s.mutex.Unlock()
 				return
 			}
-			
+
 			char := s.chars[s.current%len(s.chars)]
 			fmt.Fprintf(s.output, "\r%s %s %s", s.prefix, char, s.suffix)
 			s.current++
@@ -378,7 +378,7 @@ func NewMultiProgress(output io.Writer) *MultiProgress {
 	if output == nil {
 		output = os.Stdout
 	}
-	
+
 	return &MultiProgress{
 		output: output,
 	}
@@ -388,15 +388,15 @@ func NewMultiProgress(output io.Writer) *MultiProgress {
 func (mp *MultiProgress) AddBar(config *ProgressConfig) *ProgressBar {
 	mp.mutex.Lock()
 	defer mp.mutex.Unlock()
-	
+
 	if config == nil {
 		config = DefaultProgressConfig()
 	}
 	config.Output = mp.output
-	
+
 	bar := NewProgressBar(config)
 	mp.bars = append(mp.bars, bar)
-	
+
 	return bar
 }
 
@@ -404,12 +404,12 @@ func (mp *MultiProgress) AddBar(config *ProgressConfig) *ProgressBar {
 func (mp *MultiProgress) Render() {
 	mp.mutex.Lock()
 	defer mp.mutex.Unlock()
-	
+
 	// Move cursor up to overwrite previous bars
 	if len(mp.bars) > 1 {
 		fmt.Fprintf(mp.output, "\033[%dA", len(mp.bars)-1)
 	}
-	
+
 	// Render each bar
 	for i, bar := range mp.bars {
 		bar.render()
@@ -421,24 +421,24 @@ func (mp *MultiProgress) Render() {
 
 // ProgressTracker provides a simple interface for tracking progress
 type ProgressTracker struct {
-	name     string
-	total    int64
-	current  int64
-	bar      *ProgressBar
-	spinner  *Spinner
-	useBar   bool
-	logger   Logger
+	name    string
+	total   int64
+	current int64
+	bar     *ProgressBar
+	spinner *Spinner
+	useBar  bool
+	logger  Logger
 }
 
 // NewProgressTracker creates a new progress tracker
 func NewProgressTracker(name string, total int64, useBar bool) *ProgressTracker {
 	tracker := &ProgressTracker{
-		name:    name,
-		total:   total,
-		useBar:  useBar,
-		logger:  GetGlobalLogger(),
+		name:   name,
+		total:  total,
+		useBar: useBar,
+		logger: GetGlobalLogger(),
 	}
-	
+
 	if useBar && total > 0 {
 		config := DefaultProgressConfig()
 		config.Total = total
@@ -450,14 +450,14 @@ func NewProgressTracker(name string, total int64, useBar bool) *ProgressTracker 
 		tracker.spinner = NewSpinner(config)
 		tracker.spinner.Start()
 	}
-	
+
 	return tracker
 }
 
 // Update updates the progress
 func (pt *ProgressTracker) Update(current int64, message string) {
 	pt.current = current
-	
+
 	if pt.useBar && pt.bar != nil {
 		if message != "" {
 			pt.bar.SetSuffix(message)
@@ -468,7 +468,7 @@ func (pt *ProgressTracker) Update(current int64, message string) {
 			pt.spinner.SetSuffix(message)
 		}
 	}
-	
+
 	// Log progress at intervals
 	if pt.total > 0 {
 		percent := float64(current) / float64(pt.total) * 100
@@ -491,7 +491,7 @@ func (pt *ProgressTracker) Finish(message string) {
 			fmt.Printf("%s %s\n", pt.name, message)
 		}
 	}
-	
+
 	pt.logger.Info("Completed: %s", pt.name)
 }
 
@@ -504,6 +504,6 @@ func (pt *ProgressTracker) Error(err error) {
 		pt.spinner.Stop()
 		fmt.Printf("%s Error: %v\n", pt.name, err)
 	}
-	
+
 	pt.logger.Error("Failed: %s - %v", pt.name, err)
 }

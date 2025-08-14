@@ -8,10 +8,10 @@ type Config struct {
 
 // RepositoryConfig contains repository-related configuration
 type RepositoryConfig struct {
-	Name             string `mapstructure:"name" json:"name"`
-	Description      string `mapstructure:"description" json:"description"`
-	BaseURL          string `mapstructure:"base_url" json:"base_url"`
-	KeepVersions     int    `mapstructure:"keep_versions" json:"keep_versions"`         // 0 = keep all
+	Name              string `mapstructure:"name" json:"name"`
+	Description       string `mapstructure:"description" json:"description"`
+	BaseURL           string `mapstructure:"base_url" json:"base_url"`
+	KeepVersions      int    `mapstructure:"keep_versions" json:"keep_versions"`           // 0 = keep all
 	SignatureHandling string `mapstructure:"signature_handling" json:"signature_handling"` // "mark", "separate", "reject"
 }
 

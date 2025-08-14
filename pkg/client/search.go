@@ -10,17 +10,17 @@ import (
 
 // SearchResult represents a search result
 type SearchResult struct {
-	PackageID     string  `json:"package_id"`
-	AppName       string  `json:"app_name"`
-	Version       string  `json:"version"`
-	Description   string  `json:"description"`
-	BucketName    string  `json:"bucket_name"`
-	Category      string  `json:"category"`
-	Score         float64 `json:"score"`
-	Size          int64   `json:"size"`
-	MinSDK        int     `json:"min_sdk"`
-	TargetSDK     int     `json:"target_sdk"`
-	IsInstalled   bool    `json:"is_installed"`
+	PackageID   string  `json:"package_id"`
+	AppName     string  `json:"app_name"`
+	Version     string  `json:"version"`
+	Description string  `json:"description"`
+	BucketName  string  `json:"bucket_name"`
+	Category    string  `json:"category"`
+	Score       float64 `json:"score"`
+	Size        int64   `json:"size"`
+	MinSDK      int     `json:"min_sdk"`
+	TargetSDK   int     `json:"target_sdk"`
+	IsInstalled bool    `json:"is_installed"`
 }
 
 // SearchEngine handles application searches
@@ -60,7 +60,7 @@ func (s *SearchEngine) Search(query string, options SearchOptions) ([]SearchResu
 		} else {
 			score = s.calculateScore(query, pkgID, pkg)
 		}
-		
+
 		if score == 0 {
 			continue
 		}
@@ -81,7 +81,7 @@ func (s *SearchEngine) Search(query string, options SearchOptions) ([]SearchResu
 				continue
 			}
 		}
-		
+
 		if options.Category != "" && !strings.EqualFold(pkg.Category, options.Category) {
 			continue
 		}
@@ -92,7 +92,7 @@ func (s *SearchEngine) Search(query string, options SearchOptions) ([]SearchResu
 			parts := strings.SplitN(pkg.Latest, "_", 2)
 			bucketName = parts[0]
 		}
-		
+
 		if options.Bucket != "" && !strings.EqualFold(bucketName, options.Bucket) {
 			continue
 		}
@@ -218,7 +218,7 @@ func getDefaultName(names map[string]string) string {
 // calculateExactScore calculates score for exact matching
 func (s *SearchEngine) calculateExactScore(query string, pkgID string, pkg *models.AppPackage) float64 {
 	query = strings.ToLower(query)
-	
+
 	// Exact package ID match
 	if strings.EqualFold(pkgID, query) {
 		return 100.0

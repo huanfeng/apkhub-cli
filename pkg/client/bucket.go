@@ -104,7 +104,7 @@ func (b *BucketManager) FetchManifest(bucketName string) (*models.ManifestIndex,
 		if health.Status == "unknown" {
 			health.Status = "healthy"
 		}
-		
+
 		if !isStale {
 			return manifest, nil
 		}
@@ -148,7 +148,7 @@ func (b *BucketManager) FetchManifest(bucketName string) (*models.ManifestIndex,
 	if cacheTTL <= 0 {
 		cacheTTL = 24 * time.Hour // Default 24 hours
 	}
-	
+
 	if err := b.cacheManager.SetManifest(bucketName, &manifest, cacheTTL); err != nil {
 		fmt.Printf("⚠️  Failed to cache manifest for '%s': %v\n", bucketName, err)
 	}
@@ -440,7 +440,7 @@ func (b *BucketManager) GetMergedManifest() (*models.ManifestIndex, error) {
 					if version.DownloadURL != "" && !isAbsoluteURL(version.DownloadURL) {
 						version.DownloadURL = b.resolveDownloadURL(name, version.DownloadURL)
 					}
-					
+
 					// Track the prefixed key for the latest version
 					if versionKey == pkg.Latest {
 						latestPrefixedKey = prefixedKey
@@ -470,7 +470,7 @@ func (b *BucketManager) GetMergedManifest() (*models.ManifestIndex, error) {
 						clonedVersion.DownloadURL = b.resolveDownloadURL(name, clonedVersion.DownloadURL)
 					}
 					clonedPkg.Versions[prefixedKey] = &clonedVersion
-					
+
 					// Update Latest key if this is the latest version
 					if versionKey == pkg.Latest {
 						clonedPkg.Latest = prefixedKey

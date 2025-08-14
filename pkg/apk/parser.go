@@ -28,12 +28,12 @@ func NewParser(workDir string) *Parser {
 	// Create parser chain with logger
 	logger := &SimpleLogger{}
 	chain := NewParserChain(logger)
-	
+
 	// Add parsers in priority order
 	chain.AddParser(NewAndroidBinaryParser(workDir))
 	chain.AddParser(NewAAPTParserWrapper(workDir))
 	chain.AddParser(NewXAPKParserWrapper(workDir))
-	
+
 	return &Parser{
 		workDir:     workDir,
 		parserChain: chain,
@@ -50,7 +50,7 @@ func (p *Parser) ParseAPK(apkPath string) (*APKInfo, error) {
 
 	// Log parsing result
 	fmt.Printf("File parsed successfully using %s parser (took %v)\n", result.Parser, result.Duration)
-	
+
 	// Show warnings if any
 	for _, warning := range result.Warnings {
 		fmt.Printf("Warning: %s\n", warning)
@@ -222,13 +222,13 @@ func (p *Parser) parseWithAAPTFallback(apkPath string, originalErr error) (*APKI
 		if strings.Contains(aaptErr.Error(), "not found") {
 			fmt.Printf("Info: %v\n", aaptErr)
 			fmt.Printf("Continuing with limited APK information from file analysis...\n")
-			
+
 			// Return basic info that we can extract without aapt
 			return p.createBasicAPKInfo(apkPath, originalErr)
 		}
 		return nil, fmt.Errorf("both parsers failed - androidbinary: %v, aapt: %v", originalErr, aaptErr)
 	}
-	
+
 	fmt.Printf("Success: APK parsed using aapt fallback\n")
 
 	// Get file info
@@ -299,7 +299,7 @@ func (p *Parser) createBasicAPKInfo(apkPath string, originalErr error) (*APKInfo
 	// Extract basic info from filename if possible
 	filename := filepath.Base(apkPath)
 	packageID := strings.TrimSuffix(filename, filepath.Ext(filename))
-	
+
 	// Try to extract ABIs from APK structure
 	abis := p.extractABIs(apkPath)
 

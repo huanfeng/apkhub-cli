@@ -57,12 +57,12 @@ type XAPKManifest struct {
 // ParseXAPK parses an XAPK/APKM file
 func (p *XAPKParser) ParseXAPK(xapkPath string) (*XAPKInfo, error) {
 	fmt.Printf("Parsing XAPK/APKM file: %s\n", filepath.Base(xapkPath))
-	
+
 	// Verify file exists and is readable
 	if _, err := os.Stat(xapkPath); err != nil {
 		return nil, fmt.Errorf("XAPK file not accessible: %w", err)
 	}
-	
+
 	// Open XAPK as zip file
 	reader, err := zip.OpenReader(xapkPath)
 	if err != nil {
@@ -75,8 +75,8 @@ func (p *XAPKParser) ParseXAPK(xapkPath string) (*XAPKInfo, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to stat XAPK file: %w", err)
 	}
-	
-	fmt.Printf("XAPK file size: %.2f MB, contains %d entries\n", 
+
+	fmt.Printf("XAPK file size: %.2f MB, contains %d entries\n",
 		float64(fileInfo.Size())/(1024*1024), len(reader.File))
 
 	xapkInfo := &XAPKInfo{
@@ -92,7 +92,7 @@ func (p *XAPKParser) ParseXAPK(xapkPath string) (*XAPKInfo, error) {
 	var baseAPKData io.ReadCloser
 
 	fmt.Printf("Analyzing XAPK contents...\n")
-	
+
 	for _, file := range reader.File {
 		fileName := filepath.Base(file.Name)
 
@@ -138,8 +138,8 @@ func (p *XAPKParser) ParseXAPK(xapkPath string) (*XAPKInfo, error) {
 			fmt.Printf("Found OBB: %s (%.2f MB)\n", file.Name, float64(file.UncompressedSize64)/(1024*1024))
 		}
 	}
-	
-	fmt.Printf("XAPK analysis complete: %d APKs, %d OBBs, manifest: %v\n", 
+
+	fmt.Printf("XAPK analysis complete: %d APKs, %d OBBs, manifest: %v\n",
 		len(xapkInfo.APKFiles), len(xapkInfo.OBBFiles), manifestData != nil)
 
 	// Parse manifest if found
@@ -157,7 +157,7 @@ func (p *XAPKParser) ParseXAPK(xapkPath string) (*XAPKInfo, error) {
 	// Extract base APK info
 	if baseAPKData != nil {
 		defer baseAPKData.Close()
-		
+
 		fmt.Printf("Extracting base APK for parsing...\n")
 
 		// Create temporary file
@@ -175,7 +175,7 @@ func (p *XAPKParser) ParseXAPK(xapkPath string) (*XAPKInfo, error) {
 		tempFile.Close()
 
 		fmt.Printf("Parsing extracted base APK...\n")
-		
+
 		// Parse base APK using parser chain
 		parser := NewParser(p.workDir)
 		apkInfo, err := parser.ParseAPK(tempFile.Name())

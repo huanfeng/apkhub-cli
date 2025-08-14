@@ -25,7 +25,7 @@ var initCmd = &cobra.Command{
 Supports interactive configuration, templates, and updating existing configurations.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		configPath := "apkhub.yaml"
-		
+
 		// Check if config already exists
 		configExists := false
 		if _, err := os.Stat(configPath); err == nil {
@@ -38,7 +38,7 @@ Supports interactive configuration, templates, and updating existing configurati
 			fmt.Println("  --force      Overwrite existing configuration")
 			fmt.Println("  --update     Update existing configuration")
 			fmt.Println("  --interactive Interactive configuration wizard")
-			
+
 			if !initInteractive {
 				return fmt.Errorf("use --force to overwrite or --update to modify existing configuration")
 			}
@@ -89,7 +89,7 @@ func createConfig(configPath string, exists bool) error {
 
 	fmt.Printf("✅ Configuration file created: %s\n", configPath)
 	fmt.Printf("📁 Repository structure initialized\n")
-	
+
 	if initTemplate != "minimal" {
 		fmt.Println("\n💡 Next steps:")
 		fmt.Println("   1. Edit the configuration file to customize settings")
@@ -139,7 +139,7 @@ func interactiveInit(configPath string, exists bool) error {
 	fmt.Println()
 
 	reader := bufio.NewReader(os.Stdin)
-	
+
 	// Load existing config if available
 	var existingConfig *models.Config
 	if exists {
@@ -153,15 +153,15 @@ func interactiveInit(configPath string, exists bool) error {
 	// Repository settings
 	fmt.Println("📦 Repository Settings")
 	fmt.Println("---------------------")
-	
+
 	repoName := promptWithDefault(reader, "Repository name", getConfigValue(existingConfig, "name", "My APK Repository"))
 	repoDesc := promptWithDefault(reader, "Repository description", getConfigValue(existingConfig, "description", "Private APK repository"))
 	baseURL := promptWithDefault(reader, "Base URL (optional)", getConfigValue(existingConfig, "base_url", ""))
-	
+
 	fmt.Println()
 	fmt.Println("🔧 Scanning Settings")
 	fmt.Println("-------------------")
-	
+
 	recursive := promptBool(reader, "Scan directories recursively", getConfigBool(existingConfig, "recursive", true))
 	parseInfo := promptBool(reader, "Parse detailed APK information", getConfigBool(existingConfig, "parse_apk_info", true))
 
@@ -207,10 +207,10 @@ func promptWithDefault(reader *bufio.Reader, prompt, defaultValue string) string
 	} else {
 		fmt.Printf("%s: ", prompt)
 	}
-	
+
 	input, _ := reader.ReadString('\n')
 	input = strings.TrimSpace(input)
-	
+
 	if input == "" {
 		return defaultValue
 	}
@@ -222,15 +222,15 @@ func promptBool(reader *bufio.Reader, prompt string, defaultValue bool) bool {
 	if defaultValue {
 		defaultStr = "y"
 	}
-	
+
 	fmt.Printf("%s [%s]: ", prompt, defaultStr)
 	input, _ := reader.ReadString('\n')
 	input = strings.ToLower(strings.TrimSpace(input))
-	
+
 	if input == "" {
 		return defaultValue
 	}
-	
+
 	return input == "y" || input == "yes"
 }
 
@@ -238,7 +238,7 @@ func getConfigValue(cfg *models.Config, key, defaultValue string) string {
 	if cfg == nil {
 		return defaultValue
 	}
-	
+
 	switch key {
 	case "name":
 		if cfg.Repository.Name != "" {
@@ -251,7 +251,7 @@ func getConfigValue(cfg *models.Config, key, defaultValue string) string {
 	case "base_url":
 		return cfg.Repository.BaseURL
 	}
-	
+
 	return defaultValue
 }
 
@@ -259,26 +259,26 @@ func getConfigBool(cfg *models.Config, key string, defaultValue bool) bool {
 	if cfg == nil {
 		return defaultValue
 	}
-	
+
 	switch key {
 	case "recursive":
 		return cfg.Scanning.Recursive
 	case "parse_apk_info":
 		return cfg.Scanning.ParseAPKInfo
 	}
-	
+
 	return defaultValue
 }
 
 func createRepositoryStructure() error {
 	dirs := []string{"apks", "infos"}
-	
+
 	for _, dir := range dirs {
 		if err := os.MkdirAll(dir, 0755); err != nil {
 			return fmt.Errorf("failed to create directory %s: %w", dir, err)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -287,20 +287,20 @@ func validateAndFixConfig(cfg *models.Config) error {
 	if cfg.Repository.Name == "" {
 		cfg.Repository.Name = "My APK Repository"
 	}
-	
+
 	if cfg.Repository.Description == "" {
 		cfg.Repository.Description = "Private APK repository"
 	}
-	
+
 	if cfg.Repository.SignatureHandling == "" {
 		cfg.Repository.SignatureHandling = "mark"
 	}
-	
+
 	// Validate scanning settings
 	if len(cfg.Scanning.IncludePattern) == 0 {
 		cfg.Scanning.IncludePattern = []string{"*.apk", "*.xapk", "*.apkm"}
 	}
-	
+
 	return nil
 }
 
@@ -430,7 +430,7 @@ scanning:
 
 func init() {
 	repoCmd.AddCommand(initCmd)
-	
+
 	initCmd.Flags().BoolVarP(&initForce, "force", "f", false, "Overwrite existing configuration")
 	initCmd.Flags().BoolVarP(&initInteractive, "interactive", "i", false, "Interactive configuration wizard")
 	initCmd.Flags().BoolVarP(&initUpdate, "update", "u", false, "Update existing configuration")
