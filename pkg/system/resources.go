@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"syscall"
 	"time"
 )
 
@@ -26,6 +25,14 @@ func NewResourceChecker(logger Logger) *ResourceChecker {
 	return &ResourceChecker{
 		logger: logger,
 	}
+}
+
+// DiskUsage contains raw disk usage information
+type DiskUsage struct {
+	Total     uint64 // Total space in bytes
+	Free      uint64 // Free space in bytes
+	Available uint64 // Available space in bytes
+	Used      uint64 // Used space in bytes
 }
 
 // DiskSpaceInfo contains disk space information
@@ -87,37 +94,32 @@ type ResourceCheckResult struct {
 
 // CheckDiskSpace checks disk space for a given path
 func (rc *ResourceChecker) CheckDiskSpace(path string) (*DiskSpaceInfo, error) {
-	// Get absolute path
+	// Get disk usage using platform-specific implementation
+	diskUsage, err := getDiskUsage(path)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get absolute path for display
 	absPath, err := filepath.Abs(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get absolute path: %w", err)
 	}
 
-	// Get disk usage statistics
-	var stat syscall.Statfs_t
-	if err := syscall.Statfs(absPath, &stat); err != nil {
-		return nil, fmt.Errorf("failed to get disk statistics: %w", err)
-	}
-
-	// Calculate disk space information
-	total := stat.Blocks * uint64(stat.Bsize)
-	free := stat.Bfree * uint64(stat.Bsize)
-	available := stat.Bavail * uint64(stat.Bsize)
-	used := total - free
-	usedPct := float64(used) / float64(total) * 100
+	usedPct := float64(diskUsage.Used) / float64(diskUsage.Total) * 100
 
 	info := &DiskSpaceInfo{
 		Path:      absPath,
-		Total:     total,
-		Free:      free,
-		Available: available,
-		Used:      used,
+		Total:     diskUsage.Total,
+		Free:      diskUsage.Free,
+		Available: diskUsage.Available,
+		Used:      diskUsage.Used,
 		UsedPct:   usedPct,
 	}
 
 	if rc.logger != nil {
 		rc.logger.Debug("Disk space for %s: %.2f%% used (%.2f GB / %.2f GB)",
-			absPath, usedPct, float64(used)/(1024*1024*1024), float64(total)/(1024*1024*1024))
+			absPath, usedPct, float64(diskUsage.Used)/(1024*1024*1024), float64(diskUsage.Total)/(1024*1024*1024))
 	}
 
 	return info, nil

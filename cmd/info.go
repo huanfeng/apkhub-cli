@@ -181,7 +181,7 @@ func showLocalAPKInfo(apkPath string) error {
 	fmt.Printf("Modified: %s\n", info.ModTime().Format("2006-01-02 15:04:05"))
 
 	// Try to parse APK
-	fmt.Println("\n=== APK Analysis ===\n")
+	fmt.Println("\n=== APK Analysis ===")
 
 	parser := apk.NewParser(".")
 	apkInfo, err := parser.ParseAPK(apkPath)

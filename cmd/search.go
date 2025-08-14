@@ -88,7 +88,7 @@ var searchCmd = &cobra.Command{
 			if searchCategory != "" {
 				fmt.Printf(" (category: %s)", searchCategory)
 			}
-			fmt.Println("...\n")
+			fmt.Println("...")
 		}
 
 		// Perform search
@@ -106,8 +106,6 @@ var searchCmd = &cobra.Command{
 		default:
 			return displayResultsDefault(results, searchVerbose)
 		}
-
-		return nil
 	},
 }
 

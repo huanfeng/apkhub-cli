@@ -141,7 +141,7 @@ func showDevicesDefault(status *client.DeviceStatus) error {
 		for i, device := range status.Offline {
 			fmt.Printf("%d. %s\n", i+1, formatDeviceInfo(device))
 		}
-		fmt.Println("   💡 Try reconnecting or restarting the device\n")
+		fmt.Println("   💡 Try reconnecting or restarting the device")
 	}
 
 	// Unauthorized devices
@@ -150,7 +150,7 @@ func showDevicesDefault(status *client.DeviceStatus) error {
 		for i, device := range status.Unauthorized {
 			fmt.Printf("%d. %s\n", i+1, formatDeviceInfo(device))
 		}
-		fmt.Println("   💡 Allow USB debugging when prompted on the device\n")
+		fmt.Println("   💡 Allow USB debugging when prompted on the device")
 	}
 
 	// Summary
