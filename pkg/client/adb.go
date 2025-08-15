@@ -6,10 +6,13 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/huanfeng/apkhub-cli/pkg/apk"
 )
 
 // ADBManager handles ADB operations
@@ -215,6 +218,12 @@ func (a *ADBManager) InstallWithResult(apkPath string, deviceID string, options 
 		Success:  false,
 	}
 
+	// Check if this is an XAPK/APKM file and handle accordingly
+	if isXAPKFile(apkPath) {
+		fmt.Printf("🔍 XAPK/APKM file detected, using specialized installation process...\n")
+		return a.installXAPK(apkPath, deviceID, options, startTime)
+	}
+
 	// Validate device is online
 	if deviceID != "" {
 		if err := a.validateDeviceOnline(deviceID); err != nil {
@@ -226,6 +235,11 @@ func (a *ADBManager) InstallWithResult(apkPath string, deviceID string, options 
 			}
 			return result, nil
 		}
+	}
+
+	// Check if this is an XAPK/APKM file and handle accordingly
+	if isXAPKFile(apkPath) {
+		return a.installXAPK(apkPath, deviceID, options, startTime)
 	}
 
 	// Build command arguments
@@ -647,4 +661,305 @@ func (a *ADBManager) WaitForDevice(deviceID string, timeout time.Duration) error
 
 	fmt.Println()
 	return fmt.Errorf("timeout waiting for device %s to come online", deviceID)
+}
+// isXAPKFile checks if the file is an XAPK or APKM file
+func isXAPKFile(path string) bool {
+	ext := strings.ToLower(filepath.Ext(path))
+	return ext == ".xapk" || ext == ".apkm"
+}
+
+// installXAPK handles XAPK/APKM installation
+func (a *ADBManager) installXAPK(xapkPath string, deviceID string, options InstallOptions, startTime time.Time) (*InstallResult, error) {
+	result := &InstallResult{
+		DeviceID: deviceID,
+		Duration: 0,
+		Success:  false,
+	}
+
+	fmt.Printf("📦 Installing XAPK/APKM file: %s\n", filepath.Base(xapkPath))
+
+	// Create temporary directory for extraction
+	tempDir, err := os.MkdirTemp("", "xapk_install_*")
+	if err != nil {
+		result.ErrorMessage = fmt.Sprintf("failed to create temp directory: %v", err)
+		result.Suggestions = []string{
+			"Check disk space and permissions",
+			"Try running with administrator privileges",
+		}
+		return result, nil
+	}
+	defer func() {
+		if err := os.RemoveAll(tempDir); err != nil {
+			fmt.Printf("⚠️  Warning: failed to cleanup temp directory: %v\n", err)
+		}
+	}()
+
+	fmt.Printf("📂 Extracting XAPK to temporary directory...\n")
+
+	// Parse and extract XAPK
+	parser := apk.NewXAPKParser(tempDir)
+	xapkInfo, err := parser.ParseXAPK(xapkPath)
+	if err != nil {
+		result.ErrorMessage = fmt.Sprintf("failed to parse XAPK: %v", err)
+		result.Suggestions = []string{
+			"Verify the XAPK file is not corrupted",
+			"Try downloading the file again",
+		}
+		return result, nil
+	}
+
+	// Extract XAPK contents
+	if err := parser.ExtractXAPK(xapkPath, tempDir); err != nil {
+		result.ErrorMessage = fmt.Sprintf("failed to extract XAPK: %v", err)
+		result.Suggestions = []string{
+			"Check disk space",
+			"Verify file permissions",
+		}
+		return result, nil
+	}
+
+	fmt.Printf("✅ XAPK extracted successfully\n")
+	fmt.Printf("   📱 Found %d APK files\n", len(xapkInfo.APKFiles))
+	fmt.Printf("   📦 Found %d OBB files\n", len(xapkInfo.OBBFiles))
+
+	// Install APK files
+	if len(xapkInfo.APKFiles) == 0 {
+		result.ErrorMessage = "no APK files found in XAPK"
+		result.Suggestions = []string{
+			"Verify the XAPK file is valid",
+			"Check if the file is corrupted",
+		}
+		return result, nil
+	}
+
+	// Prepare APK file paths for installation
+	var apkPaths []string
+	for _, apkFile := range xapkInfo.APKFiles {
+		apkPath := filepath.Join(tempDir, apkFile)
+		if _, err := os.Stat(apkPath); err != nil {
+			fmt.Printf("⚠️  Warning: APK file not found: %s\n", apkFile)
+			continue
+		}
+		apkPaths = append(apkPaths, apkPath)
+	}
+
+	if len(apkPaths) == 0 {
+		result.ErrorMessage = "no valid APK files found after extraction"
+		return result, nil
+	}
+
+	// Install APKs
+	fmt.Printf("🚀 Installing %d APK files...\n", len(apkPaths))
+	
+	if len(apkPaths) == 1 {
+		// Single APK installation
+		if err := a.installSingleAPK(apkPaths[0], deviceID, options); err != nil {
+			result.ErrorMessage = fmt.Sprintf("APK installation failed: %v", err)
+			result.Suggestions = []string{
+				"Check device storage space",
+				"Enable 'Install from unknown sources'",
+				"Try installing with --replace flag",
+			}
+			return result, nil
+		}
+	} else {
+		// Multiple APK installation (split APKs)
+		if err := a.installMultipleAPKs(apkPaths, deviceID, options); err != nil {
+			result.ErrorMessage = fmt.Sprintf("split APK installation failed: %v", err)
+			result.Suggestions = []string{
+				"Check device storage space",
+				"Ensure device supports split APKs (Android 5.0+)",
+				"Try installing with --replace flag",
+			}
+			return result, nil
+		}
+	}
+
+	fmt.Printf("✅ APK installation completed\n")
+
+	// Install OBB files if present
+	if len(xapkInfo.OBBFiles) > 0 {
+		fmt.Printf("📦 Installing %d OBB files...\n", len(xapkInfo.OBBFiles))
+		
+		if err := a.installOBBFiles(xapkInfo, tempDir, deviceID); err != nil {
+			fmt.Printf("⚠️  OBB installation failed: %v\n", err)
+			fmt.Printf("   APK was installed successfully, but OBB files may be missing\n")
+			// Don't fail the entire installation for OBB issues
+		} else {
+			fmt.Printf("✅ OBB files installed successfully\n")
+		}
+	}
+
+	result.Success = true
+	result.Duration = time.Since(startTime)
+	result.PackageID = xapkInfo.PackageID
+
+	fmt.Printf("🎉 XAPK installation completed successfully!\n")
+	return result, nil
+}
+
+// installSingleAPK installs a single APK file
+func (a *ADBManager) installSingleAPK(apkPath string, deviceID string, options InstallOptions) error {
+	args := []string{}
+	
+	if deviceID != "" {
+		args = append(args, "-s", deviceID)
+	}
+	
+	args = append(args, "install")
+	
+	if options.Replace {
+		args = append(args, "-r")
+	}
+	if options.Downgrade {
+		args = append(args, "-d")
+	}
+	if options.GrantPermissions {
+		args = append(args, "-g")
+	}
+	
+	args = append(args, apkPath)
+	
+	fmt.Printf("   🔧 Installing: %s\n", filepath.Base(apkPath))
+	
+	cmd := exec.Command(a.config.ADB.Path, args...)
+	output, err := cmd.CombinedOutput()
+	
+	if err != nil {
+		return fmt.Errorf("adb install failed: %v, output: %s", err, string(output))
+	}
+	
+	if !strings.Contains(string(output), "Success") {
+		return fmt.Errorf("installation failed: %s", string(output))
+	}
+	
+	return nil
+}
+
+// installMultipleAPKs installs multiple APK files using install-multiple
+func (a *ADBManager) installMultipleAPKs(apkPaths []string, deviceID string, options InstallOptions) error {
+	args := []string{}
+	
+	if deviceID != "" {
+		args = append(args, "-s", deviceID)
+	}
+	
+	args = append(args, "install-multiple")
+	
+	if options.Replace {
+		args = append(args, "-r")
+	}
+	if options.Downgrade {
+		args = append(args, "-d")
+	}
+	if options.GrantPermissions {
+		args = append(args, "-g")
+	}
+	
+	// Sort APK paths to ensure base.apk is installed first
+	sortedPaths := make([]string, len(apkPaths))
+	copy(sortedPaths, apkPaths)
+	
+	// Move base.apk to front if present
+	for i, path := range sortedPaths {
+		if strings.Contains(strings.ToLower(filepath.Base(path)), "base.apk") {
+			if i != 0 {
+				sortedPaths[0], sortedPaths[i] = sortedPaths[i], sortedPaths[0]
+			}
+			break
+		}
+	}
+	
+	args = append(args, sortedPaths...)
+	
+	fmt.Printf("   🔧 Installing split APKs: %d files\n", len(sortedPaths))
+	for _, path := range sortedPaths {
+		fmt.Printf("      - %s\n", filepath.Base(path))
+	}
+	
+	cmd := exec.Command(a.config.ADB.Path, args...)
+	output, err := cmd.CombinedOutput()
+	
+	if err != nil {
+		return fmt.Errorf("adb install-multiple failed: %v, output: %s", err, string(output))
+	}
+	
+	if !strings.Contains(string(output), "Success") {
+		return fmt.Errorf("installation failed: %s", string(output))
+	}
+	
+	return nil
+}
+
+// installOBBFiles installs OBB files to the device
+func (a *ADBManager) installOBBFiles(xapkInfo *apk.XAPKInfo, tempDir string, deviceID string) error {
+	if len(xapkInfo.OBBFiles) == 0 {
+		return nil
+	}
+
+	packageID := xapkInfo.PackageID
+	if packageID == "" {
+		return fmt.Errorf("package ID not found, cannot install OBB files")
+	}
+
+	// OBB files should be placed in /sdcard/Android/obb/<package_name>/
+	obbDir := fmt.Sprintf("/sdcard/Android/obb/%s/", packageID)
+	
+	// Create OBB directory on device
+	fmt.Printf("   📁 Creating OBB directory: %s\n", obbDir)
+	if err := a.createDeviceDirectory(obbDir, deviceID); err != nil {
+		return fmt.Errorf("failed to create OBB directory: %v", err)
+	}
+
+	// Copy each OBB file
+	for _, obbFile := range xapkInfo.OBBFiles {
+		localOBBPath := filepath.Join(tempDir, obbFile)
+		remoteOBBPath := obbDir + filepath.Base(obbFile)
+		
+		fmt.Printf("   📦 Copying OBB: %s\n", filepath.Base(obbFile))
+		
+		if err := a.pushFile(localOBBPath, remoteOBBPath, deviceID); err != nil {
+			return fmt.Errorf("failed to copy OBB file %s: %v", obbFile, err)
+		}
+	}
+
+	return nil
+}
+
+// createDeviceDirectory creates a directory on the device
+func (a *ADBManager) createDeviceDirectory(dirPath string, deviceID string) error {
+	args := []string{}
+	
+	if deviceID != "" {
+		args = append(args, "-s", deviceID)
+	}
+	
+	args = append(args, "shell", "mkdir", "-p", dirPath)
+	
+	cmd := exec.Command(a.config.ADB.Path, args...)
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("mkdir command failed: %v", err)
+	}
+	
+	return nil
+}
+
+// pushFile copies a file from local to device
+func (a *ADBManager) pushFile(localPath string, remotePath string, deviceID string) error {
+	args := []string{}
+	
+	if deviceID != "" {
+		args = append(args, "-s", deviceID)
+	}
+	
+	args = append(args, "push", localPath, remotePath)
+	
+	cmd := exec.Command(a.config.ADB.Path, args...)
+	output, err := cmd.CombinedOutput()
+	
+	if err != nil {
+		return fmt.Errorf("adb push failed: %v, output: %s", err, string(output))
+	}
+	
+	return nil
 }

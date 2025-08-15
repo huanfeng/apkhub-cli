@@ -28,8 +28,13 @@ func (p *XAPKParserWrapper) ParseAPK(apkPath string) (*APKInfo, error) {
 
 	// Add XAPK specific features
 	if xapkInfo.APKInfo != nil {
-		// Mark as XAPK
-		xapkInfo.APKInfo.Features = append(xapkInfo.APKInfo.Features, "xapk")
+		// Mark as XAPK or APKM based on file extension
+		ext := strings.ToLower(filepath.Ext(apkPath))
+		if ext == ".xapk" {
+			xapkInfo.APKInfo.Features = append(xapkInfo.APKInfo.Features, "xapk")
+		} else if ext == ".apkm" {
+			xapkInfo.APKInfo.Features = append(xapkInfo.APKInfo.Features, "apkm")
+		}
 
 		// Add split APK marker if multiple APKs
 		if len(xapkInfo.APKFiles) > 1 {
