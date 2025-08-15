@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/huanfeng/apkhub-cli/internal/errors"
@@ -27,7 +28,8 @@ var installCmd = &cobra.Command{
 	Short: "Install an application using adb",
 	Long: `Install an application to a connected Android device using adb.
 You can specify either a package ID to download and install, or a local APK path.`,
-	Args: cobra.ExactArgs(1),
+	Args:         cobra.ExactArgs(1),
+	SilenceUsage: true, // Don't show usage on errors
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logger := utils.GetGlobalLogger()
 		logger.Info("Starting installation process for: %s", args[0])
@@ -192,10 +194,16 @@ func validateAndShowLocalAPKInfo(apkPath string) error {
 	fmt.Printf("   Size: %.2f MB\n", float64(info.Size())/(1024*1024))
 	fmt.Printf("   Modified: %s\n", info.ModTime().Format("2006-01-02 15:04:05"))
 
-	// Try to extract basic APK information using the parser
-	if err := showLocalAPKDetails(apkPath); err != nil {
-		fmt.Printf("   ⚠️  Could not extract APK details: %v\n", err)
-		fmt.Printf("   📝 File will be installed as-is\n")
+	// For XAPK/APKM files, show basic info only
+	if isXAPKFile(apkPath) {
+		fmt.Printf("   📦 Type: XAPK/APKM package\n")
+		fmt.Printf("   📝 Will be extracted and installed automatically\n")
+	} else {
+		// Try to extract basic APK information using the parser
+		if err := showLocalAPKDetails(apkPath); err != nil {
+			fmt.Printf("   ⚠️  Could not extract APK details: %v\n", err)
+			fmt.Printf("   📝 File will be installed as-is\n")
+		}
 	}
 
 	fmt.Println()
@@ -397,6 +405,12 @@ func checkDeviceStorage(adbMgr *client.ADBManager, apkPath, deviceID string) err
 
 // checkExistingInstallation checks if the app is already installed
 func checkExistingInstallation(adbMgr *client.ADBManager, apkPath, deviceID string) error {
+	// For XAPK files, skip existing installation check to avoid duplicate parsing
+	if isXAPKFile(apkPath) {
+		fmt.Printf("   📦 XAPK package - installation check will be performed during installation\n")
+		return nil
+	}
+
 	// Try to extract package ID from APK
 	parser := apk.NewParser(".")
 	apkInfo, err := parser.ParseAPK(apkPath)
@@ -504,4 +518,9 @@ func init() {
 	installCmd.Flags().StringVarP(&downloadVersion, "version", "v", "", "Install specific version (when using package ID)")
 	installCmd.Flags().StringVarP(&installLocalPath, "local", "l", "", "Force treating argument as local path")
 	installCmd.Flags().BoolVar(&installCheckDeps, "check-deps", false, "Check dependencies before installation")
+}
+// isXAPKFile checks if the file is an XAPK or APKM file
+func isXAPKFile(path string) bool {
+	ext := strings.ToLower(filepath.Ext(path))
+	return ext == ".xapk" || ext == ".apkm"
 }

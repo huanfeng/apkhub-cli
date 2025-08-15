@@ -344,3 +344,151 @@ func (p *XAPKParser) calculateHashes(filePath string) (map[string]string, error)
 		"sha256": hex.EncodeToString(hash.Sum(nil)),
 	}, nil
 }
+// ParseXAPKQuiet parses an XAPK/APKM file with minimal output
+func (p *XAPKParser) ParseXAPKQuiet(xapkPath string) (*XAPKInfo, error) {
+	// Verify file exists and is readable
+	if _, err := os.Stat(xapkPath); err != nil {
+		return nil, fmt.Errorf("XAPK file not accessible: %w", err)
+	}
+
+	// Open XAPK as zip file
+	reader, err := zip.OpenReader(xapkPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open XAPK file (not a valid zip): %w", err)
+	}
+	defer reader.Close()
+
+	// Get file info
+	fileInfo, err := os.Stat(xapkPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to stat XAPK file: %w", err)
+	}
+
+	xapkInfo := &XAPKInfo{
+		IsXAPK:        true,
+		TotalSize:     fileInfo.Size(),
+		APKFiles:      []string{},
+		OBBFiles:      []string{},
+		ExpansionAPKs: []string{},
+	}
+
+	// Look for manifest files and APK contents
+	var manifestData []byte
+	var baseAPKData io.ReadCloser
+
+	for _, file := range reader.File {
+		fileName := filepath.Base(file.Name)
+
+		// Check for manifest files
+		switch fileName {
+		case "manifest.json", "info.json":
+			rc, err := file.Open()
+			if err != nil {
+				continue
+			}
+			manifestData, err = io.ReadAll(rc)
+			rc.Close()
+			if err != nil {
+				manifestData = nil
+			}
+		}
+
+		// Track APK files
+		if strings.HasSuffix(strings.ToLower(file.Name), ".apk") {
+			xapkInfo.APKFiles = append(xapkInfo.APKFiles, file.Name)
+
+			// Find base APK (priority order)
+			if strings.Contains(strings.ToLower(file.Name), "base.apk") || strings.ToLower(fileName) == "base.apk" {
+				if baseAPKData != nil {
+					baseAPKData.Close()
+				}
+				baseAPKData, _ = file.Open()
+			} else if baseAPKData == nil && !strings.Contains(strings.ToLower(file.Name), "config.") {
+				// Use first non-config APK as base
+				baseAPKData, _ = file.Open()
+			}
+		}
+
+		// Track OBB files
+		if strings.HasSuffix(strings.ToLower(file.Name), ".obb") {
+			xapkInfo.OBBFiles = append(xapkInfo.OBBFiles, file.Name)
+		}
+	}
+
+	// Parse manifest if found
+	var manifest *XAPKManifest
+	if manifestData != nil {
+		manifest = &XAPKManifest{}
+		if err := json.Unmarshal(manifestData, manifest); err != nil {
+			manifest = nil
+		}
+	}
+
+	// Extract base APK info
+	if baseAPKData != nil {
+		defer baseAPKData.Close()
+
+		// Create temporary file
+		tempFile, err := os.CreateTemp("", "xapk_base_*.apk")
+		if err != nil {
+			return nil, fmt.Errorf("failed to create temp file: %w", err)
+		}
+		defer os.Remove(tempFile.Name())
+		defer tempFile.Close()
+
+		// Copy base APK to temp file
+		if _, err := io.Copy(tempFile, baseAPKData); err != nil {
+			return nil, fmt.Errorf("failed to extract base APK: %w", err)
+		}
+		tempFile.Close()
+
+		// Parse base APK using parser chain
+		parser := NewParser(p.workDir)
+		apkInfo, err := parser.ParseAPK(tempFile.Name())
+		if err != nil {
+			// Try to use manifest info if APK parsing fails
+			if manifest != nil {
+				apkInfo = p.createAPKInfoFromManifest(manifest, xapkPath)
+			} else {
+				return nil, fmt.Errorf("failed to parse base APK and no manifest available: %w", err)
+			}
+		}
+
+		xapkInfo.APKInfo = apkInfo
+
+		// Override with manifest info if available
+		if manifest != nil {
+			if manifest.PackageName != "" {
+				xapkInfo.PackageID = manifest.PackageName
+			}
+			if manifest.Name != "" {
+				xapkInfo.AppName = map[string]string{"default": manifest.Name}
+			}
+			if manifest.VersionName != "" {
+				xapkInfo.Version = manifest.VersionName
+			}
+			if manifest.VersionCode > 0 {
+				xapkInfo.VersionCode = manifest.VersionCode
+			}
+			if manifest.MinSDKVersion > 0 {
+				xapkInfo.MinSDK = manifest.MinSDKVersion
+			}
+			if manifest.TargetSDKVersion > 0 {
+				xapkInfo.TargetSDK = manifest.TargetSDKVersion
+			}
+		}
+	} else if manifest != nil {
+		// No base APK found, use manifest info
+		xapkInfo.APKInfo = p.createAPKInfoFromManifest(manifest, xapkPath)
+	} else {
+		return nil, fmt.Errorf("no base APK or manifest found in XAPK")
+	}
+
+	// Use XAPK total size
+	xapkInfo.Size = xapkInfo.TotalSize
+
+	// Update file path
+	xapkInfo.FilePath = filepath.Base(xapkPath)
+
+	return xapkInfo, nil
+}
