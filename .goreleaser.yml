@@ -57,6 +57,7 @@ release:
   draft: false
   # 自动生成 release notes
   mode: append
+  replace_existing_artifacts: true
   header: |
     ## ApkHub CLI {{.Version}}
 
@@ -129,13 +130,28 @@ brews:
     test: |
       system "#{bin}/apkhub", "version"
 
-# 注释掉 GoReleaser 的 Scoop 集成，改用自定义 workflow
-# scoops:
-#   - name: apkhub
-#     repository:
-#       owner: huanfeng
-#       name: apkhub-scoop-bucket
-#       token: "{{ .Env.SCOOP_BUCKET_GITHUB_TOKEN }}"
-#     description: "A command-line tool for managing distributed APK repositories"
-#     homepage: "https://github.com/huanfeng/apkhub-cli"
-#     license: "MIT"
+scoops:
+  - name: apkhub
+    directory: "bucket"
+    commit_msg_template: "Update ApkHub CLI scoop manifest to {{ .Tag }}"
+    homepage: "https://github.com/huanfeng/apkhub-cli"
+    description: "ApkHub CLI – manage distributed APK repositories"
+    license: MIT
+    skip_upload: false
+    repository:
+      owner: huanfeng
+      name: apkhub-scoop-bucket
+      branch: main
+      token: "{{ .Env.SCOOP_BUCKET_GITHUB_TOKEN }}"
+
+    # 可选：PR 而不是直接 push
+      # pull_request:
+      #   enabled: true
+      #   draft: false
+      #   body: |
+      #     Update Scoop manifest for ApkHub CLI {{ .Tag }}
+
+    # 可选作者信息
+    commit_author:
+      name: goreleaserbot
+      email: goreleaser@bot.com
