@@ -129,25 +129,13 @@ brews:
     test: |
       system "#{bin}/apkhub", "version"
 
-# Scoop Manifest
-# 注意：需要先创建 apkhub-scoop-bucket 仓库并设置 SCOOP_BUCKET_GITHUB_TOKEN
-scoops:
-  - name: apkhub
-    # GitHub repository to push the manifest to
-    repository:
-      owner: huanfeng
-      name: apkhub-scoop-bucket
-      token: "{{ .Env.SCOOP_BUCKET_GITHUB_TOKEN }}"
-
-    # 如果没有设置 token，跳过此步骤
-    skip_upload: "{{ not .Env.SCOOP_BUCKET_GITHUB_TOKEN }}"
-
-    # Manifest description
-    description: "A command-line tool for managing distributed APK repositories"
-    homepage: "https://github.com/huanfeng/apkhub-cli"
-    license: "MIT"
-
-    # Persist data between updates
-    persist:
-      - "apkhub.yaml"
-      - "apkhub_manifest.json"
+# 注释掉 GoReleaser 的 Scoop 集成，改用自定义 workflow
+# scoops:
+#   - name: apkhub
+#     repository:
+#       owner: huanfeng
+#       name: apkhub-scoop-bucket
+#       token: "{{ .Env.SCOOP_BUCKET_GITHUB_TOKEN }}"
+#     description: "A command-line tool for managing distributed APK repositories"
+#     homepage: "https://github.com/huanfeng/apkhub-cli"
+#     license: "MIT"
