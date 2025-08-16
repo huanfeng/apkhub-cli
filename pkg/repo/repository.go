@@ -273,14 +273,50 @@ func (r *Repository) buildDownloadURL(filePath string) string {
 	urlPath := strings.ReplaceAll(filePath, "\\", "/")
 
 	if r.config.Repository.BaseURL != "" {
-		// Ensure base URL doesn't end with slash and path doesn't start with slash
-		baseURL := strings.TrimRight(r.config.Repository.BaseURL, "/")
+		baseURL := r.config.Repository.BaseURL
+		
+		// Handle local mode with special rules
+		if r.isLocalMode(baseURL) {
+			return r.buildLocalDownloadURL(baseURL, urlPath)
+		}
+		
+		// Handle remote URLs
+		baseURL = strings.TrimRight(baseURL, "/")
 		urlPath = strings.TrimLeft(urlPath, "/")
 		return fmt.Sprintf("%s/%s", baseURL, urlPath)
 	}
 
 	// Return relative path
 	return urlPath
+}
+
+// isLocalMode checks if the base URL indicates local mode
+func (r *Repository) isLocalMode(baseURL string) bool {
+	return strings.HasPrefix(baseURL, "http://localhost") || 
+		   strings.HasPrefix(baseURL, "http://127.0.0.1") ||
+		   strings.HasPrefix(baseURL, "file://") ||
+		   baseURL == "local"
+}
+
+// buildLocalDownloadURL builds download URL for local mode based on bucket path rules
+func (r *Repository) buildLocalDownloadURL(baseURL, urlPath string) string {
+	// If baseURL is "local", use file:// protocol with absolute path
+	if baseURL == "local" {
+		absPath := filepath.Join(r.rootDir, urlPath)
+		return "file://" + absPath
+	}
+	
+	// If it's already a file:// URL, resolve relative to the repository root
+	if strings.HasPrefix(baseURL, "file://") {
+		basePath := strings.TrimPrefix(baseURL, "file://")
+		absPath := filepath.Join(basePath, urlPath)
+		return "file://" + absPath
+	}
+	
+	// For localhost URLs, keep the original behavior but ensure proper path joining
+	baseURL = strings.TrimRight(baseURL, "/")
+	urlPath = strings.TrimLeft(urlPath, "/")
+	return fmt.Sprintf("%s/%s", baseURL, urlPath)
 }
 
 // updateLatestVersion updates the latest version field for a package

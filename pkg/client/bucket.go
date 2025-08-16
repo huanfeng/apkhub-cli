@@ -714,15 +714,33 @@ func (b *BucketManager) resolveDownloadURL(bucketName, relativeURL string) strin
 		return relativeURL
 	}
 
+	// Handle file:// URLs (local buckets)
 	if strings.HasPrefix(bucket.URL, "file://") {
-		// For local buckets, construct file:// URL
 		localPath := strings.TrimPrefix(bucket.URL, "file://")
 		fullPath := filepath.Join(localPath, relativeURL)
+		// Normalize path separators for URLs
+		fullPath = strings.ReplaceAll(fullPath, "\\", "/")
 		return "file://" + fullPath
-	} else {
-		// For remote buckets, use HTTP URL
-		return bucket.URL + "/" + relativeURL
 	}
+	
+	// Handle local development URLs
+	if b.isLocalDevelopmentURL(bucket.URL) {
+		// Ensure proper URL path joining
+		baseURL := strings.TrimRight(bucket.URL, "/")
+		urlPath := strings.TrimLeft(relativeURL, "/")
+		return fmt.Sprintf("%s/%s", baseURL, urlPath)
+	}
+	
+	// For remote buckets, use HTTP URL
+	baseURL := strings.TrimRight(bucket.URL, "/")
+	urlPath := strings.TrimLeft(relativeURL, "/")
+	return fmt.Sprintf("%s/%s", baseURL, urlPath)
+}
+
+// isLocalDevelopmentURL checks if URL is for local development
+func (b *BucketManager) isLocalDevelopmentURL(url string) bool {
+	return strings.HasPrefix(url, "http://localhost") || 
+		   strings.HasPrefix(url, "http://127.0.0.1")
 }
 
 // isAbsoluteURL checks if a URL is absolute

@@ -68,6 +68,8 @@ func createConfig(configPath string, exists bool) error {
 		templateContent = getAdvancedTemplate()
 	case "development":
 		templateContent = getDevelopmentTemplate()
+	case "local":
+		templateContent = getLocalTemplate()
 	default:
 		templateContent = getDefaultTemplate()
 	}
@@ -324,8 +326,12 @@ repository:
   description: "Private APK repository for my applications"
   
   # Base URL for downloads (will be prepended to relative paths)
-  # Leave empty to use relative paths only
-  # Example: "https://example.com/apk-repo"
+  # Options:
+  # - "" (empty): Use relative paths only
+  # - "local": Generate file:// URLs based on repository path (for local buckets)
+  # - "http://localhost:8080": Local HTTP server
+  # - "https://example.com/apk-repo": Remote HTTP server
+  # - "file:///absolute/path": Specific file path
   base_url: ""
   
   # Number of versions to keep (0 = keep all)
@@ -406,7 +412,11 @@ func getDevelopmentTemplate() string {
 repository:
   name: "Development APK Repository"
   description: "Development and testing APK repository"
-  base_url: "http://localhost:8080"
+  # For local development, you can use:
+  # - "local" for file:// URLs based on repository path
+  # - "http://localhost:8080" for local HTTP server
+  # - "file:///absolute/path" for specific file path
+  base_url: "local"
   keep_versions: 5
   signature_handling: "separate"
 
@@ -428,11 +438,38 @@ scanning:
 `
 }
 
+func getLocalTemplate() string {
+	return `# ApkHub Local Repository Configuration
+
+repository:
+  name: "Local APK Repository"
+  description: "Local file-based APK repository"
+  # Use "local" for file:// URLs based on repository path
+  # This will generate file:// URLs that can be used by bucket clients
+  base_url: "local"
+  keep_versions: 0
+  signature_handling: "mark"
+
+scanning:
+  recursive: true
+  follow_symlinks: false
+  include_pattern:
+    - "*.apk"
+    - "*.xapk"
+    - "*.apkm"
+  exclude_pattern:
+    - "*.tmp"
+    - "*.bak"
+    - ".git/*"
+  parse_apk_info: true
+`
+}
+
 func init() {
 	repoCmd.AddCommand(initCmd)
 
 	initCmd.Flags().BoolVarP(&initForce, "force", "f", false, "Overwrite existing configuration")
 	initCmd.Flags().BoolVarP(&initInteractive, "interactive", "i", false, "Interactive configuration wizard")
 	initCmd.Flags().BoolVarP(&initUpdate, "update", "u", false, "Update existing configuration")
-	initCmd.Flags().StringVarP(&initTemplate, "template", "t", "default", "Configuration template (default, minimal, advanced, development)")
+	initCmd.Flags().StringVarP(&initTemplate, "template", "t", "default", "Configuration template (default, minimal, advanced, development, local)")
 }
