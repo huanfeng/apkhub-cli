@@ -16,7 +16,7 @@ brew install apkhub
 #### Scoop (Windows)
 ```powershell
 # 添加 bucket（仅第一次）
-scoop bucket add apkhub https://github.com/huanfeng/apkhub-scoop-bucket
+scoop bucket add huanfeng-bucket https://github.com/huanfeng/scoop-bucket
 
 # 安装
 scoop install apkhub

@@ -28,15 +28,15 @@ homebrew-tap/
 
 ### 2. 创建 Scoop Bucket 仓库
 
-创建一个名为 `apkhub-scoop-bucket` 的 GitHub 仓库：
+创建一个名为 `scoop-bucket` 的 GitHub 仓库：
 
 ```bash
-# 仓库名称：huanfeng/apkhub-scoop-bucket
+# 仓库名称：huanfeng/scoop-bucket
 ```
 
 初始化仓库结构：
 ```
-apkhub-scoop-bucket/
+scoop-bucket/
 ├── README.md
 ├── bucket/
 │   └── .gitkeep
@@ -86,7 +86,7 @@ brew upgrade apkhub
 
 ```powershell
 # 添加 bucket
-scoop bucket add apkhub https://github.com/huanfeng/apkhub-scoop-bucket
+scoop bucket add huanfeng-bucket https://github.com/huanfeng/scoop-bucket
 
 # 安装
 scoop install apkhub
@@ -137,7 +137,7 @@ brew install apkhub
 ## Installation
 
 ```powershell
-scoop bucket add apkhub https://github.com/huanfeng/apkhub-scoop-bucket
+scoop bucket add huanfeng-bucket https://github.com/huanfeng/scoop-bucket
 scoop install apkhub
 ```
 

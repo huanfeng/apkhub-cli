@@ -63,7 +63,7 @@ brew install apkhub
 
 #### Scoop (Windows)
 ```bash
-scoop bucket add apkhub https://github.com/huanfeng/apkhub-scoop-bucket
+scoop bucket add huanfeng-bucket https://github.com/huanfeng/scoop-bucket
 scoop install apkhub
 ```
 
@@ -193,7 +193,7 @@ repository:
   name: "My APK Repository"
   description: "Personal APK collection"
   base_url: "https://example.com"
-  
+
 directories:
   apks: "./apks"
   icons: "./icons"
@@ -213,7 +213,7 @@ buckets:
     name: "main"
     url: "https://apkhub.example.com/apkhub_manifest.json"
     enabled: true
-  
+
 client:
   download_dir: "~/Downloads/apkhub"
   cache_dir: "~/.apkhub/cache"

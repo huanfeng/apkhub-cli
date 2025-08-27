@@ -12,7 +12,7 @@ cat > README.md << 'EOF'
 ## Installation
 
 ```powershell
-scoop bucket add apkhub https://github.com/huanfeng/apkhub-scoop-bucket
+scoop bucket add huanfeng-bucket https://github.com/huanfeng/scoop-bucket
 scoop install apkhub
 ```
 
@@ -55,5 +55,5 @@ echo "Don't forget to:"
 echo "1. git init"
 echo "2. git add ."
 echo "3. git commit -m 'Initial commit'"
-echo "4. git remote add origin https://github.com/huanfeng/apkhub-scoop-bucket.git"
+echo "4. git remote add origin https://github.com/huanfeng/scoop-bucket.git"
 echo "5. git push -u origin main"

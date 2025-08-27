@@ -140,7 +140,7 @@ scoops:
     skip_upload: false
     repository:
       owner: huanfeng
-      name: apkhub-scoop-bucket
+      name: scoop-bucket
       branch: main
       token: "{{ .Env.SCOOP_BUCKET_GITHUB_TOKEN }}"
 
