@@ -29,7 +29,9 @@ Create and maintain your own APK repositories:
 ### 📱 Client Operations (`apkhub bucket`, `apkhub search`, `apkhub install`)
 Consume APK repositories like a package manager:
 
-- **Multi-Repository**: Manage multiple APK sources (buckets)
+- **Multi-Repository**: Manage multiple APK sources (buckets), supporting both local and remote repositories
+- **Local Repository Support**: Use APK repositories directly from local file system
+- **Remote Repository Support**: Fetch APK repositories from HTTP/HTTPS servers
 - **Smart Search**: Find apps across all configured repositories
 - **Direct Installation**: Install APKs directly to Android devices via ADB
 - **Download Management**: Automatic verification and resume support
@@ -110,8 +112,12 @@ apkhub repo export --format csv
 ### 3. 📱 Client Operations (Use APK Repositories)
 
 ```bash
-# Add a repository source (bucket)
+# Add a remote repository source (bucket)
 apkhub bucket add myrepo https://example.com/apkhub_manifest.json
+
+# Add a local repository source
+apkhub bucket add localrepo /path/to/local/repo
+apkhub bucket add localrepo ./my-local-repo
 
 # List all configured repositories
 apkhub bucket list
@@ -164,10 +170,13 @@ Use APK repositories like a package manager:
 
 #### Repository Sources Management
 - `apkhub bucket list` - List all configured repository sources
-- `apkhub bucket add <name> <url>` - Add a new repository source
+- `apkhub bucket add <name> <url-or-path> [display-name]` - Add a new repository source (supports local paths and remote URLs)
 - `apkhub bucket remove <name>` - Remove a repository source
-- `apkhub bucket update` - Update all repository sources
-- `apkhub bucket health` - Check repository health status
+- `apkhub bucket update [name]` - Update all or specific repository sources
+- `apkhub bucket enable <name>` - Enable a repository source
+- `apkhub bucket disable <name>` - Disable a repository source
+- `apkhub bucket health [name]` - Check repository health status
+- `apkhub bucket status` - Show detailed repository status and statistics
 
 #### App Discovery & Installation
 - `apkhub search <query>` - Search applications across all repositories
@@ -329,6 +338,153 @@ scoop install adb
 choco install adb
 ```
 
+## 🏠 Local Repository Guide
+
+ApkHub CLI fully supports APK repositories on the local file system, working without requiring HTTP servers.
+
+### 📁 Local Repository Benefits
+
+- **🚀 Fast Access**: No network latency, instant response
+- **🔒 Privacy Protection**: Data stays completely local, no server uploads required
+- **💾 Offline Operation**: Works perfectly in completely offline environments
+- **🛠️ Development Friendly**: Perfect for development and testing environments
+- **📦 Version Control**: Can be integrated with Git and other version control systems
+
+### 🔧 Local Repository Setup
+
+#### Creating a Local Repository
+```bash
+# Create repository directory
+mkdir my-apk-repo
+cd my-apk-repo
+
+# Initialize repository
+apkhub repo init
+
+# Create APK storage directory
+mkdir apks
+
+# Copy APK files to repository
+cp /path/to/*.apk ./apks/
+
+# Scan and generate index
+apkhub repo scan ./apks
+```
+
+#### Adding Local Repository as Client Source
+```bash
+# Using absolute path
+apkhub bucket add mylocal /home/user/my-apk-repo "My Local Repository"
+
+# Using relative path
+apkhub bucket add dev ./dev-repo "Development Repository"
+
+# Using current directory
+apkhub bucket add current . "Current Directory Repository"
+```
+
+#### Local Repository Directory Structure
+```
+my-apk-repo/
+├── apkhub_manifest.json    # Repository index file (auto-generated)
+├── apkhub.yaml            # Repository configuration file
+├── apks/                  # APK files storage directory
+│   ├── com.example.app-1.0.0.apk
+│   ├── com.example.app-2.0.0.apk
+│   └── org.telegram.messenger-10.2.0.apk
+├── icons/                 # Application icons (auto-extracted)
+│   ├── com.example.app.png
+│   └── org.telegram.messenger.png
+└── info/                  # Detailed app information (optional)
+    ├── com.example.app.json
+    └── org.telegram.messenger.json
+```
+
+### 🔄 Local Repository Maintenance
+
+#### Adding New Applications
+```bash
+# Method 1: Add single APK directly
+apkhub repo add /path/to/new-app.apk
+
+# Method 2: Batch scan directory
+cp /path/to/new-apps/*.apk ./apks/
+apkhub repo scan ./apks
+
+# Method 3: Incremental scan (only process new files)
+apkhub repo scan --incremental ./apks
+```
+
+#### Updates and Cleanup
+```bash
+# View repository statistics
+apkhub repo stats
+
+# Verify repository integrity
+apkhub repo verify
+
+# Clean old versions (keep latest 3 versions)
+apkhub repo clean --keep 3
+
+# Regenerate all indexes
+apkhub repo scan --force ./apks
+```
+
+### 🌐 Local Repository Sharing
+
+#### Through File Sharing
+```bash
+# Share via network file system
+# Team members can directly add shared paths
+apkhub bucket add shared /mnt/shared/apk-repo
+
+# Share via Samba/CIFS
+apkhub bucket add team //server/apk-repo
+```
+
+#### Through Simple HTTP Server
+```bash
+# Start simple HTTP server in repository directory
+cd my-apk-repo
+python3 -m http.server 8080
+
+# Other clients can access via HTTP
+apkhub bucket add local-http http://localhost:8080
+```
+
+#### Through Version Control Systems
+```bash
+# Commit repository to Git
+git init
+git add .
+git commit -m "Initial APK repository"
+
+# Other developers can clone and use directly
+git clone https://github.com/user/apk-repo.git
+apkhub bucket add team-repo ./apk-repo
+```
+
+### ⚡ Local Repository Performance Optimization
+
+#### Cache Configuration
+```yaml
+# ~/.apkhub/config.yaml
+client:
+  cache_ttl: 0  # Local repositories can disable cache TTL
+  cache_dir: "~/.apkhub/cache"
+```
+
+#### Health Checks
+```bash
+# Check local repository health status
+apkhub bucket health mylocal
+
+# Local repository health checks include:
+# - Directory existence and accessibility
+# - apkhub_manifest.json existence and validity
+# - APK file integrity verification
+```
+
 ## 🚀 Advanced Usage
 
 ### 🏗️ Repository Management Workflows
@@ -371,18 +527,46 @@ apkhub repo import --format fdroid https://f-droid.org/repo/index-v1.json
 
 ### 📱 Client Usage Workflows
 
-#### Multi-Repository Setup
+#### Multi-Repository Setup (Local + Remote)
 ```bash
-# Add multiple repository sources
+# Add remote repository sources
 apkhub bucket add official https://apkhub.example.com/apkhub_manifest.json
 apkhub bucket add fdroid https://f-droid.org/repo/apkhub_manifest.json
-apkhub bucket add personal https://my-repo.com/apkhub_manifest.json
+
+# Add local repository sources
+apkhub bucket add personal /home/user/my-apk-repo
+apkhub bucket add work ./work-apps-repo
+apkhub bucket add backup ~/backup/apk-collection
 
 # Search across all repositories
 apkhub search "telegram"
 
 # Install from any repository
 apkhub install org.telegram.messenger
+
+# Check health of all repositories
+apkhub bucket health
+
+# Update all repositories (local repos will rescan, remote repos will re-download)
+apkhub bucket update
+```
+
+#### Local Repository Workflow
+```bash
+# Create a local repository
+mkdir my-local-repo
+cd my-local-repo
+apkhub repo init
+
+# Add APK files to repository
+apkhub repo scan ./apks
+
+# Add local repository as client source
+apkhub bucket add local-dev /path/to/my-local-repo
+
+# Search and install from local repository
+apkhub search "myapp"
+apkhub install com.example.myapp
 ```
 
 #### Bulk Installation

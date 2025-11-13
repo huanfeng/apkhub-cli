@@ -29,7 +29,9 @@ ApkHub CLI 是一个**分布式 APK 仓库系统**，工作方式类似 Scoop �
 ### 📱 客户端操作 (`apkhub bucket`, `apkhub search`, `apkhub install`)
 像包管理器一样使用 APK 仓库：
 
-- **多仓库管理**: 管理多个 APK 源（存储桶）
+- **多仓库管理**: 管理多个 APK 源（存储桶），支持本地和远程仓库
+- **本地仓库支持**: 直接使用本地文件系统中的 APK 仓库
+- **远程仓库支持**: 从 HTTP/HTTPS 服务器获取 APK 仓库
 - **智能搜索**: 在所有配置的仓库中查找应用
 - **直接安装**: 通过 ADB 直接安装 APK 到 Android 设备
 - **下载管理**: 自动验证和断点续传支持
@@ -110,8 +112,12 @@ apkhub repo export --format csv
 ### 3. 📱 客户端操作（使用 APK 仓库）
 
 ```bash
-# 添加仓库源（存储桶）
+# 添加远程仓库源（存储桶）
 apkhub bucket add myrepo https://example.com/apkhub_manifest.json
+
+# 添加本地仓库源
+apkhub bucket add localrepo /path/to/local/repo
+apkhub bucket add localrepo ./my-local-repo
 
 # 列出所有配置的仓库
 apkhub bucket list
@@ -164,10 +170,13 @@ apkhub install --device emulator-5554 app.apk
 
 #### 仓库源管理
 - `apkhub bucket list` - 列出所有配置的仓库源
-- `apkhub bucket add <name> <url>` - 添加新的仓库源
+- `apkhub bucket add <name> <url-or-path> [display-name]` - 添加新的仓库源（支持本地路径和远程 URL）
 - `apkhub bucket remove <name>` - 移除仓库源
-- `apkhub bucket update` - 更新所有仓库源
-- `apkhub bucket health` - 检查仓库健康状态
+- `apkhub bucket update [name]` - 更新所有或指定仓库源
+- `apkhub bucket enable <name>` - 启用仓库源
+- `apkhub bucket disable <name>` - 禁用仓库源
+- `apkhub bucket health [name]` - 检查仓库健康状态
+- `apkhub bucket status` - 显示详细的仓库状态和统计信息
 
 #### 应用发现与安装
 - `apkhub search <query>` - 在所有仓库中搜索应用程序
@@ -329,6 +338,153 @@ scoop install adb
 choco install adb
 ```
 
+## 🏠 本地仓库详解
+
+ApkHub CLI 完全支持本地文件系统中的 APK 仓库，无需 HTTP 服务器即可工作。
+
+### 📁 本地仓库的优势
+
+- **🚀 快速访问**: 无网络延迟，即时响应
+- **🔒 隐私保护**: 数据完全在本地，无需上传到服务器
+- **💾 离线工作**: 完全离线环境下也能正常使用
+- **🛠️ 开发友好**: 适合开发和测试环境
+- **📦 版本控制**: 可以与 Git 等版本控制系统集成
+
+### 🔧 本地仓库设置
+
+#### 创建本地仓库
+```bash
+# 创建仓库目录
+mkdir my-apk-repo
+cd my-apk-repo
+
+# 初始化仓库
+apkhub repo init
+
+# 创建 APK 存储目录
+mkdir apks
+
+# 复制 APK 文件到仓库
+cp /path/to/*.apk ./apks/
+
+# 扫描并生成索引
+apkhub repo scan ./apks
+```
+
+#### 添加本地仓库为客户端源
+```bash
+# 使用绝对路径
+apkhub bucket add mylocal /home/user/my-apk-repo "我的本地仓库"
+
+# 使用相对路径
+apkhub bucket add dev ./dev-repo "开发仓库"
+
+# 使用当前目录
+apkhub bucket add current . "当前目录仓库"
+```
+
+#### 本地仓库的目录结构
+```
+my-apk-repo/
+├── apkhub_manifest.json    # 仓库索引文件（自动生成）
+├── apkhub.yaml            # 仓库配置文件
+├── apks/                  # APK 文件存储目录
+│   ├── com.example.app-1.0.0.apk
+│   ├── com.example.app-2.0.0.apk
+│   └── org.telegram.messenger-10.2.0.apk
+├── icons/                 # 应用图标（自动提取）
+│   ├── com.example.app.png
+│   └── org.telegram.messenger.png
+└── info/                  # 应用详细信息（可选）
+    ├── com.example.app.json
+    └── org.telegram.messenger.json
+```
+
+### 🔄 本地仓库维护
+
+#### 添加新应用
+```bash
+# 方法1：直接添加单个 APK
+apkhub repo add /path/to/new-app.apk
+
+# 方法2：批量扫描目录
+cp /path/to/new-apps/*.apk ./apks/
+apkhub repo scan ./apks
+
+# 方法3：增量扫描（只处理新文件）
+apkhub repo scan --incremental ./apks
+```
+
+#### 更新和清理
+```bash
+# 查看仓库统计
+apkhub repo stats
+
+# 验证仓库完整性
+apkhub repo verify
+
+# 清理旧版本（保留最新3个版本）
+apkhub repo clean --keep 3
+
+# 重新生成所有索引
+apkhub repo scan --force ./apks
+```
+
+### 🌐 本地仓库共享
+
+#### 通过文件共享
+```bash
+# 通过网络文件系统共享
+# 团队成员可以直接添加共享路径
+apkhub bucket add shared /mnt/shared/apk-repo
+
+# 通过 Samba/CIFS 共享
+apkhub bucket add team //server/apk-repo
+```
+
+#### 通过简单 HTTP 服务器
+```bash
+# 在仓库目录中启动简单 HTTP 服务器
+cd my-apk-repo
+python3 -m http.server 8080
+
+# 其他客户端可以通过 HTTP 访问
+apkhub bucket add local-http http://localhost:8080
+```
+
+#### 通过版本控制系统
+```bash
+# 将仓库提交到 Git
+git init
+git add .
+git commit -m "Initial APK repository"
+
+# 其他开发者克隆后可直接使用
+git clone https://github.com/user/apk-repo.git
+apkhub bucket add team-repo ./apk-repo
+```
+
+### ⚡ 本地仓库性能优化
+
+#### 缓存配置
+```yaml
+# ~/.apkhub/config.yaml
+client:
+  cache_ttl: 0  # 本地仓库可以禁用缓存TTL
+  cache_dir: "~/.apkhub/cache"
+```
+
+#### 健康检查
+```bash
+# 检查本地仓库健康状态
+apkhub bucket health mylocal
+
+# 本地仓库健康检查包括：
+# - 目录是否存在和可访问
+# - apkhub_manifest.json 是否存在和有效
+# - APK 文件完整性验证
+```
+
 ## 🚀 高级用法
 
 ### 🏗️ 仓库管理工作流
@@ -371,18 +527,46 @@ apkhub repo import --format fdroid https://f-droid.org/repo/index-v1.json
 
 ### 📱 客户端使用工作流
 
-#### 多仓库设置
+#### 多仓库设置（本地 + 远程）
 ```bash
-# 添加多个仓库源
+# 添加远程仓库源
 apkhub bucket add official https://apkhub.example.com/apkhub_manifest.json
 apkhub bucket add fdroid https://f-droid.org/repo/apkhub_manifest.json
-apkhub bucket add personal https://my-repo.com/apkhub_manifest.json
+
+# 添加本地仓库源
+apkhub bucket add personal /home/user/my-apk-repo
+apkhub bucket add work ./work-apps-repo
+apkhub bucket add backup ~/backup/apk-collection
 
 # 在所有仓库中搜索
 apkhub search "telegram"
 
 # 从任何仓库安装
 apkhub install org.telegram.messenger
+
+# 检查所有仓库的健康状态
+apkhub bucket health
+
+# 更新所有仓库（本地仓库会重新扫描，远程仓库会重新下载）
+apkhub bucket update
+```
+
+#### 本地仓库工作流
+```bash
+# 创建本地仓库
+mkdir my-local-repo
+cd my-local-repo
+apkhub repo init
+
+# 添加 APK 文件到仓库
+apkhub repo scan ./apks
+
+# 将本地仓库添加为客户端源
+apkhub bucket add local-dev /path/to/my-local-repo
+
+# 从本地仓库搜索和安装
+apkhub search "myapp"
+apkhub install com.example.myapp
 ```
 
 #### 批量安装
