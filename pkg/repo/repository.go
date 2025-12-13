@@ -61,6 +61,8 @@ func (r *Repository) Initialize() error {
 			Packages:    make(map[string]*models.AppPackage),
 		}
 
+		r.applyManifestSignature(manifest)
+
 		if err := r.saveManifest(manifest); err != nil {
 			return fmt.Errorf("failed to create initial manifest: %w", err)
 		}
@@ -213,6 +215,8 @@ func (r *Repository) BuildManifestFromInfos() (*models.ManifestIndex, error) {
 		Packages:    make(map[string]*models.AppPackage),
 	}
 
+	r.applyManifestSignature(manifest)
+
 	var totalSize int64
 
 	// Group APKs by package ID
@@ -264,7 +268,28 @@ func (r *Repository) BuildManifestFromInfos() (*models.ManifestIndex, error) {
 	manifest.TotalAPKs = len(infos)
 	manifest.TotalSize = totalSize
 
+	r.applyManifestSignature(manifest)
+
 	return manifest, nil
+}
+
+// applyManifestSignature injects signing metadata into the manifest when configured
+func (r *Repository) applyManifestSignature(manifest *models.ManifestIndex) {
+	if manifest == nil {
+		return
+	}
+
+	// Only attach signature metadata when signer information is provided
+	if r.config.Repository.SigningKeyFingerprint == "" && r.config.Repository.Signer == "" {
+		manifest.Signature = nil
+		return
+	}
+
+	manifest.Signature = &models.ManifestSignature{
+		PublicKeyFingerprint: r.config.Repository.SigningKeyFingerprint,
+		SignedAt:             time.Now(),
+		Signer:               r.config.Repository.Signer,
+	}
 }
 
 // buildDownloadURL builds the download URL for an APK
@@ -274,12 +299,12 @@ func (r *Repository) buildDownloadURL(filePath string) string {
 
 	if r.config.Repository.BaseURL != "" {
 		baseURL := r.config.Repository.BaseURL
-		
+
 		// Handle local mode with special rules
 		if r.isLocalMode(baseURL) {
 			return r.buildLocalDownloadURL(baseURL, urlPath)
 		}
-		
+
 		// Handle remote URLs
 		baseURL = strings.TrimRight(baseURL, "/")
 		urlPath = strings.TrimLeft(urlPath, "/")
@@ -292,10 +317,10 @@ func (r *Repository) buildDownloadURL(filePath string) string {
 
 // isLocalMode checks if the base URL indicates local mode
 func (r *Repository) isLocalMode(baseURL string) bool {
-	return strings.HasPrefix(baseURL, "http://localhost") || 
-		   strings.HasPrefix(baseURL, "http://127.0.0.1") ||
-		   strings.HasPrefix(baseURL, "file://") ||
-		   baseURL == "local"
+	return strings.HasPrefix(baseURL, "http://localhost") ||
+		strings.HasPrefix(baseURL, "http://127.0.0.1") ||
+		strings.HasPrefix(baseURL, "file://") ||
+		baseURL == "local"
 }
 
 // buildLocalDownloadURL builds download URL for local mode based on bucket path rules
@@ -305,14 +330,14 @@ func (r *Repository) buildLocalDownloadURL(baseURL, urlPath string) string {
 		absPath := filepath.Join(r.rootDir, urlPath)
 		return "file://" + absPath
 	}
-	
+
 	// If it's already a file:// URL, resolve relative to the repository root
 	if strings.HasPrefix(baseURL, "file://") {
 		basePath := strings.TrimPrefix(baseURL, "file://")
 		absPath := filepath.Join(basePath, urlPath)
 		return "file://" + absPath
 	}
-	
+
 	// For localhost URLs, keep the original behavior but ensure proper path joining
 	baseURL = strings.TrimRight(baseURL, "/")
 	urlPath = strings.TrimLeft(urlPath, "/")

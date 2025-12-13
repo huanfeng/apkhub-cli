@@ -17,6 +17,8 @@ var bucketCmd = &cobra.Command{
 	Long:  `Manage APK repository buckets (sources) for the client functionality.`,
 }
 
+var bucketVerifySignature bool
+
 var bucketListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all configured buckets",
@@ -108,6 +110,7 @@ var bucketAddCmd = &cobra.Command{
 		// Update bucket index
 		fmt.Printf("Fetching bucket manifest...\n")
 		bucketMgr := client.NewBucketManager(config)
+		bucketMgr.SetSignatureVerification(bucketVerifySignature && config.Security.VerifySignature)
 		if _, err := bucketMgr.FetchManifest(name); err != nil {
 			fmt.Printf("Warning: Failed to fetch manifest: %v\n", err)
 			fmt.Println("You can try updating later with 'apkhub bucket update'")
@@ -169,6 +172,7 @@ var bucketUpdateCmd = &cobra.Command{
 		}
 
 		bucketMgr := client.NewBucketManager(config)
+		bucketMgr.SetSignatureVerification(bucketVerifySignature && config.Security.VerifySignature)
 
 		if len(args) > 0 {
 			// Update specific bucket
@@ -516,6 +520,8 @@ func formatBytes(bytes int64) string {
 
 func init() {
 	rootCmd.AddCommand(bucketCmd)
+
+	bucketCmd.PersistentFlags().BoolVar(&bucketVerifySignature, "verify-signature", true, "Verify bucket manifest signatures (set false to bypass)")
 
 	// Add subcommands
 	bucketCmd.AddCommand(bucketListCmd)

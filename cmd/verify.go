@@ -1,8 +1,11 @@
 package cmd
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,10 +17,11 @@ import (
 )
 
 var (
-	verifyFix    bool
-	verifyDeep   bool
-	verifyQuiet  bool
-	verifyReport string
+	verifyFix        bool
+	verifyDeep       bool
+	verifyQuiet      bool
+	verifyReport     string
+	verifySignatures bool
 )
 
 var verifyCmd = &cobra.Command{
@@ -159,7 +163,7 @@ func performRepositoryVerification(cfg *models.Config) (*VerificationResult, err
 	}
 
 	if manifest != nil {
-		result.TotalFiles = manifest.TotalAPKs
+		result.TotalFiles = countManifestAPKs(manifest)
 
 		// Check 4: APK files
 		if !verifyQuiet {
@@ -261,17 +265,8 @@ func checkDirectoryStructure(cfg *models.Config) []VerificationIssue {
 	return issues
 }
 
-// ManifestData represents the basic manifest structure
-type ManifestData struct {
-	Name        string                 `json:"name"`
-	Description string                 `json:"description"`
-	Version     string                 `json:"version"`
-	TotalAPKs   int                    `json:"total_apks"`
-	Packages    map[string]interface{} `json:"packages"`
-}
-
 // checkManifestIntegrity checks manifest file integrity
-func checkManifestIntegrity(cfg *models.Config) ([]VerificationIssue, *ManifestData) {
+func checkManifestIntegrity(cfg *models.Config) ([]VerificationIssue, *models.ManifestIndex) {
 	var issues []VerificationIssue
 
 	// Check if manifest file exists
@@ -299,7 +294,7 @@ func checkManifestIntegrity(cfg *models.Config) ([]VerificationIssue, *ManifestD
 		return issues, nil
 	}
 
-	var manifest ManifestData
+	var manifest models.ManifestIndex
 	if err := json.Unmarshal(data, &manifest); err != nil {
 		issues = append(issues, VerificationIssue{
 			Type:        "manifest",
@@ -312,7 +307,7 @@ func checkManifestIntegrity(cfg *models.Config) ([]VerificationIssue, *ManifestD
 	}
 
 	// Check manifest consistency
-	if manifest.Name != cfg.Repository.Name {
+	if manifest.Name != "" && manifest.Name != cfg.Repository.Name {
 		issues = append(issues, VerificationIssue{
 			Type:        "manifest",
 			Severity:    "warning",
@@ -322,11 +317,17 @@ func checkManifestIntegrity(cfg *models.Config) ([]VerificationIssue, *ManifestD
 		})
 	}
 
+	if verifySignatures {
+		if issue := validateManifestSignature(&manifest, cfg); issue != nil {
+			issues = append(issues, *issue)
+		}
+	}
+
 	return issues, &manifest
 }
 
 // checkAPKFiles checks APK file integrity
-func checkAPKFiles(cfg *models.Config, manifest *ManifestData) ([]VerificationIssue, int) {
+func checkAPKFiles(cfg *models.Config, manifest *models.ManifestIndex) ([]VerificationIssue, int) {
 	var issues []VerificationIssue
 	validCount := 0
 
@@ -334,56 +335,95 @@ func checkAPKFiles(cfg *models.Config, manifest *ManifestData) ([]VerificationIs
 		return issues, validCount
 	}
 
-	// Check APK files in the apks directory
-	apkDir := "apks"
-	if entries, err := os.ReadDir(apkDir); err == nil {
-		for _, entry := range entries {
-			if entry.IsDir() {
+	strictPolicy := strings.ToLower(cfg.Repository.SignaturePolicy) == "strict"
+
+	for pkgID, pkg := range manifest.Packages {
+		if pkg == nil {
+			continue
+		}
+
+		for versionKey, version := range pkg.Versions {
+			if version == nil {
 				continue
 			}
 
-			filename := entry.Name()
-			if strings.HasSuffix(strings.ToLower(filename), ".apk") {
-				apkPath := filepath.Join(apkDir, filename)
-				if _, err := os.Stat(apkPath); err == nil {
-					validCount++
-				} else {
+			localPath, hasLocalPath := resolveLocalAPKPath(version.DownloadURL)
+			if !hasLocalPath {
+				continue
+			}
+
+			if _, err := os.Stat(localPath); err != nil {
+				issues = append(issues, VerificationIssue{
+					Type:        "apk",
+					Severity:    "error",
+					Description: fmt.Sprintf("APK file missing for %s (%s)", pkgID, versionKey),
+					File:        localPath,
+					Fixable:     false,
+				})
+				continue
+			}
+
+			if verifySignatures {
+				if sigIssue := validateAPKSignature(pkgID, versionKey, version, cfg, strictPolicy); sigIssue != nil {
+					issues = append(issues, *sigIssue)
+				}
+
+				expectedHash := strings.TrimSpace(version.SHA256)
+				if expectedHash == "" {
+					severity := "warning"
+					if strictPolicy {
+						severity = "error"
+					}
+					issues = append(issues, VerificationIssue{
+						Type:        "manifest",
+						Severity:    severity,
+						Description: fmt.Sprintf("Missing SHA256 for %s (%s). Regenerate manifest or disable signature verification.", pkgID, versionKey),
+						File:        "apkhub_manifest.json",
+						Fixable:     true,
+					})
+					continue
+				}
+
+				actualHash, err := calculateFileSHA256(localPath)
+				if err != nil {
 					issues = append(issues, VerificationIssue{
 						Type:        "apk",
 						Severity:    "error",
-						Description: fmt.Sprintf("Cannot access APK file: %s", filename),
-						File:        filename,
+						Description: fmt.Sprintf("Failed to hash %s (%s): %v", pkgID, versionKey, err),
+						File:        localPath,
 						Fixable:     false,
 					})
+					continue
+				}
+
+				if actualHash != expectedHash {
+					issues = append(issues, VerificationIssue{
+						Type:        "apk",
+						Severity:    "error",
+						Description: fmt.Sprintf("Hash mismatch for %s (%s). Expected %s, got %s", pkgID, versionKey, expectedHash, actualHash),
+						File:        localPath,
+						Fixable:     false,
+					})
+					continue
 				}
 			}
+
+			validCount++
 		}
-	} else {
-		issues = append(issues, VerificationIssue{
-			Type:        "apk",
-			Severity:    "error",
-			Description: "Cannot access APK directory",
-			File:        apkDir,
-			Fixable:     false,
-		})
 	}
 
 	return issues, validCount
 }
 
 // checkOrphanedFiles checks for files not referenced in manifest
-func checkOrphanedFiles(cfg *models.Config, manifest *ManifestData) []VerificationIssue {
+func checkOrphanedFiles(cfg *models.Config, manifest *models.ManifestIndex) []VerificationIssue {
 	var issues []VerificationIssue
 
 	if manifest == nil {
 		return issues
 	}
 
-	// For now, we'll do a basic check for APK files
-	// In a more complete implementation, we'd parse the manifest packages
-	// and check against the actual files referenced
-
-	// Check APK directory for any obvious issues
+	// For now, we'll do a basic check for APK files against the reported total
 	apkDir := "apks"
 	if entries, err := os.ReadDir(apkDir); err == nil {
 		apkCount := 0
@@ -399,11 +439,12 @@ func checkOrphanedFiles(cfg *models.Config, manifest *ManifestData) []Verificati
 		}
 
 		// Basic consistency check
-		if apkCount != manifest.TotalAPKs {
+		expected := countManifestAPKs(manifest)
+		if expected > 0 && apkCount != expected {
 			issues = append(issues, VerificationIssue{
 				Type:        "consistency",
 				Severity:    "warning",
-				Description: fmt.Sprintf("APK count mismatch: found %d files, manifest reports %d", apkCount, manifest.TotalAPKs),
+				Description: fmt.Sprintf("APK count mismatch: found %d files, manifest reports %d", apkCount, expected),
 				File:        "apks/",
 				Fixable:     false,
 			})
@@ -414,7 +455,7 @@ func checkOrphanedFiles(cfg *models.Config, manifest *ManifestData) []Verificati
 }
 
 // performDeepVerification performs additional deep checks
-func performDeepVerification(cfg *models.Config, manifest *ManifestData) []VerificationIssue {
+func performDeepVerification(cfg *models.Config, manifest *models.ManifestIndex) []VerificationIssue {
 	var issues []VerificationIssue
 
 	if manifest == nil {
@@ -468,6 +509,150 @@ func performDeepVerification(cfg *models.Config, manifest *ManifestData) []Verif
 	return issues
 }
 
+func validateManifestSignature(manifest *models.ManifestIndex, cfg *models.Config) *VerificationIssue {
+	policyStrict := strings.ToLower(cfg.Repository.SignaturePolicy) == "strict"
+
+	if manifest.Signature == nil || manifest.Signature.PublicKeyFingerprint == "" {
+		if !verifySignatures {
+			return nil
+		}
+
+		severity := "warning"
+		if policyStrict {
+			severity = "error"
+		}
+
+		return &VerificationIssue{
+			Type:        "manifest",
+			Severity:    severity,
+			Description: "Manifest lacks signature metadata. Configure signing_key_fingerprint/signer or rerun with --verify-signature=false.",
+			File:        "apkhub_manifest.json",
+			Fixable:     true,
+		}
+	}
+
+	if len(cfg.Repository.TrustedKeys) > 0 && !containsString(cfg.Repository.TrustedKeys, manifest.Signature.PublicKeyFingerprint) {
+		severity := "warning"
+		if policyStrict {
+			severity = "error"
+		}
+
+		return &VerificationIssue{
+			Type:        "manifest",
+			Severity:    severity,
+			Description: fmt.Sprintf("Manifest signer %s is not in trusted_keys. Add the fingerprint or relax signature_policy.", manifest.Signature.PublicKeyFingerprint),
+			File:        "apkhub_manifest.json",
+			Fixable:     true,
+		}
+	}
+
+	if manifest.Signature.SignedAt.IsZero() && verifySignatures {
+		return &VerificationIssue{
+			Type:        "manifest",
+			Severity:    "warning",
+			Description: "Manifest signature timestamp missing. Regenerate manifest to refresh signing metadata.",
+			File:        "apkhub_manifest.json",
+			Fixable:     true,
+		}
+	}
+
+	return nil
+}
+
+func validateAPKSignature(pkgID, versionKey string, version *models.AppVersion, cfg *models.Config, strict bool) *VerificationIssue {
+	if version.SignatureInfo == nil || version.SignatureInfo.SHA256 == "" {
+		severity := "warning"
+		if strict {
+			severity = "error"
+		}
+
+		return &VerificationIssue{
+			Type:        "signature",
+			Severity:    severity,
+			Description: fmt.Sprintf("Missing APK signature fingerprint for %s (%s).", pkgID, versionKey),
+			File:        "apkhub_manifest.json",
+			Fixable:     true,
+		}
+	}
+
+	if len(cfg.Repository.TrustedKeys) > 0 && !containsString(cfg.Repository.TrustedKeys, version.SignatureInfo.SHA256) {
+		severity := "warning"
+		if strict {
+			severity = "error"
+		}
+
+		return &VerificationIssue{
+			Type:        "signature",
+			Severity:    severity,
+			Description: fmt.Sprintf("APK signer %s not trusted for %s (%s). Update trusted_keys or disable signature verification.", version.SignatureInfo.SHA256, pkgID, versionKey),
+			File:        "apkhub_manifest.json",
+			Fixable:     true,
+		}
+	}
+
+	return nil
+}
+
+func resolveLocalAPKPath(downloadURL string) (string, bool) {
+	if downloadURL == "" {
+		return "", false
+	}
+
+	lowered := strings.ToLower(downloadURL)
+	if strings.HasPrefix(lowered, "http://") || strings.HasPrefix(lowered, "https://") {
+		return "", false
+	}
+
+	if strings.HasPrefix(lowered, "file://") {
+		return strings.TrimPrefix(downloadURL, "file://"), true
+	}
+
+	return filepath.Clean(strings.TrimLeft(downloadURL, "/")), true
+}
+
+func calculateFileSHA256(path string) (string, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	hasher := sha256.New()
+	if _, err := io.Copy(hasher, file); err != nil {
+		return "", err
+	}
+
+	return hex.EncodeToString(hasher.Sum(nil)), nil
+}
+
+func countManifestAPKs(manifest *models.ManifestIndex) int {
+	if manifest == nil {
+		return 0
+	}
+
+	if manifest.TotalAPKs > 0 {
+		return manifest.TotalAPKs
+	}
+
+	count := 0
+	for _, pkg := range manifest.Packages {
+		if pkg == nil {
+			continue
+		}
+		count += len(pkg.Versions)
+	}
+	return count
+}
+
+func containsString(list []string, target string) bool {
+	for _, item := range list {
+		if strings.EqualFold(strings.TrimSpace(item), strings.TrimSpace(target)) {
+			return true
+		}
+	}
+	return false
+}
+
 // calculateStatistics calculates verification statistics
 func calculateStatistics(result *VerificationResult) {
 	for _, issue := range result.Issues {
@@ -481,6 +666,8 @@ func calculateStatistics(result *VerificationResult) {
 		case "orphan":
 			result.Statistics.OrphanedFiles++
 		case "manifest":
+			result.Statistics.InvalidMetadata++
+		case "signature":
 			result.Statistics.InvalidMetadata++
 		case "icon":
 			result.Statistics.MissingIcons++
@@ -644,4 +831,5 @@ func init() {
 	verifyCmd.Flags().BoolVar(&verifyDeep, "deep", false, "Perform deep verification (slower but more thorough)")
 	verifyCmd.Flags().BoolVar(&verifyQuiet, "quiet", false, "Suppress progress output")
 	verifyCmd.Flags().StringVar(&verifyReport, "report", "", "Generate JSON report file")
+	verifyCmd.Flags().BoolVar(&verifySignatures, "verify-signature", true, "Verify manifest signature metadata and APK hashes")
 }

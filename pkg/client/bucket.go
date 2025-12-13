@@ -50,11 +50,12 @@ func DefaultRetryConfig() RetryConfig {
 
 // BucketManager manages repository buckets
 type BucketManager struct {
-	config       *Config
-	retryConfig  RetryConfig
-	healthMap    map[string]*BucketHealth
-	httpClient   *http.Client
-	cacheManager *CacheManager
+	config          *Config
+	retryConfig     RetryConfig
+	healthMap       map[string]*BucketHealth
+	httpClient      *http.Client
+	cacheManager    *CacheManager
+	verifySignature bool
 }
 
 // NewBucketManager creates a new bucket manager
@@ -67,6 +68,7 @@ func NewBucketManager(config *Config) *BucketManager {
 		httpClient: &http.Client{
 			Timeout: 30 * time.Second,
 		},
+		verifySignature: config.Security.VerifySignature,
 	}
 }
 
@@ -80,7 +82,13 @@ func NewBucketManagerWithRetry(config *Config, retryConfig RetryConfig) *BucketM
 		httpClient: &http.Client{
 			Timeout: retryConfig.Timeout,
 		},
+		verifySignature: config.Security.VerifySignature,
 	}
+}
+
+// SetSignatureVerification allows callers to override signature verification behavior
+func (b *BucketManager) SetSignatureVerification(enabled bool) {
+	b.verifySignature = enabled
 }
 
 // FetchManifest fetches and caches a bucket's manifest with retry and health monitoring
@@ -141,6 +149,29 @@ func (b *BucketManager) FetchManifest(bucketName string) (*models.ManifestIndex,
 	if err := json.Unmarshal(data, &manifest); err != nil {
 		b.updateHealthOnError(bucketName, fmt.Errorf("parse error: %w", err))
 		return nil, fmt.Errorf("failed to parse manifest: %w", err)
+	}
+
+	if b.verifySignature {
+		if err := b.verifyManifestSignature(&manifest); err != nil {
+			policy := strings.ToLower(b.config.Security.SignaturePolicy)
+			if policy == "" {
+				policy = "lenient"
+			}
+
+			if policy == "strict" {
+				b.updateHealthOnError(bucketName, fmt.Errorf("signature verification failed: %w", err))
+
+				// Try to use stale cache as a safe downgrade path
+				if manifest, _, cacheErr := b.cacheManager.GetManifest(bucketName, true); cacheErr == nil && manifest != nil {
+					fmt.Printf("⚠️  Using stale cache for bucket '%s' due to signature verification failure: %v\n", bucketName, err)
+					return manifest, nil
+				}
+
+				return nil, fmt.Errorf("manifest signature verification failed: %w. Add the signer fingerprint to security.trusted_keys or rerun with --verify-signature=false.", err)
+			}
+
+			fmt.Printf("⚠️  Manifest signature verification failed: %v (continuing due to lenient policy)\n", err)
+		}
 	}
 
 	// Save to cache
@@ -487,6 +518,31 @@ func (b *BucketManager) GetMergedManifest() (*models.ManifestIndex, error) {
 	return merged, nil
 }
 
+func (b *BucketManager) verifyManifestSignature(manifest *models.ManifestIndex) error {
+	if manifest == nil {
+		return fmt.Errorf("manifest is empty")
+	}
+
+	sig := manifest.Signature
+	if sig == nil {
+		return fmt.Errorf("manifest missing signature metadata")
+	}
+
+	if sig.PublicKeyFingerprint == "" {
+		return fmt.Errorf("manifest signature missing public key fingerprint")
+	}
+
+	if len(b.config.Security.TrustedKeys) > 0 && !containsString(b.config.Security.TrustedKeys, sig.PublicKeyFingerprint) {
+		return fmt.Errorf("untrusted manifest signer: %s", sig.PublicKeyFingerprint)
+	}
+
+	if sig.SignedAt.IsZero() {
+		return fmt.Errorf("manifest signature timestamp is missing")
+	}
+
+	return nil
+}
+
 // loadCachedManifest loads manifest from cache if not expired
 func (b *BucketManager) loadCachedManifest(cachePath string, ttl int) (*models.ManifestIndex, error) {
 	info, err := os.Stat(cachePath)
@@ -722,7 +778,7 @@ func (b *BucketManager) resolveDownloadURL(bucketName, relativeURL string) strin
 		fullPath = strings.ReplaceAll(fullPath, "\\", "/")
 		return "file://" + fullPath
 	}
-	
+
 	// Handle local development URLs
 	if b.isLocalDevelopmentURL(bucket.URL) {
 		// Ensure proper URL path joining
@@ -730,7 +786,7 @@ func (b *BucketManager) resolveDownloadURL(bucketName, relativeURL string) strin
 		urlPath := strings.TrimLeft(relativeURL, "/")
 		return fmt.Sprintf("%s/%s", baseURL, urlPath)
 	}
-	
+
 	// For remote buckets, use HTTP URL
 	baseURL := strings.TrimRight(bucket.URL, "/")
 	urlPath := strings.TrimLeft(relativeURL, "/")
@@ -739,8 +795,17 @@ func (b *BucketManager) resolveDownloadURL(bucketName, relativeURL string) strin
 
 // isLocalDevelopmentURL checks if URL is for local development
 func (b *BucketManager) isLocalDevelopmentURL(url string) bool {
-	return strings.HasPrefix(url, "http://localhost") || 
-		   strings.HasPrefix(url, "http://127.0.0.1")
+	return strings.HasPrefix(url, "http://localhost") ||
+		strings.HasPrefix(url, "http://127.0.0.1")
+}
+
+func containsString(list []string, target string) bool {
+	for _, item := range list {
+		if strings.EqualFold(strings.TrimSpace(item), strings.TrimSpace(target)) {
+			return true
+		}
+	}
+	return false
 }
 
 // isAbsoluteURL checks if a URL is absolute
