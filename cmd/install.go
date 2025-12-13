@@ -1,11 +1,13 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/huanfeng/apkhub-cli/internal/device"
 	"github.com/huanfeng/apkhub-cli/internal/errors"
 	"github.com/huanfeng/apkhub-cli/pkg/apk"
 	"github.com/huanfeng/apkhub-cli/pkg/client"
@@ -15,12 +17,15 @@ import (
 )
 
 var (
-	installDevice    string
-	installReplace   bool
-	installDowngrade bool
-	installGrant     bool
-	installLocalPath string
-	installCheckDeps bool
+	installDevice     string
+	installDeviceIDs  []string
+	installAllDevices bool
+	installReplace    bool
+	installDowngrade  bool
+	installGrant      bool
+	installLocalPath  string
+	installCheckDeps  bool
+	installWorkers    int
 )
 
 var installCmd = &cobra.Command{
@@ -120,6 +125,10 @@ You can specify either a package ID to download and install, or a local APK path
 				"APK file not found").
 				WithContext("apk_path", apkPath).
 				WithSuggestion("Verify the file path is correct")
+		}
+
+		if installAllDevices && (installDevice != "" || len(installDeviceIDs) > 0) {
+			return fmt.Errorf("--all-devices cannot be combined with --device or --devices")
 		}
 
 		// Perform unified installation process
@@ -255,66 +264,122 @@ func performUnifiedInstall(config *client.Config, apkPath, target string, isLoca
 	// Initialize ADB manager
 	adbMgr := client.NewADBManager(config)
 
-	// Device selection and validation
-	deviceID := installDevice
-	if deviceID == "" {
-		fmt.Println("📱 No device specified, detecting available devices...")
-		selectedDevice, err := adbMgr.SelectDevice()
-		if err != nil {
-			return fmt.Errorf("device selection failed: %w", err)
-		}
-		deviceID = selectedDevice
-	} else {
-		fmt.Printf("📱 Using specified device: %s\n", deviceID)
-		// Validate the specified device
-		if err := validateSpecifiedDevice(adbMgr, deviceID); err != nil {
-			return err
-		}
+	explicitTargets := append([]string{}, installDeviceIDs...)
+	if installDevice != "" {
+		explicitTargets = append(explicitTargets, installDevice)
 	}
 
-	// Pre-installation checks
-	if err := performPreInstallChecks(adbMgr, apkPath, deviceID); err != nil {
-		return fmt.Errorf("pre-installation checks failed: %w", err)
-	}
-
-	// Prepare install options
-	installOptions := client.InstallOptions{
-		Replace:          installReplace,
-		Downgrade:        installDowngrade,
-		GrantPermissions: installGrant,
-	}
-
-	// Perform installation with progress tracking
-	fmt.Println("📦 Installing APK...")
-	result, err := adbMgr.InstallWithResult(apkPath, deviceID, installOptions)
+	deviceIDs, err := resolveTargetDevices(adbMgr, explicitTargets, installAllDevices, true)
 	if err != nil {
-		return fmt.Errorf("installation failed: %w", err)
+		return fmt.Errorf("device selection failed: %w", err)
 	}
 
-	// Display installation result
-	displayInstallationResult(result, target, isLocalFile)
+	if err := performMultiDeviceInstall(adbMgr, deviceIDs, apkPath, target, isLocalFile); err != nil {
+		return err
+	}
 
-	// Post-installation verification
-	if result.Success {
-		if err := performPostInstallVerification(adbMgr, result, deviceID); err != nil {
-			fmt.Printf("⚠️  Post-installation verification failed: %v\n", err)
-			fmt.Println("   The app was installed but verification encountered issues")
+	return nil
+}
+
+func performMultiDeviceInstall(adbMgr *client.ADBManager, deviceIDs []string, apkPath, target string, isLocalFile bool) error {
+	fmt.Printf("📱 Targeting %d device(s)\n", len(deviceIDs))
+
+	options := []device.Option[*client.InstallResult]{}
+	if installWorkers > 0 {
+		options = append(options, device.WithWorkerLimit[*client.InstallResult](installWorkers))
+	}
+
+	manager := device.NewManager[*client.InstallResult](options...)
+	results := manager.Run(context.Background(), deviceIDs, func(ctx context.Context, deviceID string) (*client.InstallResult, error) {
+		fmt.Printf("\n🔧 [%s] Preparing installation\n", deviceID)
+		if err := validateSpecifiedDevice(adbMgr, deviceID); err != nil {
+			return nil, err
 		}
-	}
 
-	// Cleanup downloaded files if it was a remote install
-	if !isLocalFile {
-		if err := cleanupDownloadedFile(apkPath); err != nil {
-			fmt.Printf("⚠️  Failed to cleanup downloaded file: %v\n", err)
+		if err := performPreInstallChecks(adbMgr, apkPath, deviceID); err != nil {
+			return nil, fmt.Errorf("pre-installation checks failed: %w", err)
 		}
+
+		installOptions := client.InstallOptions{
+			Replace:          installReplace,
+			Downgrade:        installDowngrade,
+			GrantPermissions: installGrant,
+		}
+
+		fmt.Printf("📦 [%s] Installing APK...\n", deviceID)
+		result, err := adbMgr.InstallWithResult(apkPath, deviceID, installOptions)
+		if err != nil {
+			return nil, err
+		}
+
+		displayInstallationResult(result, target, isLocalFile)
+
+		if result.Success {
+			if err := performPostInstallVerification(adbMgr, result, deviceID); err != nil {
+				fmt.Printf("⚠️  [%s] Post-installation verification failed: %v\n", deviceID, err)
+				fmt.Println("   The app was installed but verification encountered issues")
+			}
+		}
+
+		return result, nil
+	})
+
+	return summarizeInstallResults(results)
+}
+
+func summarizeInstallResults(results []device.Result[*client.InstallResult]) error {
+	var successes []string
+	var failures []string
+
+	for _, res := range results {
+		if res.Err != nil {
+			failures = append(failures, fmt.Sprintf("%s: %v", res.DeviceID, res.Err))
+			continue
+		}
+
+		if res.Value != nil && res.Value.Success {
+			summary := res.DeviceID
+			if res.Value.PackageID != "" {
+				summary = fmt.Sprintf("%s (%s)", res.DeviceID, res.Value.PackageID)
+			}
+			successes = append(successes, summary)
+			continue
+		}
+
+		if res.Value != nil {
+			message := res.Value.ErrorMessage
+			if message == "" {
+				message = "installation failed"
+			}
+			failures = append(failures, fmt.Sprintf("%s: %s", res.DeviceID, message))
+			continue
+		}
+
+		failures = append(failures, fmt.Sprintf("%s: unknown result", res.DeviceID))
 	}
 
-	if result.Success {
-		fmt.Println("✅ Installation completed successfully!")
-		return nil
+	fmt.Println("\n📊 Installation summary:")
+	if len(successes) > 0 {
+		fmt.Printf("   ✅ %d succeeded:\n", len(successes))
+		for _, s := range successes {
+			fmt.Printf("      • %s\n", s)
+		}
 	} else {
-		return fmt.Errorf("installation failed")
+		fmt.Println("   ✅ 0 succeeded")
 	}
+
+	if len(failures) > 0 {
+		fmt.Printf("   ❌ %d failed:\n", len(failures))
+		for _, f := range failures {
+			fmt.Printf("      • %s\n", f)
+		}
+	}
+
+	if len(failures) > 0 {
+		return fmt.Errorf("installation failed on %d device(s)", len(failures))
+	}
+
+	return nil
 }
 
 // validateSpecifiedDevice validates that the specified device is available and online
@@ -512,6 +577,9 @@ func init() {
 
 	// Add flags
 	installCmd.Flags().StringVarP(&installDevice, "device", "s", "", "Target device ID")
+	installCmd.Flags().StringSliceVar(&installDeviceIDs, "devices", nil, "Comma-separated target device IDs")
+	installCmd.Flags().BoolVar(&installAllDevices, "all-devices", false, "Install on all online devices")
+	installCmd.Flags().IntVar(&installWorkers, "workers", 0, "Maximum concurrent installs (0 = auto)")
 	installCmd.Flags().BoolVarP(&installReplace, "replace", "r", true, "Replace existing application")
 	installCmd.Flags().BoolVarP(&installDowngrade, "downgrade", "d", false, "Allow version downgrade")
 	installCmd.Flags().BoolVarP(&installGrant, "grant", "g", true, "Grant all runtime permissions")
@@ -519,6 +587,7 @@ func init() {
 	installCmd.Flags().StringVarP(&installLocalPath, "local", "l", "", "Force treating argument as local path")
 	installCmd.Flags().BoolVar(&installCheckDeps, "check-deps", false, "Check dependencies before installation")
 }
+
 // isXAPKFile checks if the file is an XAPK or APKM file
 func isXAPKFile(path string) bool {
 	ext := strings.ToLower(filepath.Ext(path))

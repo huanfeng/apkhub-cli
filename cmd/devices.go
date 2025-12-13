@@ -1,12 +1,16 @@
 package cmd
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 	"text/tabwriter"
 	"time"
 
+	"github.com/huanfeng/apkhub-cli/internal/device"
 	"github.com/huanfeng/apkhub-cli/pkg/client"
 	"github.com/spf13/cobra"
 )
@@ -15,6 +19,12 @@ var (
 	devicesFormat  string
 	devicesWatch   bool
 	devicesRefresh int
+	devicesAll     bool
+	devicesTargets []string
+
+	devicesLogPackage string
+	devicesLogLevel   string
+	devicesLogOutput  string
 )
 
 var devicesCmd = &cobra.Command{
@@ -91,6 +101,41 @@ var devicesWaitCmd = &cobra.Command{
 		}
 
 		return nil
+	},
+}
+
+var devicesLogsCmd = &cobra.Command{
+	Use:   "logs",
+	Short: "Capture application logs from connected devices",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		if devicesLogPackage == "" {
+			return fmt.Errorf("--package is required")
+		}
+
+		config, err := client.Load()
+		if err != nil {
+			return fmt.Errorf("failed to load config: %w", err)
+		}
+
+		adbMgr := client.NewADBManager(config)
+		deviceIDs, err := resolveTargetDevices(adbMgr, devicesTargets, devicesAll, true)
+		if err != nil {
+			return err
+		}
+
+		options := []device.Option[*client.LogCaptureResult]{}
+		manager := device.NewManager[*client.LogCaptureResult](options...)
+		results := manager.Run(context.Background(), deviceIDs, func(ctx context.Context, deviceID string) (*client.LogCaptureResult, error) {
+			outputPath := buildLogOutputPath(deviceID, len(deviceIDs))
+			return adbMgr.CaptureLogs(client.LogCaptureOptions{
+				DeviceID:   deviceID,
+				PackageID:  devicesLogPackage,
+				Level:      devicesLogLevel,
+				OutputPath: outputPath,
+			})
+		})
+
+		return summarizeLogCaptures(results)
 	},
 }
 
@@ -305,6 +350,67 @@ func showDeviceDetails(device *client.Device) {
 	}
 }
 
+func buildLogOutputPath(deviceID string, totalDevices int) string {
+	if devicesLogOutput == "" {
+		return ""
+	}
+
+	if totalDevices <= 1 {
+		return devicesLogOutput
+	}
+
+	ext := filepath.Ext(devicesLogOutput)
+	base := strings.TrimSuffix(filepath.Base(devicesLogOutput), ext)
+	dir := filepath.Dir(devicesLogOutput)
+	sanitized := strings.ReplaceAll(deviceID, ":", "_")
+
+	return filepath.Join(dir, fmt.Sprintf("%s-%s%s", base, sanitized, ext))
+}
+
+func summarizeLogCaptures(results []device.Result[*client.LogCaptureResult]) error {
+	var successes []string
+	var failures []string
+
+	for _, res := range results {
+		if res.Err != nil {
+			failures = append(failures, fmt.Sprintf("%s: %v", res.DeviceID, res.Err))
+			continue
+		}
+
+		if res.Value != nil {
+			summary := fmt.Sprintf("%s -> %s (%d bytes)", res.DeviceID, res.Value.OutputPath, res.Value.SizeBytes)
+			if res.Value.Note != "" {
+				summary += fmt.Sprintf(" [%s]", res.Value.Note)
+			}
+			successes = append(successes, summary)
+			continue
+		}
+
+		failures = append(failures, fmt.Sprintf("%s: no result", res.DeviceID))
+	}
+
+	fmt.Println("\n📊 Log capture summary:")
+	if len(successes) > 0 {
+		fmt.Printf("   ✅ %d captured:\n", len(successes))
+		for _, s := range successes {
+			fmt.Printf("      • %s\n", s)
+		}
+	}
+
+	if len(failures) > 0 {
+		fmt.Printf("   ❌ %d failed:\n", len(failures))
+		for _, f := range failures {
+			fmt.Printf("      • %s\n", f)
+		}
+	}
+
+	if len(failures) > 0 {
+		return fmt.Errorf("log capture failed on %d device(s)", len(failures))
+	}
+
+	return nil
+}
+
 // watchDevices continuously monitors device status
 func watchDevices(adbMgr *client.ADBManager) error {
 	fmt.Printf("👀 Watching devices (refresh every %ds, press Ctrl+C to stop)...\n\n", devicesRefresh)
@@ -329,9 +435,16 @@ func init() {
 	// Add subcommands
 	devicesCmd.AddCommand(devicesInfoCmd)
 	devicesCmd.AddCommand(devicesWaitCmd)
+	devicesCmd.AddCommand(devicesLogsCmd)
 
 	// Add flags
 	devicesCmd.Flags().StringVar(&devicesFormat, "format", "default", "Output format: default, table, json")
 	devicesCmd.Flags().BoolVar(&devicesWatch, "watch", false, "Watch device status continuously")
 	devicesCmd.Flags().IntVar(&devicesRefresh, "refresh", 3, "Refresh interval in seconds for watch mode")
+	devicesCmd.PersistentFlags().BoolVar(&devicesAll, "all-devices", false, "Target all online devices")
+	devicesCmd.PersistentFlags().StringSliceVar(&devicesTargets, "devices", nil, "Comma-separated list of target devices")
+
+	devicesLogsCmd.Flags().StringVar(&devicesLogPackage, "package", "", "Package ID to filter logs")
+	devicesLogsCmd.Flags().StringVar(&devicesLogLevel, "level", "I", "Minimum log level (V, D, I, W, E, F, S)")
+	devicesLogsCmd.Flags().StringVar(&devicesLogOutput, "output", "", "Optional output file or directory for logs")
 }
