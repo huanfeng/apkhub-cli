@@ -15,6 +15,7 @@ type Config struct {
 	Buckets       map[string]*Bucket `yaml:"buckets"`
 	Client        ClientSettings     `yaml:"client"`
 	ADB           ADBSettings        `yaml:"adb"`
+	Security      SecuritySettings   `yaml:"security"`
 }
 
 // Bucket represents a repository source
@@ -30,6 +31,13 @@ type ClientSettings struct {
 	DownloadDir string `yaml:"download_dir"`
 	CacheDir    string `yaml:"cache_dir"`
 	CacheTTL    int    `yaml:"cache_ttl"` // seconds
+}
+
+// SecuritySettings controls how manifests and downloads are validated
+type SecuritySettings struct {
+	VerifySignature bool     `yaml:"verify_signature"`
+	TrustedKeys     []string `yaml:"trusted_keys"`
+	SignaturePolicy string   `yaml:"signature_policy"`
 }
 
 // ADBSettings contains ADB configuration
@@ -50,6 +58,11 @@ func DefaultConfig() *Config {
 			DownloadDir: filepath.Join(apkhubDir, "downloads"),
 			CacheDir:    filepath.Join(apkhubDir, "cache"),
 			CacheTTL:    3600, // 1 hour
+		},
+		Security: SecuritySettings{
+			VerifySignature: true,
+			TrustedKeys:     []string{},
+			SignaturePolicy: "lenient",
 		},
 		ADB: ADBSettings{
 			Path:          "adb",

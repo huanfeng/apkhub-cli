@@ -11,11 +11,15 @@ import (
 
 var defaultConfig = models.Config{
 	Repository: models.RepositoryConfig{
-		Name:              "My APK Repository",
-		Description:       "Private APK repository",
-		BaseURL:           "",
-		KeepVersions:      0,
-		SignatureHandling: "mark",
+		Name:                  "My APK Repository",
+		Description:           "Private APK repository",
+		BaseURL:               "",
+		KeepVersions:          0,
+		SignatureHandling:     "mark",
+		SigningKeyFingerprint: "",
+		Signer:                "",
+		TrustedKeys:           []string{},
+		SignaturePolicy:       "lenient",
 	},
 	Scanning: models.ScanningConfig{
 		Recursive:      true,
@@ -36,6 +40,10 @@ func Load(configPath string) (*models.Config, error) {
 	viper.SetDefault("repository.base_url", defaultConfig.Repository.BaseURL)
 	viper.SetDefault("repository.keep_versions", defaultConfig.Repository.KeepVersions)
 	viper.SetDefault("repository.signature_handling", defaultConfig.Repository.SignatureHandling)
+	viper.SetDefault("repository.signing_key_fingerprint", defaultConfig.Repository.SigningKeyFingerprint)
+	viper.SetDefault("repository.signer", defaultConfig.Repository.Signer)
+	viper.SetDefault("repository.trusted_keys", defaultConfig.Repository.TrustedKeys)
+	viper.SetDefault("repository.signature_policy", defaultConfig.Repository.SignaturePolicy)
 	viper.SetDefault("scanning.recursive", defaultConfig.Scanning.Recursive)
 	viper.SetDefault("scanning.follow_symlinks", defaultConfig.Scanning.FollowSymlinks)
 	viper.SetDefault("scanning.include_pattern", defaultConfig.Scanning.IncludePattern)
@@ -101,6 +109,18 @@ repository:
   # - "reject": Reject APKs with different signatures
   signature_handling: "mark"
 
+  # Manifest signing metadata (optional)
+  signing_key_fingerprint: ""
+  signer: ""
+
+  # Verification policy for manifest/APK signatures
+  # - "strict": fail when signatures are missing or untrusted
+  # - "lenient": continue with warnings on signature issues
+  signature_policy: "lenient"
+
+  # Trusted signer fingerprints for verification
+  trusted_keys: []
+
 scanning:
   # Scan directories recursively
   recursive: true
@@ -132,6 +152,10 @@ func SaveConfig(cfg *models.Config, path string) error {
 	viper.Set("repository.base_url", cfg.Repository.BaseURL)
 	viper.Set("repository.keep_versions", cfg.Repository.KeepVersions)
 	viper.Set("repository.signature_handling", cfg.Repository.SignatureHandling)
+	viper.Set("repository.signing_key_fingerprint", cfg.Repository.SigningKeyFingerprint)
+	viper.Set("repository.signer", cfg.Repository.Signer)
+	viper.Set("repository.trusted_keys", cfg.Repository.TrustedKeys)
+	viper.Set("repository.signature_policy", cfg.Repository.SignaturePolicy)
 	viper.Set("scanning.recursive", cfg.Scanning.Recursive)
 	viper.Set("scanning.follow_symlinks", cfg.Scanning.FollowSymlinks)
 	viper.Set("scanning.include_pattern", cfg.Scanning.IncludePattern)

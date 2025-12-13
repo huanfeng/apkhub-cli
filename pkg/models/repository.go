@@ -42,6 +42,14 @@ type ManifestIndex struct {
 	TotalAPKs   int                    `json:"total_apks"`
 	TotalSize   int64                  `json:"total_size"`
 	Packages    map[string]*AppPackage `json:"packages"`
+	Signature   *ManifestSignature     `json:"signature,omitempty"`
+}
+
+// ManifestSignature captures the signing metadata for a manifest index
+type ManifestSignature struct {
+	PublicKeyFingerprint string    `json:"public_key_fingerprint,omitempty"`
+	SignedAt             time.Time `json:"signed_at,omitempty"`
+	Signer               string    `json:"signer,omitempty"`
 }
 
 // NewRepositoryLayout creates a new repository layout structure

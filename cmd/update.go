@@ -25,6 +25,7 @@ Examples:
 		}
 
 		bucketMgr := client.NewBucketManager(config)
+		bucketMgr.SetSignatureVerification(bucketVerifySignature && config.Security.VerifySignature)
 
 		if len(args) > 0 {
 			// Update specific bucket
@@ -39,7 +40,7 @@ Examples:
 			if updateAll {
 				// Update all buckets including disabled ones
 				fmt.Println("🔄 Updating all buckets (including disabled)...")
-				
+
 				for name := range config.Buckets {
 					fmt.Printf("📡 Fetching '%s'...\n", name)
 					if _, err := bucketMgr.FetchManifest(name); err != nil {
@@ -65,7 +66,8 @@ var updateAll bool
 
 func init() {
 	rootCmd.AddCommand(updateCmd)
-	
+
 	// Add flags
 	updateCmd.Flags().BoolVar(&updateAll, "all", false, "Update all buckets including disabled ones")
+	updateCmd.Flags().BoolVar(&bucketVerifySignature, "verify-signature", true, "Verify bucket manifest signatures during update")
 }
