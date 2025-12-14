@@ -16,13 +16,13 @@
 
 ```bash
 # 从源码构建
-git clone https://github.com/huanfeng/apkhub-cli.git
-cd apkhub-cli
+git clone https://github.com/huanfeng/apkhub.git
+cd apkhub
 go build -o apkhub
 sudo mv apkhub /usr/local/bin/
 
 # 或者下载预编译版本
-wget https://github.com/huanfeng/apkhub-cli/releases/latest/download/apkhub-linux-amd64
+wget https://github.com/huanfeng/apkhub/releases/latest/download/apkhub-linux-amd64
 chmod +x apkhub-linux-amd64
 sudo mv apkhub-linux-amd64 /usr/local/bin/apkhub
 ```
@@ -185,10 +185,10 @@ COPY --from=golang:1.21 /usr/local/go /usr/local/go
 ENV PATH="/usr/local/go/bin:${PATH}"
 
 RUN apk add --no-cache git && \
-    git clone https://github.com/huanfeng/apkhub-cli.git && \
-    cd apkhub-cli && \
+    git clone https://github.com/huanfeng/apkhub.git && \
+    cd apkhub && \
     go build -o /usr/local/bin/apkhub && \
-    rm -rf /apkhub-cli /usr/local/go && \
+    rm -rf /apkhub /usr/local/go && \
     apk del git
 
 # 配置 nginx

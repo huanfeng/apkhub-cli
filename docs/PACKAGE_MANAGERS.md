@@ -58,9 +58,9 @@ scoop-bucket/
 
 ### 4. 添加 Secrets 到主仓库
 
-在 apkhub-cli 仓库中添加 secrets：
+在 apkhub 仓库中添加 secrets：
 
-1. 访问 `https://github.com/huanfeng/apkhub-cli/settings/secrets/actions`
+1. 访问 `https://github.com/huanfeng/apkhub/settings/secrets/actions`
 2. 添加以下 secrets：
    - `HOMEBREW_TAP_GITHUB_TOKEN`
    - `SCOOP_BUCKET_GITHUB_TOKEN`
@@ -97,7 +97,7 @@ scoop update apkhub
 
 #### 直接下载
 
-也可以从 [Releases](https://github.com/huanfeng/apkhub-cli/releases) 页面直接下载对应平台的二进制文件。
+也可以从 [Releases](https://github.com/huanfeng/apkhub/releases) 页面直接下载对应平台的二进制文件。
 
 ## 发布流程
 
@@ -180,7 +180,7 @@ scoop install apkhub
 ```ruby
 class Apkhub < Formula
   desc "A command-line tool for managing distributed APK repositories"
-  homepage "https://github.com/huanfeng/apkhub-cli"
+  homepage "https://github.com/huanfeng/apkhub"
   version "0.2.0"
   license "MIT"
 
@@ -193,7 +193,7 @@ end
 {
     "version": "0.2.0",
     "description": "A command-line tool for managing distributed APK repositories",
-    "homepage": "https://github.com/huanfeng/apkhub-cli",
+    "homepage": "https://github.com/huanfeng/apkhub",
     "license": "MIT",
     "architecture": {
         "64bit": {

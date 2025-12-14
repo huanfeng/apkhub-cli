@@ -23,7 +23,7 @@ scoop install apkhub
 ```
 
 ### 直接下载
-从 [Releases](https://github.com/huanfeng/apkhub-cli/releases) 页面下载对应平台的二进制文件。
+从 [Releases](https://github.com/huanfeng/apkhub/releases) 页面下载对应平台的二进制文件。
 
 ## 开发构建
 
@@ -35,7 +35,7 @@ go build -o apkhub
 ### 包含版本信息的构建
 ```bash
 # 手动指定版本
-go build -ldflags "-X github.com/huanfeng/apkhub-cli/internal/version.Version=v1.0.0" -o apkhub
+go build -ldflags "-X github.com/huanfeng/apkhub/internal/version.Version=v1.0.0" -o apkhub
 
 # 查看版本
 ./apkhub version

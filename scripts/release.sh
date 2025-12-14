@@ -90,7 +90,7 @@ main() {
             git push origin "$NEW_VERSION"
 
             echo -e "${GREEN}标签已推送！GitHub Actions 将自动完成发布。${NC}"
-            echo "请访问 https://github.com/huanfeng/apkhub-cli/actions 查看进度"
+            echo "请访问 https://github.com/huanfeng/apkhub/actions 查看进度"
             ;;
         3)
             echo "退出"

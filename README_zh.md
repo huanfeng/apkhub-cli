@@ -1,4 +1,4 @@
-# ApkHub CLI
+# ApkHub
 
  [English](README.md) | [简体中文](README_zh.md)
 
@@ -46,11 +46,11 @@ ApkHub CLI 是一个**分布式 APK 仓库系统**，工作方式类似 Scoop �
 ## 📦 安装
 
 ### 预编译二进制文件
-从 [GitHub Releases](https://github.com/huanfeng/apkhub-cli/releases) 下载最新版本：
+从 [GitHub Releases](https://github.com/huanfeng/apkhub/releases) 下载最新版本：
 
 ```bash
 # Linux/macOS
-curl -L https://github.com/huanfeng/apkhub-cli/releases/latest/download/apkhub-linux-x86_64.tar.gz -o apkhub.tar.gz
+curl -L https://github.com/huanfeng/apkhub/releases/latest/download/apkhub-linux-x86_64.tar.gz -o apkhub.tar.gz
 tar xzf apkhub.tar.gz
 sudo mv apkhub /usr/local/bin/
 ```
@@ -71,8 +71,8 @@ scoop install apkhub
 
 ### 从源码构建
 ```bash
-git clone https://github.com/huanfeng/apkhub-cli.git
-cd apkhub-cli
+git clone https://github.com/huanfeng/apkhub.git
+cd apkhub
 go build -o apkhub
 ```
 
@@ -598,6 +598,6 @@ apkhub install --device emulator-5554 --version 1.2.3 com.example.app
 
 ## 📞 支持
 
-- 📖 [文档](https://github.com/huanfeng/apkhub-cli/wiki)
-- 🐛 [问题跟踪](https://github.com/huanfeng/apkhub-cli/issues)
-- 💬 [讨论](https://github.com/huanfeng/apkhub-cli/discussions)
+- 📖 [文档](https://github.com/huanfeng/apkhub/wiki)
+- 🐛 [问题跟踪](https://github.com/huanfeng/apkhub/issues)
+- 💬 [讨论](https://github.com/huanfeng/apkhub/discussions)

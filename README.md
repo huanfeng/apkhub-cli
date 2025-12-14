@@ -1,4 +1,4 @@
-# ApkHub CLI
+# ApkHub
 
  [English](README.md) | [简体中文](README_zh.md)
 
@@ -6,7 +6,7 @@ A distributed APK repository management tool, similar to Scoop for Windows, that
 
 ## 🎯 What is ApkHub?
 
-ApkHub CLI is a **distributed APK repository system** that works like Scoop package manager:
+ApkHub is a **distributed APK repository system** that works like Scoop package manager:
 
 - **🏗️ Repository Mode**: Create and maintain APK repositories (like creating a Scoop bucket)
 - **📱 Client Mode**: Search, download, and install APKs from multiple repositories (like using Scoop)
@@ -46,11 +46,11 @@ Consume APK repositories like a package manager:
 ## 📦 Installation
 
 ### Pre-built Binaries
-Download the latest release from [GitHub Releases](https://github.com/huanfeng/apkhub-cli/releases):
+Download the latest release from [GitHub Releases](https://github.com/huanfeng/apkhub/releases):
 
 ```bash
 # Linux/macOS
-curl -L https://github.com/huanfeng/apkhub-cli/releases/latest/download/apkhub-linux-x86_64.tar.gz -o apkhub.tar.gz
+curl -L https://github.com/huanfeng/apkhub/releases/latest/download/apkhub-linux-x86_64.tar.gz -o apkhub.tar.gz
 tar xzf apkhub.tar.gz
 sudo mv apkhub /usr/local/bin/
 ```
@@ -71,8 +71,8 @@ scoop install apkhub
 
 ### Build from Source
 ```bash
-git clone https://github.com/huanfeng/apkhub-cli.git
-cd apkhub-cli
+git clone https://github.com/huanfeng/apkhub.git
+cd apkhub
 go build -o apkhub
 ```
 
@@ -598,6 +598,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- 📖 [Documentation](https://github.com/huanfeng/apkhub-cli/wiki)
-- 🐛 [Issue Tracker](https://github.com/huanfeng/apkhub-cli/issues)
-- 💬 [Discussions](https://github.com/huanfeng/apkhub-cli/discussions)
+- 📖 [Documentation](https://github.com/huanfeng/apkhub/wiki)
+- 🐛 [Issue Tracker](https://github.com/huanfeng/apkhub/issues)
+- 💬 [Discussions](https://github.com/huanfeng/apkhub/discussions)
