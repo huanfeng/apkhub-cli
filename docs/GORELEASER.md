@@ -121,9 +121,9 @@ GoReleaser 自动从 Git 标签获取版本号：
 builds:
   - ldflags:
       # 自动注入版本信息
-      - -X github.com/huanfeng/apkhub-cli/internal/version.Version={{.Version}}
-      - -X github.com/huanfeng/apkhub-cli/internal/version.Commit={{.Commit}}
-      - -X github.com/huanfeng/apkhub-cli/internal/version.BuildDate={{.Date}}
+      - -X github.com/huanfeng/apkhub/internal/version.Version={{.Version}}
+      - -X github.com/huanfeng/apkhub/internal/version.Commit={{.Commit}}
+      - -X github.com/huanfeng/apkhub/internal/version.BuildDate={{.Date}}
 ```
 
 ## 常见问题
