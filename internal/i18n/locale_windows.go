@@ -17,9 +17,7 @@ func getPlatformLocales() []string {
 	}
 
 	if len(locales) == 0 {
-		if name, err := windows.GetUserDefaultLocaleName(); err == nil && name != "" {
-			locales = append(locales, name)
-		}
+		// If APIs are unavailable or return empty, just leave locales empty.
 	}
 
 	return locales
