@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/huanfeng/apkhub-cli/internal/config"
+	"github.com/huanfeng/apkhub-cli/internal/i18n"
 	"github.com/huanfeng/apkhub-cli/pkg/models"
 	"github.com/spf13/cobra"
 )
@@ -26,20 +27,20 @@ var (
 
 var verifyCmd = &cobra.Command{
 	Use:   "verify",
-	Short: "Verify repository integrity",
-	Long:  `Verify the integrity of the APK repository by checking files, metadata, and structure.`,
+	Short: i18n.T("cmd.verify.short"),
+	Long:  i18n.T("cmd.verify.long"),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		verifyStart := time.Now()
 
 		if !verifyQuiet {
-			fmt.Println("🔍 Starting repository verification...")
+			fmt.Println(i18n.T("cmd.verify.start"))
 			fmt.Println(strings.Repeat("=", 50))
 		}
 
 		// Load configuration
 		cfg, err := config.Load(cfgFile)
 		if err != nil {
-			return fmt.Errorf("failed to load configuration: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.verify.errLoadConfig"), err)
 		}
 
 		// Perform verification
@@ -53,7 +54,7 @@ var verifyCmd = &cobra.Command{
 
 		// Auto-fix if requested
 		if verifyFix && len(result.Issues) > 0 {
-			fmt.Println("\n🔧 Attempting to fix issues...")
+			fmt.Println("\n" + i18n.T("cmd.verify.fix.start"))
 			fixResult := attemptAutoFix(cfg, result)
 			showFixResults(fixResult)
 		}
@@ -61,9 +62,9 @@ var verifyCmd = &cobra.Command{
 		// Generate report if requested
 		if verifyReport != "" {
 			if err := generateVerificationReport(result, verifyReport); err != nil {
-				fmt.Printf("⚠️  Failed to generate report: %v\n", err)
+				fmt.Printf("%s\n", i18n.T("cmd.verify.report.fail", map[string]interface{}{"error": err}))
 			} else {
-				fmt.Printf("📄 Report saved to: %s\n", verifyReport)
+				fmt.Printf("%s\n", i18n.T("cmd.verify.report.saved", map[string]interface{}{"path": verifyReport}))
 			}
 		}
 
@@ -117,12 +118,12 @@ func performRepositoryVerification(cfg *models.Config) (*VerificationResult, err
 	}
 
 	if !verifyQuiet {
-		fmt.Printf("📋 Repository: %s\n", cfg.Repository.Name)
+		fmt.Printf("%s\n", i18n.T("cmd.verify.repo", map[string]interface{}{"name": cfg.Repository.Name}))
 	}
 
 	// Check 1: Configuration integrity
 	if !verifyQuiet {
-		fmt.Print("🔧 Checking configuration... ")
+		fmt.Print(i18n.T("cmd.verify.check.config"))
 	}
 	configIssues := checkConfigurationIntegrity(cfg)
 	result.Issues = append(result.Issues, configIssues...)
@@ -130,13 +131,13 @@ func performRepositoryVerification(cfg *models.Config) (*VerificationResult, err
 		if len(configIssues) == 0 {
 			fmt.Println("✅")
 		} else {
-			fmt.Printf("❌ (%d issues)\n", len(configIssues))
+			fmt.Printf(i18n.T("cmd.verify.check.failCount")+"\n", len(configIssues))
 		}
 	}
 
 	// Check 2: Directory structure
 	if !verifyQuiet {
-		fmt.Print("📁 Checking directory structure... ")
+		fmt.Print(i18n.T("cmd.verify.check.dir"))
 	}
 	dirIssues := checkDirectoryStructure(cfg)
 	result.Issues = append(result.Issues, dirIssues...)
@@ -144,13 +145,13 @@ func performRepositoryVerification(cfg *models.Config) (*VerificationResult, err
 		if len(dirIssues) == 0 {
 			fmt.Println("✅")
 		} else {
-			fmt.Printf("❌ (%d issues)\n", len(dirIssues))
+			fmt.Printf(i18n.T("cmd.verify.check.failCount")+"\n", len(dirIssues))
 		}
 	}
 
 	// Check 3: Manifest integrity
 	if !verifyQuiet {
-		fmt.Print("📄 Checking manifest... ")
+		fmt.Print(i18n.T("cmd.verify.check.manifest"))
 	}
 	manifestIssues, manifest := checkManifestIntegrity(cfg)
 	result.Issues = append(result.Issues, manifestIssues...)
@@ -158,7 +159,7 @@ func performRepositoryVerification(cfg *models.Config) (*VerificationResult, err
 		if len(manifestIssues) == 0 {
 			fmt.Println("✅")
 		} else {
-			fmt.Printf("❌ (%d issues)\n", len(manifestIssues))
+			fmt.Printf(i18n.T("cmd.verify.check.failCount")+"\n", len(manifestIssues))
 		}
 	}
 
@@ -167,7 +168,7 @@ func performRepositoryVerification(cfg *models.Config) (*VerificationResult, err
 
 		// Check 4: APK files
 		if !verifyQuiet {
-			fmt.Print("📱 Checking APK files... ")
+			fmt.Print(i18n.T("cmd.verify.check.apks"))
 		}
 		apkIssues, validCount := checkAPKFiles(cfg, manifest)
 		result.Issues = append(result.Issues, apkIssues...)
@@ -176,13 +177,13 @@ func performRepositoryVerification(cfg *models.Config) (*VerificationResult, err
 			if len(apkIssues) == 0 {
 				fmt.Println("✅")
 			} else {
-				fmt.Printf("❌ (%d issues)\n", len(apkIssues))
+				fmt.Printf(i18n.T("cmd.verify.check.failCount")+"\n", len(apkIssues))
 			}
 		}
 
 		// Check 5: Orphaned files
 		if !verifyQuiet {
-			fmt.Print("🗑️  Checking for orphaned files... ")
+			fmt.Print(i18n.T("cmd.verify.check.orphans"))
 		}
 		orphanIssues := checkOrphanedFiles(cfg, manifest)
 		result.Issues = append(result.Issues, orphanIssues...)
@@ -190,14 +191,14 @@ func performRepositoryVerification(cfg *models.Config) (*VerificationResult, err
 			if len(orphanIssues) == 0 {
 				fmt.Println("✅")
 			} else {
-				fmt.Printf("❌ (%d issues)\n", len(orphanIssues))
+				fmt.Printf(i18n.T("cmd.verify.check.failCount")+"\n", len(orphanIssues))
 			}
 		}
 
 		// Deep verification if requested
 		if verifyDeep {
 			if !verifyQuiet {
-				fmt.Print("🔬 Performing deep verification... ")
+				fmt.Print(i18n.T("cmd.verify.check.deep"))
 			}
 			deepIssues := performDeepVerification(cfg, manifest)
 			result.Issues = append(result.Issues, deepIssues...)
@@ -205,7 +206,7 @@ func performRepositoryVerification(cfg *models.Config) (*VerificationResult, err
 				if len(deepIssues) == 0 {
 					fmt.Println("✅")
 				} else {
-					fmt.Printf("❌ (%d issues)\n", len(deepIssues))
+					fmt.Printf(i18n.T("cmd.verify.check.failCount")+"\n", len(deepIssues))
 				}
 			}
 		}
@@ -225,7 +226,7 @@ func checkConfigurationIntegrity(cfg *models.Config) []VerificationIssue {
 		issues = append(issues, VerificationIssue{
 			Type:        "config",
 			Severity:    "error",
-			Description: "Repository name is empty",
+			Description: i18n.T("cmd.verify.issue.emptyName"),
 			Fixable:     false,
 		})
 	}
@@ -235,7 +236,7 @@ func checkConfigurationIntegrity(cfg *models.Config) []VerificationIssue {
 		issues = append(issues, VerificationIssue{
 			Type:        "config",
 			Severity:    "warning",
-			Description: "Repository description is empty",
+			Description: i18n.T("cmd.verify.issue.emptyDesc"),
 			Fixable:     true,
 		})
 	}
@@ -255,7 +256,7 @@ func checkDirectoryStructure(cfg *models.Config) []VerificationIssue {
 			issues = append(issues, VerificationIssue{
 				Type:        "directory",
 				Severity:    "error",
-				Description: fmt.Sprintf("Required directory missing: %s", dir),
+				Description: i18n.T("cmd.verify.issue.missingDir", map[string]interface{}{"dir": dir}),
 				File:        dir,
 				Fixable:     true,
 			})
@@ -274,7 +275,7 @@ func checkManifestIntegrity(cfg *models.Config) ([]VerificationIssue, *models.Ma
 		issues = append(issues, VerificationIssue{
 			Type:        "manifest",
 			Severity:    "error",
-			Description: "Manifest file not found",
+			Description: i18n.T("cmd.verify.issue.manifestMissing"),
 			File:        "apkhub_manifest.json",
 			Fixable:     false,
 		})
@@ -287,7 +288,7 @@ func checkManifestIntegrity(cfg *models.Config) ([]VerificationIssue, *models.Ma
 		issues = append(issues, VerificationIssue{
 			Type:        "manifest",
 			Severity:    "error",
-			Description: fmt.Sprintf("Failed to read manifest: %v", err),
+			Description: i18n.T("cmd.verify.issue.manifestRead", map[string]interface{}{"error": err}),
 			File:        "apkhub_manifest.json",
 			Fixable:     false,
 		})
@@ -299,7 +300,7 @@ func checkManifestIntegrity(cfg *models.Config) ([]VerificationIssue, *models.Ma
 		issues = append(issues, VerificationIssue{
 			Type:        "manifest",
 			Severity:    "error",
-			Description: fmt.Sprintf("Failed to parse manifest: %v", err),
+			Description: i18n.T("cmd.verify.issue.manifestParse", map[string]interface{}{"error": err}),
 			File:        "apkhub_manifest.json",
 			Fixable:     false,
 		})
@@ -311,7 +312,7 @@ func checkManifestIntegrity(cfg *models.Config) ([]VerificationIssue, *models.Ma
 		issues = append(issues, VerificationIssue{
 			Type:        "manifest",
 			Severity:    "warning",
-			Description: "Manifest repository name doesn't match configuration",
+			Description: i18n.T("cmd.verify.issue.nameMismatch"),
 			File:        "apkhub_manifest.json",
 			Fixable:     true,
 		})
@@ -354,11 +355,13 @@ func checkAPKFiles(cfg *models.Config, manifest *models.ManifestIndex) ([]Verifi
 
 			if _, err := os.Stat(localPath); err != nil {
 				issues = append(issues, VerificationIssue{
-					Type:        "apk",
-					Severity:    "error",
-					Description: fmt.Sprintf("APK file missing for %s (%s)", pkgID, versionKey),
-					File:        localPath,
-					Fixable:     false,
+					Type:     "apk",
+					Severity: "error",
+					Description: i18n.T("cmd.verify.issue.apkMissing", map[string]interface{}{
+						"id": pkgID, "version": versionKey,
+					}),
+					File:    localPath,
+					Fixable: false,
 				})
 				continue
 			}
@@ -375,11 +378,13 @@ func checkAPKFiles(cfg *models.Config, manifest *models.ManifestIndex) ([]Verifi
 						severity = "error"
 					}
 					issues = append(issues, VerificationIssue{
-						Type:        "manifest",
-						Severity:    severity,
-						Description: fmt.Sprintf("Missing SHA256 for %s (%s). Regenerate manifest or disable signature verification.", pkgID, versionKey),
-						File:        "apkhub_manifest.json",
-						Fixable:     true,
+						Type:     "manifest",
+						Severity: severity,
+						Description: i18n.T("cmd.verify.issue.missingSHA", map[string]interface{}{
+							"id": pkgID, "version": versionKey,
+						}),
+						File:    "apkhub_manifest.json",
+						Fixable: true,
 					})
 					continue
 				}
@@ -387,22 +392,26 @@ func checkAPKFiles(cfg *models.Config, manifest *models.ManifestIndex) ([]Verifi
 				actualHash, err := calculateFileSHA256(localPath)
 				if err != nil {
 					issues = append(issues, VerificationIssue{
-						Type:        "apk",
-						Severity:    "error",
-						Description: fmt.Sprintf("Failed to hash %s (%s): %v", pkgID, versionKey, err),
-						File:        localPath,
-						Fixable:     false,
+						Type:     "apk",
+						Severity: "error",
+						Description: i18n.T("cmd.verify.issue.hashFail", map[string]interface{}{
+							"id": pkgID, "version": versionKey, "error": err,
+						}),
+						File:    localPath,
+						Fixable: false,
 					})
 					continue
 				}
 
 				if actualHash != expectedHash {
 					issues = append(issues, VerificationIssue{
-						Type:        "apk",
-						Severity:    "error",
-						Description: fmt.Sprintf("Hash mismatch for %s (%s). Expected %s, got %s", pkgID, versionKey, expectedHash, actualHash),
-						File:        localPath,
-						Fixable:     false,
+						Type:     "apk",
+						Severity: "error",
+						Description: i18n.T("cmd.verify.issue.hashMismatch", map[string]interface{}{
+							"id": pkgID, "version": versionKey, "expected": expectedHash, "actual": actualHash,
+						}),
+						File:    localPath,
+						Fixable: false,
 					})
 					continue
 				}
@@ -442,11 +451,13 @@ func checkOrphanedFiles(cfg *models.Config, manifest *models.ManifestIndex) []Ve
 		expected := countManifestAPKs(manifest)
 		if expected > 0 && apkCount != expected {
 			issues = append(issues, VerificationIssue{
-				Type:        "consistency",
-				Severity:    "warning",
-				Description: fmt.Sprintf("APK count mismatch: found %d files, manifest reports %d", apkCount, expected),
-				File:        "apks/",
-				Fixable:     false,
+				Type:     "consistency",
+				Severity: "warning",
+				Description: i18n.T("cmd.verify.issue.apkCountMismatch", map[string]interface{}{
+					"found": apkCount, "expected": expected,
+				}),
+				File:    "apks/",
+				Fixable: false,
 			})
 		}
 	}
@@ -468,7 +479,7 @@ func performDeepVerification(cfg *models.Config, manifest *models.ManifestIndex)
 		issues = append(issues, VerificationIssue{
 			Type:        "icon",
 			Severity:    "warning",
-			Description: "Icons directory is missing",
+			Description: i18n.T("cmd.verify.issue.iconsMissing"),
 			File:        iconDir,
 			Fixable:     true,
 		})
@@ -486,7 +497,7 @@ func performDeepVerification(cfg *models.Config, manifest *models.ManifestIndex)
 				issues = append(issues, VerificationIssue{
 					Type:        "icon",
 					Severity:    "info",
-					Description: "No icon files found",
+					Description: i18n.T("cmd.verify.issue.iconsEmpty"),
 					File:        iconDir,
 					Fixable:     false,
 				})
@@ -500,7 +511,7 @@ func performDeepVerification(cfg *models.Config, manifest *models.ManifestIndex)
 		issues = append(issues, VerificationIssue{
 			Type:        "info",
 			Severity:    "warning",
-			Description: "Info directory is missing",
+			Description: i18n.T("cmd.verify.issue.infosMissing"),
 			File:        infoDir,
 			Fixable:     true,
 		})
@@ -525,7 +536,7 @@ func validateManifestSignature(manifest *models.ManifestIndex, cfg *models.Confi
 		return &VerificationIssue{
 			Type:        "manifest",
 			Severity:    severity,
-			Description: "Manifest lacks signature metadata. Configure signing_key_fingerprint/signer or rerun with --verify-signature=false.",
+			Description: i18n.T("cmd.verify.issue.manifestNoSignature"),
 			File:        "apkhub_manifest.json",
 			Fixable:     true,
 		}
@@ -538,11 +549,13 @@ func validateManifestSignature(manifest *models.ManifestIndex, cfg *models.Confi
 		}
 
 		return &VerificationIssue{
-			Type:        "manifest",
-			Severity:    severity,
-			Description: fmt.Sprintf("Manifest signer %s is not in trusted_keys. Add the fingerprint or relax signature_policy.", manifest.Signature.PublicKeyFingerprint),
-			File:        "apkhub_manifest.json",
-			Fixable:     true,
+			Type:     "manifest",
+			Severity: severity,
+			Description: i18n.T("cmd.verify.issue.manifestSignerUntrusted", map[string]interface{}{
+				"fingerprint": manifest.Signature.PublicKeyFingerprint,
+			}),
+			File:    "apkhub_manifest.json",
+			Fixable: true,
 		}
 	}
 
@@ -550,7 +563,7 @@ func validateManifestSignature(manifest *models.ManifestIndex, cfg *models.Confi
 		return &VerificationIssue{
 			Type:        "manifest",
 			Severity:    "warning",
-			Description: "Manifest signature timestamp missing. Regenerate manifest to refresh signing metadata.",
+			Description: i18n.T("cmd.verify.issue.manifestSignedAtMissing"),
 			File:        "apkhub_manifest.json",
 			Fixable:     true,
 		}
@@ -567,11 +580,13 @@ func validateAPKSignature(pkgID, versionKey string, version *models.AppVersion, 
 		}
 
 		return &VerificationIssue{
-			Type:        "signature",
-			Severity:    severity,
-			Description: fmt.Sprintf("Missing APK signature fingerprint for %s (%s).", pkgID, versionKey),
-			File:        "apkhub_manifest.json",
-			Fixable:     true,
+			Type:     "signature",
+			Severity: severity,
+			Description: i18n.T("cmd.verify.issue.apkSignatureMissing", map[string]interface{}{
+				"id": pkgID, "version": versionKey,
+			}),
+			File:    "apkhub_manifest.json",
+			Fixable: true,
 		}
 	}
 
@@ -582,11 +597,13 @@ func validateAPKSignature(pkgID, versionKey string, version *models.AppVersion, 
 		}
 
 		return &VerificationIssue{
-			Type:        "signature",
-			Severity:    severity,
-			Description: fmt.Sprintf("APK signer %s not trusted for %s (%s). Update trusted_keys or disable signature verification.", version.SignatureInfo.SHA256, pkgID, versionKey),
-			File:        "apkhub_manifest.json",
-			Fixable:     true,
+			Type:     "signature",
+			Severity: severity,
+			Description: i18n.T("cmd.verify.issue.apkSignerUntrusted", map[string]interface{}{
+				"fingerprint": version.SignatureInfo.SHA256, "id": pkgID, "version": versionKey,
+			}),
+			File:    "apkhub_manifest.json",
+			Fixable: true,
 		}
 	}
 
@@ -682,23 +699,25 @@ func showVerificationResults(result *VerificationResult, duration time.Duration)
 	}
 
 	fmt.Println("\n" + strings.Repeat("=", 60))
-	fmt.Println("📊 VERIFICATION RESULTS")
+	fmt.Println(i18n.T("cmd.verify.results.title"))
 	fmt.Println(strings.Repeat("=", 60))
 
-	fmt.Printf("⏱️  Verification time: %v\n", duration)
-	fmt.Printf("📁 Total files: %d\n", result.TotalFiles)
-	fmt.Printf("✅ Valid files: %d\n", result.ValidFiles)
-	fmt.Printf("❌ Issues found: %d\n", len(result.Issues))
+	fmt.Printf("%s\n", i18n.T("cmd.verify.results.time", map[string]interface{}{"duration": duration}))
+	fmt.Printf("%s\n", i18n.T("cmd.verify.results.total", map[string]interface{}{"count": result.TotalFiles}))
+	fmt.Printf("%s\n", i18n.T("cmd.verify.results.valid", map[string]interface{}{"count": result.ValidFiles}))
+	fmt.Printf("%s\n", i18n.T("cmd.verify.results.issues", map[string]interface{}{"count": len(result.Issues)}))
 
 	if len(result.Issues) > 0 {
-		fmt.Println("\n📋 ISSUE BREAKDOWN:")
-		fmt.Printf("   Missing files: %d\n", result.Statistics.MissingFiles)
-		fmt.Printf("   Corrupted files: %d\n", result.Statistics.CorruptedFiles)
-		fmt.Printf("   Orphaned files: %d\n", result.Statistics.OrphanedFiles)
-		fmt.Printf("   Invalid metadata: %d\n", result.Statistics.InvalidMetadata)
-		fmt.Printf("   Missing icons: %d\n", result.Statistics.MissingIcons)
+		fmt.Println()
+		fmt.Println(i18n.T("cmd.verify.results.breakdown"))
+		fmt.Printf("%s\n", i18n.T("cmd.verify.results.missing", map[string]interface{}{"count": result.Statistics.MissingFiles}))
+		fmt.Printf("%s\n", i18n.T("cmd.verify.results.corrupted", map[string]interface{}{"count": result.Statistics.CorruptedFiles}))
+		fmt.Printf("%s\n", i18n.T("cmd.verify.results.orphaned", map[string]interface{}{"count": result.Statistics.OrphanedFiles}))
+		fmt.Printf("%s\n", i18n.T("cmd.verify.results.invalid", map[string]interface{}{"count": result.Statistics.InvalidMetadata}))
+		fmt.Printf("%s\n", i18n.T("cmd.verify.results.icons", map[string]interface{}{"count": result.Statistics.MissingIcons}))
 
-		fmt.Println("\n🔍 DETAILED ISSUES:")
+		fmt.Println()
+		fmt.Println(i18n.T("cmd.verify.results.details"))
 		for i, issue := range result.Issues {
 			severity := "❌"
 			if issue.Severity == "warning" {
@@ -707,12 +726,14 @@ func showVerificationResults(result *VerificationResult, duration time.Duration)
 
 			fixable := ""
 			if issue.Fixable {
-				fixable = " (fixable)"
+				fixable = " " + i18n.T("cmd.verify.results.fixable")
 			}
 
-			fmt.Printf("   %d. %s %s%s\n", i+1, severity, issue.Description, fixable)
+			fmt.Printf("%s\n", i18n.T("cmd.verify.results.item", map[string]interface{}{
+				"index": i + 1, "severity": severity, "desc": issue.Description, "fixable": fixable,
+			}))
 			if issue.File != "" {
-				fmt.Printf("      File: %s\n", issue.File)
+				fmt.Printf("%s\n", i18n.T("cmd.verify.results.file", map[string]interface{}{"file": issue.File}))
 			}
 		}
 	}
@@ -720,7 +741,7 @@ func showVerificationResults(result *VerificationResult, duration time.Duration)
 	fmt.Println(strings.Repeat("=", 60))
 
 	if len(result.Issues) == 0 {
-		fmt.Println("🎉 Repository verification passed! No issues found.")
+		fmt.Println(i18n.T("cmd.verify.results.pass"))
 	} else {
 		fixableCount := 0
 		for _, issue := range result.Issues {
@@ -730,10 +751,10 @@ func showVerificationResults(result *VerificationResult, duration time.Duration)
 		}
 
 		if fixableCount > 0 {
-			fmt.Printf("💡 %d issues can be automatically fixed with --fix flag\n", fixableCount)
+			fmt.Printf("%s\n", i18n.T("cmd.verify.results.fixableCount", map[string]interface{}{"count": fixableCount}))
 		}
 
-		fmt.Println("⚠️  Repository has integrity issues that need attention.")
+		fmt.Println(i18n.T("cmd.verify.results.attention"))
 	}
 }
 
@@ -755,25 +776,25 @@ func attemptAutoFix(cfg *models.Config, result *VerificationResult) *FixResult {
 		case "directory":
 			// Create missing directories
 			if err := os.MkdirAll(issue.File, 0755); err != nil {
-				fixResult.Failed = append(fixResult.Failed, fmt.Sprintf("Failed to create directory %s: %v", issue.File, err))
+				fixResult.Failed = append(fixResult.Failed, fmt.Sprintf(i18n.T("cmd.verify.fix.errCreateDir"), issue.File, err))
 			} else {
-				fixResult.Fixed = append(fixResult.Fixed, fmt.Sprintf("Created directory: %s", issue.File))
+				fixResult.Fixed = append(fixResult.Fixed, fmt.Sprintf(i18n.T("cmd.verify.fix.createdDir"), issue.File))
 			}
 
 		case "orphan":
 			// Remove orphaned files (with confirmation)
-			fmt.Printf("Remove orphaned file %s? [y/N]: ", issue.File)
+			fmt.Printf(i18n.T("cmd.verify.fix.confirmOrphan"), issue.File)
 			var response string
 			fmt.Scanln(&response)
 			if strings.ToLower(response) == "y" {
 				orphanPath := filepath.Join("apks", issue.File)
 				if err := os.Remove(orphanPath); err != nil {
-					fixResult.Failed = append(fixResult.Failed, fmt.Sprintf("Failed to remove %s: %v", issue.File, err))
+					fixResult.Failed = append(fixResult.Failed, fmt.Sprintf(i18n.T("cmd.verify.fix.errRemove"), issue.File, err))
 				} else {
-					fixResult.Fixed = append(fixResult.Fixed, fmt.Sprintf("Removed orphaned file: %s", issue.File))
+					fixResult.Fixed = append(fixResult.Fixed, fmt.Sprintf(i18n.T("cmd.verify.fix.removedOrphan"), issue.File))
 				}
 			} else {
-				fixResult.Skipped = append(fixResult.Skipped, fmt.Sprintf("Skipped removal of: %s", issue.File))
+				fixResult.Skipped = append(fixResult.Skipped, fmt.Sprintf(i18n.T("cmd.verify.fix.skipOrphan"), issue.File))
 			}
 
 		default:
@@ -787,25 +808,25 @@ func attemptAutoFix(cfg *models.Config, result *VerificationResult) *FixResult {
 // showFixResults displays fix attempt results
 func showFixResults(result *FixResult) {
 	fmt.Println("\n" + strings.Repeat("=", 50))
-	fmt.Println("🔧 AUTO-FIX RESULTS")
+	fmt.Println(i18n.T("cmd.verify.fix.title"))
 	fmt.Println(strings.Repeat("=", 50))
 
 	if len(result.Fixed) > 0 {
-		fmt.Printf("✅ FIXED (%d):\n", len(result.Fixed))
+		fmt.Printf(i18n.T("cmd.verify.fix.fixed")+"\n", len(result.Fixed))
 		for _, fix := range result.Fixed {
 			fmt.Printf("   • %s\n", fix)
 		}
 	}
 
 	if len(result.Failed) > 0 {
-		fmt.Printf("\n❌ FAILED (%d):\n", len(result.Failed))
+		fmt.Printf("\n"+i18n.T("cmd.verify.fix.failed")+"\n", len(result.Failed))
 		for _, fail := range result.Failed {
 			fmt.Printf("   • %s\n", fail)
 		}
 	}
 
 	if len(result.Skipped) > 0 {
-		fmt.Printf("\n⏭️  SKIPPED (%d):\n", len(result.Skipped))
+		fmt.Printf("\n"+i18n.T("cmd.verify.fix.skipped")+"\n", len(result.Skipped))
 		for _, skip := range result.Skipped {
 			fmt.Printf("   • %s\n", skip)
 		}
@@ -827,9 +848,9 @@ func generateVerificationReport(result *VerificationResult, filename string) err
 func init() {
 	repoCmd.AddCommand(verifyCmd)
 
-	verifyCmd.Flags().BoolVar(&verifyFix, "fix", false, "Attempt to automatically fix issues")
-	verifyCmd.Flags().BoolVar(&verifyDeep, "deep", false, "Perform deep verification (slower but more thorough)")
-	verifyCmd.Flags().BoolVar(&verifyQuiet, "quiet", false, "Suppress progress output")
-	verifyCmd.Flags().StringVar(&verifyReport, "report", "", "Generate JSON report file")
-	verifyCmd.Flags().BoolVar(&verifySignatures, "verify-signature", true, "Verify manifest signature metadata and APK hashes")
+	verifyCmd.Flags().BoolVar(&verifyFix, "fix", false, i18n.T("cmd.verify.flag.fix"))
+	verifyCmd.Flags().BoolVar(&verifyDeep, "deep", false, i18n.T("cmd.verify.flag.deep"))
+	verifyCmd.Flags().BoolVar(&verifyQuiet, "quiet", false, i18n.T("cmd.verify.flag.quiet"))
+	verifyCmd.Flags().StringVar(&verifyReport, "report", "", i18n.T("cmd.verify.flag.report"))
+	verifyCmd.Flags().BoolVar(&verifySignatures, "verify-signature", true, i18n.T("cmd.verify.flag.verifySignatures"))
 }

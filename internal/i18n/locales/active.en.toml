@@ -66,11 +66,497 @@ other = "Download an application"
 [cmd.download.long]
 other = "Download an application APK from configured buckets."
 
+[cmd.add.short]
+other = "Add an APK file to the repository"
+
+[cmd.add.long]
+other = "Analyze an APK, rename it following repository conventions, and copy it into the repository."
+
 [cmd.install.short]
 other = "Install an application using adb"
 
 [cmd.install.long]
 other = "Install an application to a connected Android device using adb. You can specify either a package ID to download and install, or a local APK path."
+
+[cmd.install.log.start]
+other = "Starting installation for %s"
+
+[cmd.install.packageDetected]
+other = "📦 Package ID detected: {{.id}}"
+
+[cmd.install.detectPackage]
+other = "Preparing to download APK for package {{.id}}"
+
+[cmd.install.log.downloading]
+other = "Downloading APK for package: {{.id}}"
+
+[cmd.install.downloading]
+other = "Downloading APK..."
+
+[cmd.install.errDownload]
+other = "Failed to download APK"
+
+[cmd.install.suggestNetwork]
+other = "Check your network connection"
+
+[cmd.install.suggestPackageID]
+other = "Confirm the package ID is correct"
+
+[cmd.install.suggestRetry]
+other = "Try again later"
+
+[cmd.install.errDepsMissing]
+other = "Missing required dependencies for install"
+
+[cmd.install.suggestDoctorFix]
+other = "Run 'apkhub doctor --fix' to attempt automatic fix"
+
+[cmd.install.errLoadConfig]
+other = "Failed to load configuration"
+
+[cmd.install.suggestInit]
+other = "Run 'apkhub init' to create a new config"
+
+[cmd.install.errEnsureDirs]
+other = "Failed to ensure required directories"
+
+[cmd.install.suggestPermissions]
+other = "Check your directory permissions"
+
+[cmd.install.errValidateLocal]
+other = "Local APK file validation failed"
+
+[cmd.install.suggestCorrupt]
+other = "Verify the APK file is not corrupted"
+
+[cmd.install.suggestFilePerm]
+other = "Check file permissions"
+
+[cmd.install.suggestTryAnother]
+other = "Try with a different APK file"
+
+[cmd.install.errAPKMissing]
+other = "APK file not found"
+
+[cmd.install.suggestCheckPath]
+other = "Verify the file path is correct"
+
+[cmd.install.errAllDevicesConflict]
+other = "--all-devices cannot be combined with --device or --devices"
+
+[cmd.install.checkDeps.start]
+other = "🔍 Checking dependencies for install command..."
+
+[cmd.install.checkDeps.missing]
+other = "❌ Required dependencies missing: {{.list}}"
+
+[cmd.install.checkDeps.hintTitle]
+other = "💡 To fix this issue:"
+
+[cmd.install.checkDeps.hintDoctor]
+other = "   1. Run 'apkhub doctor' to see installation instructions"
+
+[cmd.install.checkDeps.hintDoctorFix]
+other = "   2. Run 'apkhub doctor --fix' to attempt automatic installation"
+
+[cmd.install.checkDeps.hintDepsCmd]
+other = "   3. Run 'apkhub deps --command install' for detailed dependency info"
+
+[cmd.install.checkDeps.err]
+other = "Missing required dependencies"
+
+[cmd.install.checkDeps.ok]
+other = "✅ All required dependencies are available"
+
+[cmd.install.checkDeps.okItem]
+other = "   ✅ {{.name}}: {{.version}}"
+
+[cmd.install.errLocalMissing]
+other = "APK file not found: {{.path}}"
+
+[cmd.install.errLocalAccess]
+other = "Cannot access APK file: {{.error}}"
+
+[cmd.install.errLocalIsDir]
+other = "Path is a directory, not a file: {{.path}}"
+
+[cmd.install.errLocalEmpty]
+other = "APK file is empty: {{.path}}"
+
+[cmd.install.errLocalTooSmall]
+other = "APK file is too small (likely corrupted): {{.path}}"
+
+[cmd.install.local.detected]
+other = "📱 Local APK file detected:"
+
+[cmd.install.local.path]
+other = "   Path: {{.path}}"
+
+[cmd.install.local.size]
+other = "   Size: {{printf \"%.2f\" .size}} MB"
+
+[cmd.install.local.modified]
+other = "   Modified: {{.time}}"
+
+[cmd.install.local.typeXapk]
+other = "   📦 Type: XAPK/APKM package"
+
+[cmd.install.local.xapkNote]
+other = "   📝 Will be extracted and installed automatically"
+
+[cmd.install.local.detailsError]
+other = "   ⚠️  Could not extract APK details: {{.error}}"
+
+[cmd.install.local.installAsIs]
+other = "   📝 File will be installed as-is"
+
+[cmd.install.local.detailsTitle]
+other = "   📋 APK Details:"
+
+[cmd.install.local.package]
+other = "      Package: {{.id}}"
+
+[cmd.install.local.version]
+other = "      Version: {{.version}} ({{.code}})"
+
+[cmd.install.local.sdk]
+other = "      Min SDK: {{.min}}, Target SDK: {{.target}}"
+
+[cmd.install.local.appName]
+other = "      App Name: {{.name}}"
+
+[cmd.install.local.permissions]
+other = "      Permissions: {{.count}}"
+
+[cmd.install.local.permissionItem]
+other = "        - {{.permission}}"
+
+[cmd.install.local.morePermissions]
+other = "        ... and {{.count}} more"
+
+[cmd.install.unifiedStart]
+other = "🚀 Starting unified installation process..."
+
+[cmd.install.errDeviceSelection]
+other = "Device selection failed: {{.error}}"
+
+[cmd.install.targetDevices]
+other = "📱 Targeting {{.count}} device(s)"
+
+[cmd.install.prepareDevice]
+other = "🔧 [{{.id}}] Preparing installation"
+
+[cmd.install.errPreChecks]
+other = "Pre-installation checks failed: {{.error}}"
+
+[cmd.install.installing]
+other = "📦 [{{.id}}] Installing APK..."
+
+[cmd.install.verifyWarning]
+other = "⚠️  [{{.id}}] Post-installation verification failed: {{.error}}"
+
+[cmd.install.verifyNote]
+other = "   The app was installed but verification encountered issues"
+
+[cmd.install.summary.title]
+other = "📊 Installation summary:"
+
+[cmd.install.summary.success]
+other = "   ✅ {{.count}} succeeded:"
+
+[cmd.install.summary.item]
+other = "      • {{.entry}}"
+
+[cmd.install.summary.none]
+other = "   ✅ 0 succeeded"
+
+[cmd.install.summary.failure]
+other = "   ❌ {{.count}} failed:"
+
+[cmd.install.summary.defaultFailure]
+other = "installation failed"
+
+[cmd.install.summary.unknown]
+other = "unknown result"
+
+[cmd.install.errInstallFailed]
+other = "Installation failed on {{.count}} device(s)"
+
+[cmd.install.validateDevice]
+other = "🔍 Validating device: {{.id}}"
+
+[cmd.install.errDeviceNotFound]
+other = "Device not found: {{.error}}"
+
+[cmd.install.errDeviceOffline]
+other = "Device {{.id}} is not online (status: {{.status}})"
+
+[cmd.install.deviceValidated]
+other = "✅ Device validated: {{.info}}"
+
+[cmd.install.preChecks.start]
+other = "🔍 Performing pre-installation checks..."
+
+[cmd.install.preChecks.integrity]
+other = "APK integrity check failed: {{.error}}"
+
+[cmd.install.preChecks.storageWarn]
+other = "⚠️  Storage check warning: {{.error}}"
+
+[cmd.install.preChecks.existingInfo]
+other = "ℹ️  Existing installation info: {{.error}}"
+
+[cmd.install.preChecks.done]
+other = "✅ Pre-installation checks completed"
+
+[cmd.install.errOpenAPK]
+other = "Cannot open APK file: {{.error}}"
+
+[cmd.install.errReadHeader]
+other = "Cannot read APK header: {{.error}}"
+
+[cmd.install.errInvalidAPK]
+other = "Invalid APK file format (not a valid ZIP file)"
+
+[cmd.install.errAPKSize]
+other = "Cannot get APK file size: {{.error}}"
+
+[cmd.install.preChecks.size]
+other = "   APK size: {{printf \"%.2f\" .size}} MB"
+
+[cmd.install.preChecks.largeAPK]
+other = "   ⚠️  Large APK detected ({{printf \"%.2f\" .size}} MB), ensure device has sufficient storage"
+
+[cmd.install.preChecks.xapkSkip]
+other = "   📦 XAPK package - installation check will be performed during installation"
+
+[cmd.install.preChecks.packageInfo]
+other = "Cannot extract package info: {{.error}}"
+
+[cmd.install.preChecks.installed]
+other = "   Package {{.id}} is already installed"
+
+[cmd.install.preChecks.installedVersion]
+other = "   Installed version: {{.version}} ({{.code}})"
+
+[cmd.install.preChecks.apkVersion]
+other = "   APK version: {{.version}} ({{.code}})"
+
+[cmd.install.preChecks.downgrade]
+other = "   ⚠️  Installing older version (downgrade)"
+
+[cmd.install.preChecks.upgrade]
+other = "   ⬆️  Installing newer version (upgrade)"
+
+[cmd.install.preChecks.reinstall]
+other = "   🔄 Installing same version (reinstall)"
+
+[cmd.install.result.title]
+other = "📊 INSTALLATION RESULT"
+
+[cmd.install.result.sourceLocal]
+other = "📁 Source: Local file ({{.target}})"
+
+[cmd.install.result.sourceRemote]
+other = "📦 Source: Remote package ({{.target}})"
+
+[cmd.install.result.device]
+other = "📱 Device: {{.id}}"
+
+[cmd.install.result.duration]
+other = "⏱️  Duration: {{.duration}}"
+
+[cmd.install.result.statusSuccess]
+other = "✅ Status: SUCCESS"
+
+[cmd.install.result.package]
+other = "📋 Package: {{.id}}"
+
+[cmd.install.result.statusFailed]
+other = "❌ Status: FAILED"
+
+[cmd.install.result.errorCode]
+other = "🔍 Error Code: {{.code}}"
+
+[cmd.install.result.errorMsg]
+other = "💬 Error: {{.error}}"
+
+[cmd.install.result.suggestions]
+other = "💡 Suggestions:"
+
+[cmd.install.result.suggestionItem]
+other = "   • {{.suggestion}}"
+
+[cmd.install.errNoPackageID]
+other = "No package ID available for verification"
+
+[cmd.install.verify.start]
+other = "🔍 Verifying installation of {{.id}}..."
+
+[cmd.install.verify.notFound]
+other = "Package not found after installation: {{.error}}"
+
+[cmd.install.verify.success]
+other = "✅ Verification successful:"
+
+[cmd.install.verify.package]
+other = "   Package: {{.id}}"
+
+[cmd.install.verify.version]
+other = "   Version: {{.version}} ({{.code}})"
+
+[cmd.install.cleanup]
+other = "🧹 Cleaning up downloaded file: {{.path}}"
+
+[cmd.install.flag.device]
+other = "Target device ID"
+
+[cmd.install.flag.devices]
+other = "Comma-separated target device IDs"
+
+[cmd.install.flag.allDevices]
+other = "Install on all online devices"
+
+[cmd.install.flag.workers]
+other = "Maximum concurrent installs (0 = auto)"
+
+[cmd.install.flag.replace]
+other = "Replace existing application"
+
+[cmd.install.flag.downgrade]
+other = "Allow version downgrade"
+
+[cmd.install.flag.grant]
+other = "Grant all runtime permissions"
+
+[cmd.install.flag.version]
+other = "Install specific version (when using package ID)"
+
+[cmd.install.flag.local]
+other = "Force treating argument as local path"
+
+[cmd.install.flag.checkDeps]
+other = "Check dependencies before installation"
+
+[cmd.add.errLoadConfig]
+other = "Failed to load configuration"
+
+[cmd.add.errAPKPath]
+other = "Invalid APK path"
+
+[cmd.add.errAPKNotFound]
+other = "APK file not found"
+
+[cmd.add.errCreateRepo]
+other = "Failed to create repository"
+
+[cmd.add.errInitRepo]
+other = "Failed to initialize repository"
+
+[cmd.add.parsing]
+other = "Parsing APK: {{.path}}"
+
+[cmd.add.errParse]
+other = "Failed to parse APK"
+
+[cmd.add.info.title]
+other = "=== APK Information ==="
+
+[cmd.add.info.package]
+other = "Package ID: {{.id}}"
+
+[cmd.add.info.appName]
+other = "App Name: {{.name}}"
+
+[cmd.add.info.version]
+other = "Version: {{.version}} (Code: {{.code}})"
+
+[cmd.add.info.size]
+other = "Size: {{printf \"%.2f\" .size}} MB"
+
+[cmd.add.info.sdk]
+other = "Min SDK: {{.min}}, Target SDK: {{.target}}"
+
+[cmd.add.info.sha256]
+other = "SHA256: {{.sha}}"
+
+[cmd.add.info.signature]
+other = "Signature SHA256: {{.sha}}..."
+
+[cmd.add.info.signatureMissing]
+other = "Signature: (extraction failed)"
+
+[cmd.add.info.abis]
+other = "ABIs: {{.abis}}"
+
+[cmd.add.info.original]
+other = "Original filename: {{.name}}"
+
+[cmd.add.info.newName]
+other = "New filename: {{.name}}"
+
+[cmd.add.info.target]
+other = "Target location: {{.path}}"
+
+[cmd.add.confirm]
+other = "Add this APK to repository? [y/N]: "
+
+[cmd.add.cancel]
+other = "Operation cancelled."
+
+[cmd.add.errDuplicate]
+other = "APK with same name already exists in repository: {{.name}}"
+
+[cmd.add.copying]
+other = "Copying APK to repository..."
+
+[cmd.add.errCopy]
+other = "Failed to copy APK"
+
+[cmd.add.errMove]
+other = "Failed to move APK"
+
+[cmd.add.saving]
+other = "Saving APK information..."
+
+[cmd.add.errSaveInfo]
+other = "Failed to save APK info"
+
+[cmd.add.updating]
+other = "Updating repository manifest..."
+
+[cmd.add.errUpdateManifest]
+other = "Failed to update manifest"
+
+[cmd.add.success]
+other = "✓ APK successfully added to repository!"
+
+[cmd.add.successLocation]
+other = "  Location: {{.path}}"
+
+[cmd.add.successInfo]
+other = "  Info: {{.path}}"
+
+[cmd.add.flag.yes]
+other = "Skip confirmation prompt"
+
+[cmd.add.flag.copy]
+other = "Copy file instead of moving"
+
+[cmd.add.errCreateDir]
+other = "Failed to create directory"
+
+[cmd.add.errOpenSrc]
+other = "Failed to open source file"
+
+[cmd.add.errCreateDst]
+other = "Failed to create destination file"
+
+[cmd.add.errCopyContent]
+other = "Failed to copy file content"
+
+[cmd.add.errSync]
+other = "Failed to sync file"
 
 [cmd.doctor.short]
 other = "Diagnose and fix system issues"
@@ -877,11 +1363,167 @@ other = "Export repository data"
 [cmd.export.long]
 other = "Export repository data into distributable formats."
 
+[cmd.export.errLoadConfig]
+other = "Failed to load configuration"
+
+[cmd.export.errCreateRepo]
+other = "Failed to create repository"
+
+[cmd.export.errLoadManifest]
+other = "Failed to load manifest"
+
+[cmd.export.start]
+other = "Exporting repository data..."
+
+[cmd.export.format]
+other = "Format: {{.format}}"
+
+[cmd.export.output]
+other = "Output: {{.output}}"
+
+[cmd.export.errUnsupported]
+other = "unsupported export format"
+
+[cmd.export.errFailed]
+other = "export failed"
+
+[cmd.export.success]
+other = "✓ Export completed successfully!"
+
+[cmd.export.flag.format]
+other = "Export format: json, csv, md, fdroid"
+
+[cmd.export.flag.output]
+other = "Output file path"
+
+[cmd.export.flag.fields]
+other = "Fields to export (CSV only)"
+
+[cmd.export.errOutputDir]
+other = "failed to create output directory"
+
+[cmd.export.errMarshalJSON]
+other = "failed to marshal JSON"
+
+[cmd.export.errWriteFile]
+other = "failed to write file"
+
+[cmd.export.errCreateFile]
+other = "failed to create file"
+
+[cmd.export.errWriteHeader]
+other = "failed to write header"
+
+[cmd.export.errWriteRow]
+other = "failed to write row"
+
 [cmd.import.short]
-other = "Import repository data"
+other = "Import APK metadata from other formats"
 
 [cmd.import.long]
-other = "Import repository data from files or archives."
+other = "Import APK metadata from other repository formats such as F-Droid index or another ApkHub manifest."
+
+[cmd.import.errLoadConfig]
+other = "Failed to load configuration"
+
+[cmd.import.errCreateRepo]
+other = "Failed to create repository"
+
+[cmd.import.errInitRepo]
+other = "Failed to initialize repository"
+
+[cmd.import.title]
+other = "=== Import APK Metadata ==="
+
+[cmd.import.source]
+other = "Source: {{.source}}"
+
+[cmd.import.format]
+other = "Format: {{.format}}"
+
+[cmd.import.download]
+other = "Download APKs: {{.enabled}}"
+
+[cmd.import.downloading]
+other = "Downloading from URL..."
+
+[cmd.import.errDownload]
+other = "failed to download"
+
+[cmd.import.errReadResponse]
+other = "failed to read response"
+
+[cmd.import.errReadFile]
+other = "failed to read file"
+
+[cmd.import.errUnsupported]
+other = "unsupported import format"
+
+[cmd.import.errFailed]
+other = "import failed"
+
+[cmd.import.found]
+other = "Found {{.count}} APKs to import"
+
+[cmd.import.confirm]
+other = "Proceed with import? [y/N]: "
+
+[cmd.import.cancel]
+other = "Import cancelled."
+
+[cmd.import.importing]
+other = "=== Importing APKs ==="
+
+[cmd.import.importingItem]
+other = "Importing: {{.id}} v{{.version}}"
+
+[cmd.import.skipExists]
+other = "  Skip: Already exists"
+
+[cmd.import.errSave]
+other = "  Failed: {{.error}}"
+
+[cmd.import.downloadingAPK]
+other = "  Downloading APK..."
+
+[cmd.import.downloadTODO]
+other = "  Download not implemented yet"
+
+[cmd.import.imported]
+other = "  ✓ Imported successfully"
+
+[cmd.import.updateManifest]
+other = "Updating repository manifest..."
+
+[cmd.import.errUpdateManifest]
+other = "failed to update manifest"
+
+[cmd.import.summaryTitle]
+other = "=== Import Summary ==="
+
+[cmd.import.summaryImported]
+other = "Imported: {{.count}}"
+
+[cmd.import.summarySkipped]
+other = "Skipped: {{.count}}"
+
+[cmd.import.summaryFailed]
+other = "Failed: {{.count}}"
+
+[cmd.import.success]
+other = "✓ Import completed!"
+
+[cmd.import.flag.format]
+other = "Import format: apkhub, fdroid, json"
+
+[cmd.import.flag.download]
+other = "Download APK files if URLs are provided"
+
+[cmd.import.flag.yes]
+other = "Skip confirmation prompt"
+
+[cmd.import.flag.map]
+other = "Field mapping for generic JSON import"
 
 [cmd.info.short]
 other = "Show app info"
@@ -1011,6 +1653,48 @@ other = "SHA256: {{.sha}}"
 
 [cmd.info.local.signatureSHA]
 other = "Signature SHA256: {{.sha}}"
+
+[cmd.info.local.installTitle]
+other = "=== Installation Commands ==="
+
+[cmd.info.local.installCmd]
+other = "Install: apkhub install \"{{.path}}\""
+
+[cmd.info.local.installCmdDevice]
+other = "Install with options: apkhub install \"{{.path}}\" --device <device-id>"
+
+[cmd.info.perm.camera]
+other = "📷 Camera"
+
+[cmd.info.perm.location]
+other = "📍 Location"
+
+[cmd.info.perm.storage]
+other = "💾 Storage"
+
+[cmd.info.perm.network]
+other = "🌐 Network"
+
+[cmd.info.perm.phone]
+other = "📞 Phone & SMS"
+
+[cmd.info.perm.contacts]
+other = "👥 Contacts"
+
+[cmd.info.perm.microphone]
+other = "🎤 Microphone"
+
+[cmd.info.perm.calendar]
+other = "📅 Calendar"
+
+[cmd.info.perm.bluetooth]
+other = "📶 Bluetooth"
+
+[cmd.info.perm.notifications]
+other = "🔔 Notifications"
+
+[cmd.info.perm.system]
+other = "🔧 System"
 
 [cmd.parse.short]
 other = "Parse APK file"
@@ -1185,6 +1869,204 @@ other = "Verify repository integrity"
 
 [cmd.verify.long]
 other = "Verify repository files and manifests for consistency."
+
+[cmd.verify.start]
+other = "🔍 Starting repository verification..."
+
+[cmd.verify.errLoadConfig]
+other = "Failed to load configuration"
+
+[cmd.verify.fix.start]
+other = "🔧 Attempting to fix issues..."
+
+[cmd.verify.report.fail]
+other = "⚠️  Failed to generate report: {{.error}}"
+
+[cmd.verify.report.saved]
+other = "📄 Report saved to: {{.path}}"
+
+[cmd.verify.repo]
+other = "📋 Repository: {{.name}}"
+
+[cmd.verify.check.config]
+other = "🔧 Checking configuration... "
+
+[cmd.verify.check.dir]
+other = "📁 Checking directory structure... "
+
+[cmd.verify.check.manifest]
+other = "📄 Checking manifest... "
+
+[cmd.verify.check.apks]
+other = "📱 Checking APK files... "
+
+[cmd.verify.check.orphans]
+other = "🗑️  Checking for orphaned files... "
+
+[cmd.verify.check.deep]
+other = "🔬 Performing deep verification... "
+
+[cmd.verify.check.failCount]
+other = "❌ ({{.count}} issues)"
+
+[cmd.verify.issue.emptyName]
+other = "Repository name is empty"
+
+[cmd.verify.issue.emptyDesc]
+other = "Repository description is empty"
+
+[cmd.verify.issue.missingDir]
+other = "Required directory missing: {{.dir}}"
+
+[cmd.verify.issue.manifestMissing]
+other = "Manifest file not found"
+
+[cmd.verify.issue.manifestRead]
+other = "Failed to read manifest: {{.error}}"
+
+[cmd.verify.issue.manifestParse]
+other = "Failed to parse manifest: {{.error}}"
+
+[cmd.verify.issue.nameMismatch]
+other = "Manifest repository name doesn't match configuration"
+
+[cmd.verify.issue.missingSHA]
+other = "Missing SHA256 for {{.id}} ({{.version}}). Regenerate manifest or disable signature verification."
+
+[cmd.verify.issue.hashFail]
+other = "Failed to hash {{.id}} ({{.version}}): {{.error}}"
+
+[cmd.verify.issue.hashMismatch]
+other = "Hash mismatch for {{.id}} ({{.version}}). Expected {{.expected}}, got {{.actual}}"
+
+[cmd.verify.issue.apkMissing]
+other = "APK file missing for {{.id}} ({{.version}})"
+
+[cmd.verify.issue.apkCountMismatch]
+other = "APK count mismatch: found {{.found}} files, manifest reports {{.expected}}"
+
+[cmd.verify.issue.iconsMissing]
+other = "Icons directory is missing"
+
+[cmd.verify.issue.iconsEmpty]
+other = "No icon files found"
+
+[cmd.verify.issue.infosMissing]
+other = "Info directory is missing"
+
+[cmd.verify.issue.manifestNoSignature]
+other = "Manifest lacks signature metadata. Configure signing_key_fingerprint/signer or rerun with --verify-signature=false."
+
+[cmd.verify.issue.manifestSignerUntrusted]
+other = "Manifest signer {{.fingerprint}} is not in trusted_keys. Add the fingerprint or relax signature_policy."
+
+[cmd.verify.issue.manifestSignedAtMissing]
+other = "Manifest signature timestamp missing. Regenerate manifest to refresh signing metadata."
+
+[cmd.verify.issue.apkSignatureMissing]
+other = "Missing APK signature fingerprint for {{.id}} ({{.version}})."
+
+[cmd.verify.issue.apkSignerUntrusted]
+other = "APK signer {{.fingerprint}} not trusted for {{.id}} ({{.version}}). Update trusted_keys or disable signature verification."
+
+[cmd.verify.results.title]
+other = "📊 VERIFICATION RESULTS"
+
+[cmd.verify.results.time]
+other = "⏱️  Verification time: {{.duration}}"
+
+[cmd.verify.results.total]
+other = "📁 Total files: {{.count}}"
+
+[cmd.verify.results.valid]
+other = "✅ Valid files: {{.count}}"
+
+[cmd.verify.results.issues]
+other = "❌ Issues found: {{.count}}"
+
+[cmd.verify.results.breakdown]
+other = "📋 ISSUE BREAKDOWN:"
+
+[cmd.verify.results.missing]
+other = "   Missing files: {{.count}}"
+
+[cmd.verify.results.corrupted]
+other = "   Corrupted files: {{.count}}"
+
+[cmd.verify.results.orphaned]
+other = "   Orphaned files: {{.count}}"
+
+[cmd.verify.results.invalid]
+other = "   Invalid metadata: {{.count}}"
+
+[cmd.verify.results.icons]
+other = "   Missing icons: {{.count}}"
+
+[cmd.verify.results.details]
+other = "🔍 DETAILED ISSUES:"
+
+[cmd.verify.results.item]
+other = "   {{.index}}. {{.severity}} {{.desc}}{{.fixable}}"
+
+[cmd.verify.results.file]
+other = "      File: {{.file}}"
+
+[cmd.verify.results.fixable]
+other = "(fixable)"
+
+[cmd.verify.results.pass]
+other = "🎉 Repository verification passed! No issues found."
+
+[cmd.verify.results.fixableCount]
+other = "💡 {{.count}} issues can be automatically fixed with --fix flag"
+
+[cmd.verify.results.attention]
+other = "⚠️  Repository has integrity issues that need attention."
+
+[cmd.verify.fix.title]
+other = "🔧 AUTO-FIX RESULTS"
+
+[cmd.verify.fix.fixed]
+other = "✅ FIXED ({{.count}}):"
+
+[cmd.verify.fix.failed]
+other = "❌ FAILED ({{.count}}):"
+
+[cmd.verify.fix.skipped]
+other = "⏭️  SKIPPED ({{.count}}):"
+
+[cmd.verify.fix.errCreateDir]
+other = "Failed to create directory %s: %v"
+
+[cmd.verify.fix.createdDir]
+other = "Created directory: %s"
+
+[cmd.verify.fix.confirmOrphan]
+other = "Remove orphaned file %s? [y/N]: "
+
+[cmd.verify.fix.errRemove]
+other = "Failed to remove %s: %v"
+
+[cmd.verify.fix.removedOrphan]
+other = "Removed orphaned file: %s"
+
+[cmd.verify.fix.skipOrphan]
+other = "Skipped removal of: %s"
+
+[cmd.verify.flag.fix]
+other = "Attempt to automatically fix issues"
+
+[cmd.verify.flag.deep]
+other = "Perform deep verification (slower but more thorough)"
+
+[cmd.verify.flag.quiet]
+other = "Suppress progress output"
+
+[cmd.verify.flag.report]
+other = "Generate JSON report file"
+
+[cmd.verify.flag.verifySignatures]
+other = "Verify manifest signature metadata and APK hashes"
 
 # Scan command
 [cmd.scan.deps.limited]

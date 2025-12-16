@@ -274,9 +274,13 @@ func showLocalAPKInfo(apkPath string) error {
 	}
 
 	// Installation commands
-	fmt.Printf("\n=== Installation Commands ===\n\n")
-	fmt.Printf("Install: apkhub install \"%s\"\n", apkPath)
-	fmt.Printf("Install with options: apkhub install \"%s\" --device <device-id>\n", apkPath)
+	fmt.Printf("\n%s\n\n", i18n.T("cmd.info.local.installTitle"))
+	fmt.Printf("%s\n", i18n.T("cmd.info.local.installCmd", map[string]interface{}{
+		"path": apkPath,
+	}))
+	fmt.Printf("%s\n", i18n.T("cmd.info.local.installCmdDevice", map[string]interface{}{
+		"path": apkPath,
+	}))
 
 	return nil
 }
@@ -298,27 +302,27 @@ func categorizePermission(permission string) string {
 	perm := strings.ToLower(permission)
 
 	if strings.Contains(perm, "camera") {
-		return "📷 Camera"
+		return i18n.T("cmd.info.perm.camera")
 	} else if strings.Contains(perm, "location") || strings.Contains(perm, "gps") {
-		return "📍 Location"
+		return i18n.T("cmd.info.perm.location")
 	} else if strings.Contains(perm, "storage") || strings.Contains(perm, "external") {
-		return "💾 Storage"
+		return i18n.T("cmd.info.perm.storage")
 	} else if strings.Contains(perm, "network") || strings.Contains(perm, "internet") {
-		return "🌐 Network"
+		return i18n.T("cmd.info.perm.network")
 	} else if strings.Contains(perm, "phone") || strings.Contains(perm, "call") || strings.Contains(perm, "sms") {
-		return "📞 Phone & SMS"
+		return i18n.T("cmd.info.perm.phone")
 	} else if strings.Contains(perm, "contact") {
-		return "👥 Contacts"
+		return i18n.T("cmd.info.perm.contacts")
 	} else if strings.Contains(perm, "microphone") || strings.Contains(perm, "record") {
-		return "🎤 Microphone"
+		return i18n.T("cmd.info.perm.microphone")
 	} else if strings.Contains(perm, "calendar") {
-		return "📅 Calendar"
+		return i18n.T("cmd.info.perm.calendar")
 	} else if strings.Contains(perm, "bluetooth") {
-		return "📶 Bluetooth"
+		return i18n.T("cmd.info.perm.bluetooth")
 	} else if strings.Contains(perm, "notification") {
-		return "🔔 Notifications"
+		return i18n.T("cmd.info.perm.notifications")
 	} else {
-		return "🔧 System"
+		return i18n.T("cmd.info.perm.system")
 	}
 }
 

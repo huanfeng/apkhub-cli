@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/huanfeng/apkhub-cli/internal/config"
+	"github.com/huanfeng/apkhub-cli/internal/i18n"
 	"github.com/huanfeng/apkhub-cli/pkg/models"
 	"github.com/huanfeng/apkhub-cli/pkg/repo"
 	"github.com/spf13/cobra"
@@ -24,8 +25,8 @@ var (
 
 var importCmd = &cobra.Command{
 	Use:   "import [source]",
-	Short: "Import APK metadata from other formats",
-	Long:  `Import APK metadata from other repository formats such as F-Droid index or another ApkHub manifest.`,
+	Short: i18n.T("cmd.import.short"),
+	Long:  i18n.T("cmd.import.long"),
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		importSource = args[0]
@@ -33,45 +34,45 @@ var importCmd = &cobra.Command{
 		// Load configuration
 		cfg, err := config.Load(cfgFile)
 		if err != nil {
-			return fmt.Errorf("failed to load configuration: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.import.errLoadConfig"), err)
 		}
 
 		// Create repository instance
 		repository, err := repo.NewRepository(workDir, cfg)
 		if err != nil {
-			return fmt.Errorf("failed to create repository: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.import.errCreateRepo"), err)
 		}
 
 		// Initialize repository structure
 		if err := repository.Initialize(); err != nil {
-			return fmt.Errorf("failed to initialize repository: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.import.errInitRepo"), err)
 		}
 
-		fmt.Printf("=== Import APK Metadata ===\n")
-		fmt.Printf("Source: %s\n", importSource)
-		fmt.Printf("Format: %s\n", importFormat)
-		fmt.Printf("Download APKs: %v\n\n", downloadAPKs)
+		fmt.Printf("%s\n", i18n.T("cmd.import.title"))
+		fmt.Printf("%s\n", i18n.T("cmd.import.source", map[string]interface{}{"source": importSource}))
+		fmt.Printf("%s\n", i18n.T("cmd.import.format", map[string]interface{}{"format": importFormat}))
+		fmt.Printf("%s\n\n", i18n.T("cmd.import.download", map[string]interface{}{"enabled": downloadAPKs}))
 
 		// Load source data
 		var sourceData []byte
 		if strings.HasPrefix(importSource, "http://") || strings.HasPrefix(importSource, "https://") {
 			// Download from URL
-			fmt.Printf("Downloading from URL...\n")
+			fmt.Printf("%s\n", i18n.T("cmd.import.downloading"))
 			resp, err := http.Get(importSource)
 			if err != nil {
-				return fmt.Errorf("failed to download: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.import.errDownload"), err)
 			}
 			defer resp.Body.Close()
 
 			sourceData, err = io.ReadAll(resp.Body)
 			if err != nil {
-				return fmt.Errorf("failed to read response: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.import.errReadResponse"), err)
 			}
 		} else {
 			// Read from file
 			sourceData, err = os.ReadFile(importSource)
 			if err != nil {
-				return fmt.Errorf("failed to read file: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.import.errReadFile"), err)
 			}
 		}
 
@@ -86,32 +87,34 @@ var importCmd = &cobra.Command{
 		case "json":
 			importedPackages, err = importFromGenericJSON(sourceData, mapFields)
 		default:
-			return fmt.Errorf("unsupported import format: %s", importFormat)
+			return fmt.Errorf("%s: %s", i18n.T("cmd.import.errUnsupported"), importFormat)
 		}
 
 		if err != nil {
-			return fmt.Errorf("import failed: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.import.errFailed"), err)
 		}
 
-		fmt.Printf("\nFound %d APKs to import\n", len(importedPackages))
+		fmt.Printf("\n%s\n", i18n.T("cmd.import.found", map[string]interface{}{"count": len(importedPackages)}))
 
 		// Confirm import
 		if !skipConfirm && len(importedPackages) > 0 {
-			fmt.Printf("\nProceed with import? [y/N]: ")
+			fmt.Printf("\n%s", i18n.T("cmd.import.confirm"))
 			var response string
 			fmt.Scanln(&response)
 			if strings.ToLower(response) != "y" {
-				fmt.Println("Import cancelled.")
+				fmt.Println(i18n.T("cmd.import.cancel"))
 				return nil
 			}
 		}
 
 		// Import APKs
-		fmt.Printf("\n=== Importing APKs ===\n")
+		fmt.Printf("\n%s\n", i18n.T("cmd.import.importing"))
 		var imported, skipped, failed int
 
 		for _, apkInfo := range importedPackages {
-			fmt.Printf("\nImporting: %s v%s\n", apkInfo.PackageID, apkInfo.Version)
+			fmt.Printf("\n%s\n", i18n.T("cmd.import.importingItem", map[string]interface{}{
+				"id": apkInfo.PackageID, "version": apkInfo.Version,
+			}))
 
 			// Check if already exists
 			existingInfos, _ := repository.LoadAllAPKInfos()
@@ -125,41 +128,41 @@ var importCmd = &cobra.Command{
 			}
 
 			if exists {
-				fmt.Printf("  Skip: Already exists\n")
+				fmt.Printf("  %s\n", i18n.T("cmd.import.skipExists"))
 				skipped++
 				continue
 			}
 
 			// Save APK info
 			if err := repository.SaveAPKInfo(apkInfo); err != nil {
-				fmt.Printf("  Failed: %v\n", err)
+				fmt.Printf("  %s\n", i18n.T("cmd.import.errSave", map[string]interface{}{"error": err}))
 				failed++
 				continue
 			}
 
 			// Download APK if requested and URL is available
 			if downloadAPKs && apkInfo.FilePath != "" {
-				fmt.Printf("  Downloading APK...\n")
+				fmt.Printf("  %s\n", i18n.T("cmd.import.downloadingAPK"))
 				// TODO: Implement APK download
-				fmt.Printf("  Download not implemented yet\n")
+				fmt.Printf("  %s\n", i18n.T("cmd.import.downloadTODO"))
 			}
 
 			imported++
-			fmt.Printf("  ✓ Imported successfully\n")
+			fmt.Printf("  %s\n", i18n.T("cmd.import.imported"))
 		}
 
 		// Update manifest
-		fmt.Printf("\nUpdating repository manifest...\n")
+		fmt.Printf("\n%s\n", i18n.T("cmd.import.updateManifest"))
 		if err := repository.UpdateManifest(); err != nil {
-			return fmt.Errorf("failed to update manifest: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.import.errUpdateManifest"), err)
 		}
 
 		// Summary
-		fmt.Printf("\n=== Import Summary ===\n")
-		fmt.Printf("Imported: %d\n", imported)
-		fmt.Printf("Skipped: %d\n", skipped)
-		fmt.Printf("Failed: %d\n", failed)
-		fmt.Printf("\n✓ Import completed!\n")
+		fmt.Printf("\n%s\n", i18n.T("cmd.import.summaryTitle"))
+		fmt.Printf("%s\n", i18n.T("cmd.import.summaryImported", map[string]interface{}{"count": imported}))
+		fmt.Printf("%s\n", i18n.T("cmd.import.summarySkipped", map[string]interface{}{"count": skipped}))
+		fmt.Printf("%s\n", i18n.T("cmd.import.summaryFailed", map[string]interface{}{"count": failed}))
+		fmt.Printf("\n%s\n", i18n.T("cmd.import.success"))
 
 		return nil
 	},
@@ -168,10 +171,10 @@ var importCmd = &cobra.Command{
 func init() {
 	repoCmd.AddCommand(importCmd)
 
-	importCmd.Flags().StringVarP(&importFormat, "format", "f", "apkhub", "Import format: apkhub, fdroid, json")
-	importCmd.Flags().BoolVarP(&downloadAPKs, "download", "d", false, "Download APK files if URLs are provided")
-	importCmd.Flags().BoolVarP(&skipConfirm, "yes", "y", false, "Skip confirmation prompt")
-	importCmd.Flags().StringToStringVar(&mapFields, "map", map[string]string{}, "Field mapping for generic JSON import")
+	importCmd.Flags().StringVarP(&importFormat, "format", "f", "apkhub", i18n.T("cmd.import.flag.format"))
+	importCmd.Flags().BoolVarP(&downloadAPKs, "download", "d", false, i18n.T("cmd.import.flag.download"))
+	importCmd.Flags().BoolVarP(&skipConfirm, "yes", "y", false, i18n.T("cmd.import.flag.yes"))
+	importCmd.Flags().StringToStringVar(&mapFields, "map", map[string]string{}, i18n.T("cmd.import.flag.map"))
 }
 
 // importFromApkHub imports from another ApkHub manifest

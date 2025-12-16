@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/huanfeng/apkhub-cli/internal/config"
+	"github.com/huanfeng/apkhub-cli/internal/i18n"
 	"github.com/huanfeng/apkhub-cli/pkg/apk"
 	"github.com/huanfeng/apkhub-cli/pkg/models"
 	"github.com/huanfeng/apkhub-cli/pkg/repo"
@@ -21,8 +22,8 @@ var (
 
 var addCmd = &cobra.Command{
 	Use:   "add [apk-file]",
-	Short: "Add an APK file to the repository",
-	Long:  `Add an APK file to the repository. The file will be analyzed, renamed according to naming conventions, and copied to the repository.`,
+	Short: i18n.T("cmd.add.short"),
+	Long:  i18n.T("cmd.add.long"),
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		apkPath := args[0]
@@ -30,69 +31,95 @@ var addCmd = &cobra.Command{
 		// Load configuration
 		cfg, err := config.Load(cfgFile)
 		if err != nil {
-			return fmt.Errorf("failed to load configuration: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.add.errLoadConfig"), err)
 		}
 
 		// Convert to absolute paths
 		absAPKPath, err := filepath.Abs(apkPath)
 		if err != nil {
-			return fmt.Errorf("invalid APK path: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.add.errAPKPath"), err)
 		}
 
 		// Check if file exists
 		if _, err := os.Stat(absAPKPath); err != nil {
-			return fmt.Errorf("APK file not found: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.add.errAPKNotFound"), err)
 		}
 
 		// Create repository instance
 		repository, err := repo.NewRepository(workDir, cfg)
 		if err != nil {
-			return fmt.Errorf("failed to create repository: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.add.errCreateRepo"), err)
 		}
 
 		// Initialize repository structure
 		if err := repository.Initialize(); err != nil {
-			return fmt.Errorf("failed to initialize repository: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.add.errInitRepo"), err)
 		}
 
 		// Parse APK
-		fmt.Printf("Parsing APK: %s\n", absAPKPath)
+		fmt.Printf("%s\n", i18n.T("cmd.add.parsing", map[string]interface{}{
+			"path": absAPKPath,
+		}))
 		parser := apk.NewParser(repository.GetRootDir())
 		apkInfo, err := parser.ParseAPK(absAPKPath)
 		if err != nil {
-			return fmt.Errorf("failed to parse APK: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.add.errParse"), err)
 		}
 
 		// Generate normalized filename
 		normalizedName := repository.GenerateNormalizedFileName(apkInfo)
 
 		// Display APK information
-		fmt.Println("\n=== APK Information ===")
-		fmt.Printf("Package ID: %s\n", apkInfo.PackageID)
-		fmt.Printf("App Name: %s\n", getDefaultName(apkInfo.AppName))
-		fmt.Printf("Version: %s (Code: %d)\n", apkInfo.Version, apkInfo.VersionCode)
-		fmt.Printf("Size: %.2f MB\n", float64(apkInfo.Size)/(1024*1024))
-		fmt.Printf("Min SDK: %d, Target SDK: %d\n", apkInfo.MinSDK, apkInfo.TargetSDK)
-		fmt.Printf("SHA256: %s\n", apkInfo.SHA256)
+		fmt.Println("\n" + i18n.T("cmd.add.info.title"))
+		fmt.Printf("%s\n", i18n.T("cmd.add.info.package", map[string]interface{}{
+			"id": apkInfo.PackageID,
+		}))
+		fmt.Printf("%s\n", i18n.T("cmd.add.info.appName", map[string]interface{}{
+			"name": getDefaultName(apkInfo.AppName),
+		}))
+		fmt.Printf("%s\n", i18n.T("cmd.add.info.version", map[string]interface{}{
+			"version": apkInfo.Version,
+			"code":    apkInfo.VersionCode,
+		}))
+		fmt.Printf("%s\n", i18n.T("cmd.add.info.size", map[string]interface{}{
+			"size": float64(apkInfo.Size) / (1024 * 1024),
+		}))
+		fmt.Printf("%s\n", i18n.T("cmd.add.info.sdk", map[string]interface{}{
+			"min":    apkInfo.MinSDK,
+			"target": apkInfo.TargetSDK,
+		}))
+		fmt.Printf("%s\n", i18n.T("cmd.add.info.sha256", map[string]interface{}{
+			"sha": apkInfo.SHA256,
+		}))
 		if apkInfo.SignatureInfo != nil && len(apkInfo.SignatureInfo.SHA256) >= 16 {
-			fmt.Printf("Signature SHA256: %s...\n", apkInfo.SignatureInfo.SHA256[:16])
+			fmt.Printf("%s\n", i18n.T("cmd.add.info.signature", map[string]interface{}{
+				"sha": apkInfo.SignatureInfo.SHA256[:16],
+			}))
 		} else if apkInfo.SignatureInfo != nil {
-			fmt.Printf("Signature: (extraction failed)\n")
+			fmt.Printf("%s\n", i18n.T("cmd.add.info.signatureMissing"))
 		}
 		if len(apkInfo.ABIs) > 0 {
-			fmt.Printf("ABIs: %s\n", strings.Join(apkInfo.ABIs, ", "))
+			fmt.Printf("%s\n", i18n.T("cmd.add.info.abis", map[string]interface{}{
+				"abis": strings.Join(apkInfo.ABIs, ", "),
+			}))
 		}
-		fmt.Printf("\nOriginal filename: %s\n", filepath.Base(absAPKPath))
-		fmt.Printf("New filename: %s\n", normalizedName)
-		fmt.Printf("Target location: %s\n", filepath.Join("apks", normalizedName))
+		fmt.Printf("\n%s\n", i18n.T("cmd.add.info.original", map[string]interface{}{
+			"name": filepath.Base(absAPKPath),
+		}))
+		fmt.Printf("%s\n", i18n.T("cmd.add.info.newName", map[string]interface{}{
+			"name": normalizedName,
+		}))
+		fmt.Printf("%s\n", i18n.T("cmd.add.info.target", map[string]interface{}{
+			"path": filepath.Join("apks", normalizedName),
+		}))
 
 		// Confirm addition
 		if !skipConfirm {
-			fmt.Print("\nAdd this APK to repository? [y/N]: ")
+			fmt.Print("\n" + i18n.T("cmd.add.confirm"))
 			var response string
 			fmt.Scanln(&response)
 			if strings.ToLower(response) != "y" {
-				fmt.Println("Operation cancelled.")
+				fmt.Println(i18n.T("cmd.add.cancel"))
 				return nil
 			}
 		}
@@ -123,20 +150,22 @@ var addCmd = &cobra.Command{
 
 		// Check if target already exists
 		if _, err := os.Stat(targetPath); err == nil {
-			return fmt.Errorf("APK with same name already exists in repository: %s", normalizedName)
+			return fmt.Errorf(i18n.T("cmd.add.errDuplicate", map[string]interface{}{
+				"name": normalizedName,
+			}))
 		}
 
-		fmt.Printf("\nCopying APK to repository...\n")
+		fmt.Printf("\n%s\n", i18n.T("cmd.add.copying"))
 		if copyFile {
 			if err := copyAPKFile(absAPKPath, targetPath); err != nil {
-				return fmt.Errorf("failed to copy APK: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.add.errCopy"), err)
 			}
 		} else {
 			// Move file
 			if err := os.Rename(absAPKPath, targetPath); err != nil {
 				// If rename fails (cross-device), fall back to copy
 				if err := copyAPKFile(absAPKPath, targetPath); err != nil {
-					return fmt.Errorf("failed to move APK: %w", err)
+					return fmt.Errorf("%s: %w", i18n.T("cmd.add.errMove"), err)
 				}
 				// Remove original after successful copy
 				os.Remove(absAPKPath)
@@ -144,22 +173,26 @@ var addCmd = &cobra.Command{
 		}
 
 		// Save APK info with icon
-		fmt.Printf("Saving APK information...\n")
+		fmt.Printf("%s\n", i18n.T("cmd.add.saving"))
 		if err := repository.SaveAPKInfoWithIcon(apkInfo, modelAPKInfo); err != nil {
 			// Rollback: remove copied APK
 			os.Remove(targetPath)
-			return fmt.Errorf("failed to save APK info: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.add.errSaveInfo"), err)
 		}
 
 		// Update manifest
-		fmt.Printf("Updating repository manifest...\n")
+		fmt.Printf("%s\n", i18n.T("cmd.add.updating"))
 		if err := repository.UpdateManifest(); err != nil {
-			return fmt.Errorf("failed to update manifest: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.add.errUpdateManifest"), err)
 		}
 
-		fmt.Printf("\n✓ APK successfully added to repository!\n")
-		fmt.Printf("  Location: %s\n", modelAPKInfo.FilePath)
-		fmt.Printf("  Info: %s\n", modelAPKInfo.InfoPath)
+		fmt.Printf("\n%s\n", i18n.T("cmd.add.success"))
+		fmt.Printf("%s\n", i18n.T("cmd.add.successLocation", map[string]interface{}{
+			"path": modelAPKInfo.FilePath,
+		}))
+		fmt.Printf("%s\n", i18n.T("cmd.add.successInfo", map[string]interface{}{
+			"path": modelAPKInfo.InfoPath,
+		}))
 
 		return nil
 	},
@@ -168,8 +201,8 @@ var addCmd = &cobra.Command{
 func init() {
 	repoCmd.AddCommand(addCmd)
 
-	addCmd.Flags().BoolVarP(&skipConfirm, "yes", "y", false, "Skip confirmation prompt")
-	addCmd.Flags().BoolVarP(&copyFile, "copy", "c", false, "Copy file instead of moving")
+	addCmd.Flags().BoolVarP(&skipConfirm, "yes", "y", false, i18n.T("cmd.add.flag.yes"))
+	addCmd.Flags().BoolVarP(&copyFile, "copy", "c", false, i18n.T("cmd.add.flag.copy"))
 }
 
 // getDefaultName returns the default name from multi-language map
@@ -191,31 +224,31 @@ func getDefaultName(names map[string]string) string {
 func copyAPKFile(src, dst string) error {
 	// Create parent directory if needed
 	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
-		return fmt.Errorf("failed to create directory: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T("cmd.add.errCreateDir"), err)
 	}
 
 	// Open source file
 	srcFile, err := os.Open(src)
 	if err != nil {
-		return fmt.Errorf("failed to open source file: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T("cmd.add.errOpenSrc"), err)
 	}
 	defer srcFile.Close()
 
 	// Create destination file
 	dstFile, err := os.Create(dst)
 	if err != nil {
-		return fmt.Errorf("failed to create destination file: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T("cmd.add.errCreateDst"), err)
 	}
 	defer dstFile.Close()
 
 	// Copy content
 	if _, err := dstFile.ReadFrom(srcFile); err != nil {
-		return fmt.Errorf("failed to copy file content: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T("cmd.add.errCopyContent"), err)
 	}
 
 	// Sync to ensure data is written
 	if err := dstFile.Sync(); err != nil {
-		return fmt.Errorf("failed to sync file: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T("cmd.add.errSync"), err)
 	}
 
 	return nil

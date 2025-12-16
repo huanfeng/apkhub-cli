@@ -66,11 +66,498 @@ other = "下载应用"
 [cmd.download.long]
 other = "从已配置的仓库下载应用 APK。"
 
+[cmd.add.short]
+other = "将 APK 文件加入仓库"
+
+[cmd.add.long]
+other = "分析 APK、按仓库命名规则重命名，并复制到仓库中。"
+
 [cmd.install.short]
 other = "使用 adb 安装应用"
 
 [cmd.install.long]
 other = "通过 adb 将应用安装到已连接设备。可指定包名下载安装，也可直接安装本地 APK。"
+
+[cmd.install.log.start]
+other = "开始安装: %s"
+
+[cmd.install.packageDetected]
+other = "📦 检测到包 ID: {{.id}}"
+
+[cmd.install.detectPackage]
+other = "准备下载包 {{.id}} 的 APK"
+
+[cmd.install.log.downloading]
+other = "正在为包 {{.id}} 下载 APK"
+
+[cmd.install.downloading]
+other = "正在下载 APK..."
+
+[cmd.install.errDownload]
+other = "下载 APK 失败"
+
+[cmd.install.suggestNetwork]
+other = "检查网络连接"
+
+[cmd.install.suggestPackageID]
+other = "确认包 ID 是否正确"
+
+[cmd.install.suggestRetry]
+other = "稍后再试"
+
+[cmd.install.errDepsMissing]
+other = "安装命令缺少必需依赖"
+
+[cmd.install.suggestDoctorFix]
+other = "运行 'apkhub doctor --fix' 尝试自动修复"
+
+[cmd.install.errLoadConfig]
+other = "读取配置失败"
+
+[cmd.install.suggestInit]
+other = "运行 'apkhub init' 创建配置文件"
+
+[cmd.install.errEnsureDirs]
+other = "创建或访问必要目录失败"
+
+[cmd.install.suggestPermissions]
+other = "检查目录权限设置"
+
+[cmd.install.errValidateLocal]
+other = "本地 APK 文件校验失败"
+
+[cmd.install.suggestCorrupt]
+other = "确认 APK 文件未损坏"
+
+[cmd.install.suggestFilePerm]
+other = "检查文件权限"
+
+[cmd.install.suggestTryAnother]
+other = "尝试更换一个 APK 文件"
+
+[cmd.install.errAPKMissing]
+other = "未找到 APK 文件"
+
+[cmd.install.suggestCheckPath]
+other = "确认文件路径是否正确"
+
+[cmd.install.errAllDevicesConflict]
+other = "--all-devices 不能与 --device/--devices 同时使用"
+
+[cmd.install.checkDeps.start]
+other = "🔍 正在检查 install 命令依赖..."
+
+[cmd.install.checkDeps.missing]
+other = "❌ 缺失的必需依赖: {{.list}}"
+
+[cmd.install.checkDeps.hintTitle]
+other = "💡 解决方法:"
+
+[cmd.install.checkDeps.hintDoctor]
+other = "   1. 运行 'apkhub doctor' 查看安装说明"
+
+[cmd.install.checkDeps.hintDoctorFix]
+other = "   2. 运行 'apkhub doctor --fix' 尝试自动安装"
+
+[cmd.install.checkDeps.hintDepsCmd]
+other = "   3. 运行 'apkhub deps --command install' 查看依赖详情"
+
+[cmd.install.checkDeps.err]
+other = "缺失必需依赖"
+
+[cmd.install.checkDeps.ok]
+other = "✅ 所有必需依赖已就绪"
+
+[cmd.install.checkDeps.okItem]
+other = "   ✅ {{.name}}: {{.version}}"
+
+[cmd.install.errLocalMissing]
+other = "APK 文件未找到: {{.path}}"
+
+[cmd.install.errLocalAccess]
+other = "无法访问 APK 文件: {{.error}}"
+
+[cmd.install.errLocalIsDir]
+other = "路径是目录而不是文件: {{.path}}"
+
+[cmd.install.errLocalEmpty]
+other = "APK 文件为空: {{.path}}"
+
+[cmd.install.errLocalTooSmall]
+other = "APK 文件过小（可能损坏）: {{.path}}"
+
+[cmd.install.local.detected]
+other = "📱 检测到本地 APK 文件:"
+
+[cmd.install.local.path]
+other = "   路径: {{.path}}"
+
+[cmd.install.local.size]
+other = "   大小: {{printf \"%.2f\" .size}} MB"
+
+[cmd.install.local.modified]
+other = "   修改时间: {{.time}}"
+
+[cmd.install.local.typeXapk]
+other = "   📦 类型: XAPK/APKM 包"
+
+[cmd.install.local.xapkNote]
+other = "   📝 将自动解压并安装"
+
+[cmd.install.local.detailsError]
+other = "   ⚠️  无法解析 APK 详情: {{.error}}"
+
+[cmd.install.local.installAsIs]
+other = "   📝 将按原样安装"
+
+[cmd.install.local.detailsTitle]
+other = "   📋 APK 详情:"
+
+[cmd.install.local.package]
+other = "      包名: {{.id}}"
+
+[cmd.install.local.version]
+other = "      版本: {{.version}} ({{.code}})"
+
+[cmd.install.local.sdk]
+other = "      最低 SDK: {{.min}}, 目标 SDK: {{.target}}"
+
+[cmd.install.local.appName]
+other = "      应用名: {{.name}}"
+
+[cmd.install.local.permissions]
+other = "      权限: {{.count}}"
+
+[cmd.install.local.permissionItem]
+other = "        - {{.permission}}"
+
+[cmd.install.local.morePermissions]
+other = "        ... 以及 {{.count}} 个权限"
+
+[cmd.install.unifiedStart]
+other = "🚀 开始统一安装流程..."
+
+[cmd.install.errDeviceSelection]
+other = "设备选择失败: {{.error}}"
+
+[cmd.install.targetDevices]
+other = "📱 目标设备数量: {{.count}}"
+
+[cmd.install.prepareDevice]
+other = "🔧 [{{.id}}] 正在准备安装"
+
+[cmd.install.errPreChecks]
+other = "预安装检查失败: {{.error}}"
+
+[cmd.install.installing]
+other = "📦 [{{.id}}] 正在安装 APK..."
+
+[cmd.install.verifyWarning]
+other = "⚠️  [{{.id}}] 安装后校验失败: {{.error}}"
+
+[cmd.install.verifyNote]
+other = "   应用已安装，但校验出现问题"
+
+[cmd.install.summary.title]
+other = "📊 安装汇总:"
+
+[cmd.install.summary.success]
+other = "   ✅ 成功 {{.count}} 个:"
+
+[cmd.install.summary.item]
+other = "      • {{.entry}}"
+
+[cmd.install.summary.none]
+other = "   ✅ 成功 0 个"
+
+[cmd.install.summary.failure]
+other = "   ❌ 失败 {{.count}} 个:"
+
+[cmd.install.summary.defaultFailure]
+other = "安装失败"
+
+[cmd.install.summary.unknown]
+other = "未知结果"
+
+[cmd.install.errInstallFailed]
+other = "有 {{.count}} 台设备安装失败"
+
+[cmd.install.validateDevice]
+other = "🔍 校验设备: {{.id}}"
+
+[cmd.install.errDeviceNotFound]
+other = "未找到设备: {{.error}}"
+
+[cmd.install.errDeviceOffline]
+other = "设备 {{.id}} 未在线（状态: {{.status}}）"
+
+[cmd.install.deviceValidated]
+other = "✅ 设备可用: {{.info}}"
+
+[cmd.install.preChecks.start]
+other = "🔍 正在执行预安装检查..."
+
+[cmd.install.preChecks.integrity]
+other = "APK 完整性校验失败: {{.error}}"
+
+[cmd.install.preChecks.storageWarn]
+other = "⚠️  存储检查警告: {{.error}}"
+
+[cmd.install.preChecks.existingInfo]
+other = "ℹ️  已安装信息: {{.error}}"
+
+[cmd.install.preChecks.done]
+other = "✅ 预安装检查完成"
+
+[cmd.install.errOpenAPK]
+other = "无法打开 APK 文件: {{.error}}"
+
+[cmd.install.errReadHeader]
+other = "无法读取 APK 头信息: {{.error}}"
+
+[cmd.install.errInvalidAPK]
+other = "无效的 APK 格式（不是 ZIP 文件）"
+
+[cmd.install.errAPKSize]
+other = "无法获取 APK 大小: {{.error}}"
+
+[cmd.install.preChecks.size]
+other = "   APK 大小: {{printf \"%.2f\" .size}} MB"
+
+[cmd.install.preChecks.largeAPK]
+other = "   ⚠️  大型 APK ({{printf \"%.2f\" .size}} MB)，请确认设备存储空间"
+
+[cmd.install.preChecks.xapkSkip]
+other = "   📦 XAPK 包 - 将在安装过程中检查"
+
+[cmd.install.preChecks.packageInfo]
+other = "无法提取包信息: {{.error}}"
+
+[cmd.install.preChecks.installed]
+other = "   包 {{.id}} 已安装"
+
+[cmd.install.preChecks.installedVersion]
+other = "   已安装版本: {{.version}} ({{.code}})"
+
+[cmd.install.preChecks.apkVersion]
+other = "   APK 版本: {{.version}} ({{.code}})"
+
+[cmd.install.preChecks.downgrade]
+other = "   ⚠️  安装较低版本（降级）"
+
+[cmd.install.preChecks.upgrade]
+other = "   ⬆️  安装更高版本（升级）"
+
+[cmd.install.preChecks.reinstall]
+other = "   🔄 安装相同版本（重装）"
+
+[cmd.install.result.title]
+other = "📊 安装结果"
+
+[cmd.install.result.sourceLocal]
+other = "📁 来源: 本地文件 ({{.target}})"
+
+[cmd.install.result.sourceRemote]
+other = "📦 来源: 远程包 ({{.target}})"
+
+[cmd.install.result.device]
+other = "📱 设备: {{.id}}"
+
+[cmd.install.result.duration]
+other = "⏱️  耗时: {{.duration}}"
+
+[cmd.install.result.statusSuccess]
+other = "✅ 状态: 成功"
+
+[cmd.install.result.package]
+other = "📋 包名: {{.id}}"
+
+[cmd.install.result.statusFailed]
+other = "❌ 状态: 失败"
+
+[cmd.install.result.errorCode]
+other = "🔍 错误码: {{.code}}"
+
+[cmd.install.result.errorMsg]
+other = "💬 错误: {{.error}}"
+
+[cmd.install.result.suggestions]
+other = "💡 建议:"
+
+[cmd.install.result.suggestionItem]
+other = "   • {{.suggestion}}"
+
+[cmd.install.errNoPackageID]
+other = "缺少包名，无法校验安装"
+
+[cmd.install.verify.start]
+other = "🔍 正在校验 {{.id}} 是否安装成功..."
+
+[cmd.install.verify.notFound]
+other = "安装后未找到该包: {{.error}}"
+
+[cmd.install.verify.success]
+other = "✅ 校验成功:"
+
+[cmd.install.verify.package]
+other = "   包名: {{.id}}"
+
+[cmd.install.verify.version]
+other = "   版本: {{.version}} ({{.code}})"
+
+[cmd.install.cleanup]
+other = "🧹 清理下载的文件: {{.path}}"
+
+[cmd.install.flag.device]
+other = "指定目标设备 ID"
+
+[cmd.install.flag.devices]
+other = "以逗号分隔的目标设备 ID 列表"
+
+[cmd.install.flag.allDevices]
+other = "在所有在线设备上安装"
+
+[cmd.install.flag.workers]
+other = "最大并发安装数（0 = 自动）"
+
+[cmd.install.flag.replace]
+other = "替换已安装的应用"
+
+[cmd.install.flag.downgrade]
+other = "允许版本降级"
+
+[cmd.install.flag.grant]
+other = "授予所有运行时权限"
+
+[cmd.install.flag.version]
+other = "指定安装版本（使用包 ID 时）"
+
+[cmd.install.flag.local]
+other = "强制将参数视为本地路径"
+
+[cmd.install.flag.checkDeps]
+other = "安装前检查依赖"
+
+[cmd.add.errLoadConfig]
+other = "加载配置失败"
+
+[cmd.add.errAPKPath]
+other = "无效的 APK 路径"
+
+[cmd.add.errAPKNotFound]
+other = "未找到 APK 文件"
+
+[cmd.add.errCreateRepo]
+other = "创建仓库失败"
+
+[cmd.add.errInitRepo]
+other = "初始化仓库失败"
+
+[cmd.add.parsing]
+other = "正在解析 APK：{{.path}}"
+
+[cmd.add.errParse]
+other = "解析 APK 失败"
+
+[cmd.add.info.title]
+other = "=== APK 信息 ==="
+
+[cmd.add.info.package]
+other = "包名：{{.id}}"
+
+[cmd.add.info.appName]
+other = "应用名称：{{.name}}"
+
+[cmd.add.info.version]
+other = "版本：{{.version}}（版本号：{{.code}}）"
+
+[cmd.add.info.size]
+other = "大小：{{printf \"%.2f\" .size}} MB"
+
+[cmd.add.info.sdk]
+other = "最低 SDK：{{.min}}，目标 SDK：{{.target}}"
+
+[cmd.add.info.sha256]
+other = "SHA256：{{.sha}}"
+
+[cmd.add.info.signature]
+other = "签名 SHA256：{{.sha}}..."
+
+[cmd.add.info.signatureMissing]
+other = "签名： (提取失败)"
+
+[cmd.add.info.abis]
+other = "ABI：{{.abis}}"
+
+[cmd.add.info.original]
+other = "原始文件名：{{.name}}"
+
+[cmd.add.info.newName]
+other = "新文件名：{{.name}}"
+
+[cmd.add.info.target]
+other = "目标位置：{{.path}}"
+
+[cmd.add.confirm]
+other = "将此 APK 加入仓库？[y/N]: "
+
+[cmd.add.cancel]
+other = "操作已取消。"
+
+[cmd.add.errDuplicate]
+other = "仓库中已有同名 APK：{{.name}}"
+
+[cmd.add.copying]
+other = "正在复制 APK 到仓库..."
+
+[cmd.add.errCopy]
+other = "复制 APK 失败"
+
+[cmd.add.errMove]
+other = "移动 APK 失败"
+
+[cmd.add.saving]
+other = "正在保存 APK 信息..."
+
+[cmd.add.errSaveInfo]
+other = "保存 APK 信息失败"
+
+[cmd.add.updating]
+other = "正在更新仓库清单..."
+
+[cmd.add.errUpdateManifest]
+other = "更新清单失败"
+
+[cmd.add.success]
+other = "✓ APK 已成功加入仓库！"
+
+[cmd.add.successLocation]
+other = "  文件位置：{{.path}}"
+
+[cmd.add.successInfo]
+other = "  信息文件：{{.path}}"
+
+[cmd.add.flag.yes]
+other = "跳过确认提示"
+
+[cmd.add.flag.copy]
+other = "复制文件而不是移动"
+
+[cmd.add.errCreateDir]
+other = "创建目录失败"
+
+[cmd.add.errOpenSrc]
+other = "打开源文件失败"
+
+[cmd.add.errCreateDst]
+other = "创建目标文件失败"
+
+[cmd.add.errCopyContent]
+other = "复制文件内容失败"
+
+[cmd.add.errSync]
+other = "同步文件失败"
+
 
 [cmd.doctor.short]
 other = "诊断并修复系统问题"
@@ -877,11 +1364,167 @@ other = "导出仓库数据"
 [cmd.export.long]
 other = "将仓库数据导出为可分发格式。"
 
+[cmd.export.errLoadConfig]
+other = "加载配置失败"
+
+[cmd.export.errCreateRepo]
+other = "创建仓库失败"
+
+[cmd.export.errLoadManifest]
+other = "加载清单失败"
+
+[cmd.export.start]
+other = "正在导出仓库数据..."
+
+[cmd.export.format]
+other = "格式：{{.format}}"
+
+[cmd.export.output]
+other = "输出：{{.output}}"
+
+[cmd.export.errUnsupported]
+other = "不支持的导出格式"
+
+[cmd.export.errFailed]
+other = "导出失败"
+
+[cmd.export.success]
+other = "✓ 导出完成！"
+
+[cmd.export.flag.format]
+other = "导出格式：json、csv、md、fdroid"
+
+[cmd.export.flag.output]
+other = "输出文件路径"
+
+[cmd.export.flag.fields]
+other = "导出的字段（仅 CSV）"
+
+[cmd.export.errOutputDir]
+other = "创建输出目录失败"
+
+[cmd.export.errMarshalJSON]
+other = "JSON 序列化失败"
+
+[cmd.export.errWriteFile]
+other = "写入文件失败"
+
+[cmd.export.errCreateFile]
+other = "创建文件失败"
+
+[cmd.export.errWriteHeader]
+other = "写入表头失败"
+
+[cmd.export.errWriteRow]
+other = "写入数据行失败"
+
 [cmd.import.short]
-other = "导入仓库数据"
+other = "导入 APK 元数据"
 
 [cmd.import.long]
-other = "从文件或归档中导入仓库数据。"
+other = "从其他仓库格式（如 F-Droid 索引或另一份 ApkHub 清单）导入 APK 元数据。"
+
+[cmd.import.errLoadConfig]
+other = "加载配置失败"
+
+[cmd.import.errCreateRepo]
+other = "创建仓库失败"
+
+[cmd.import.errInitRepo]
+other = "初始化仓库失败"
+
+[cmd.import.title]
+other = "=== 导入 APK 元数据 ==="
+
+[cmd.import.source]
+other = "来源：{{.source}}"
+
+[cmd.import.format]
+other = "格式：{{.format}}"
+
+[cmd.import.download]
+other = "下载 APK：{{.enabled}}"
+
+[cmd.import.downloading]
+other = "正在从 URL 下载..."
+
+[cmd.import.errDownload]
+other = "下载失败"
+
+[cmd.import.errReadResponse]
+other = "读取响应失败"
+
+[cmd.import.errReadFile]
+other = "读取文件失败"
+
+[cmd.import.errUnsupported]
+other = "不支持的导入格式"
+
+[cmd.import.errFailed]
+other = "导入失败"
+
+[cmd.import.found]
+other = "找到 {{.count}} 个待导入的 APK"
+
+[cmd.import.confirm]
+other = "继续导入？[y/N]: "
+
+[cmd.import.cancel]
+other = "导入已取消。"
+
+[cmd.import.importing]
+other = "=== 正在导入 APK ==="
+
+[cmd.import.importingItem]
+other = "正在导入：{{.id}} v{{.version}}"
+
+[cmd.import.skipExists]
+other = "  跳过：已存在"
+
+[cmd.import.errSave]
+other = "  失败：{{.error}}"
+
+[cmd.import.downloadingAPK]
+other = "  正在下载 APK..."
+
+[cmd.import.downloadTODO]
+other = "  下载暂未实现"
+
+[cmd.import.imported]
+other = "  ✓ 导入成功"
+
+[cmd.import.updateManifest]
+other = "正在更新仓库清单..."
+
+[cmd.import.errUpdateManifest]
+other = "更新清单失败"
+
+[cmd.import.summaryTitle]
+other = "=== 导入总结 ==="
+
+[cmd.import.summaryImported]
+other = "已导入：{{.count}}"
+
+[cmd.import.summarySkipped]
+other = "已跳过：{{.count}}"
+
+[cmd.import.summaryFailed]
+other = "失败：{{.count}}"
+
+[cmd.import.success]
+other = "✓ 导入完成！"
+
+[cmd.import.flag.format]
+other = "导入格式：apkhub、fdroid、json"
+
+[cmd.import.flag.download]
+other = "如提供 URL 则下载 APK"
+
+[cmd.import.flag.yes]
+other = "跳过确认提示"
+
+[cmd.import.flag.map]
+other = "通用 JSON 导入的字段映射"
 
 [cmd.info.short]
 other = "显示应用信息"
@@ -1011,6 +1654,48 @@ other = "SHA256：{{.sha}}"
 
 [cmd.info.local.signatureSHA]
 other = "签名 SHA256：{{.sha}}"
+
+[cmd.info.local.installTitle]
+other = "=== 安装命令 ==="
+
+[cmd.info.local.installCmd]
+other = "安装: apkhub install \"{{.path}}\""
+
+[cmd.info.local.installCmdDevice]
+other = "指定设备安装: apkhub install \"{{.path}}\" --device <device-id>"
+
+[cmd.info.perm.camera]
+other = "📷 相机"
+
+[cmd.info.perm.location]
+other = "📍 位置"
+
+[cmd.info.perm.storage]
+other = "💾 存储"
+
+[cmd.info.perm.network]
+other = "🌐 网络"
+
+[cmd.info.perm.phone]
+other = "📞 电话与短信"
+
+[cmd.info.perm.contacts]
+other = "👥 联系人"
+
+[cmd.info.perm.microphone]
+other = "🎤 麦克风"
+
+[cmd.info.perm.calendar]
+other = "📅 日历"
+
+[cmd.info.perm.bluetooth]
+other = "📶 蓝牙"
+
+[cmd.info.perm.notifications]
+other = "🔔 通知"
+
+[cmd.info.perm.system]
+other = "🔧 系统"
 
 [cmd.parse.short]
 other = "解析 APK 文件"
@@ -1185,6 +1870,204 @@ other = "校验仓库完整性"
 
 [cmd.verify.long]
 other = "校验仓库文件与清单的一致性。"
+
+[cmd.verify.start]
+other = "🔍 正在开始仓库校验..."
+
+[cmd.verify.errLoadConfig]
+other = "加载配置失败"
+
+[cmd.verify.fix.start]
+other = "🔧 正在尝试修复问题..."
+
+[cmd.verify.report.fail]
+other = "⚠️ 生成报告失败：{{.error}}"
+
+[cmd.verify.report.saved]
+other = "📄 报告已保存到：{{.path}}"
+
+[cmd.verify.repo]
+other = "📋 仓库：{{.name}}"
+
+[cmd.verify.check.config]
+other = "🔧 正在检查配置... "
+
+[cmd.verify.check.dir]
+other = "📁 正在检查目录结构... "
+
+[cmd.verify.check.manifest]
+other = "📄 正在检查清单... "
+
+[cmd.verify.check.apks]
+other = "📱 正在检查 APK 文件... "
+
+[cmd.verify.check.orphans]
+other = "🗑️ 正在检查孤立文件... "
+
+[cmd.verify.check.deep]
+other = "🔬 正在执行深度校验... "
+
+[cmd.verify.check.failCount]
+other = "❌ （{{.count}} 个问题）"
+
+[cmd.verify.issue.emptyName]
+other = "仓库名称为空"
+
+[cmd.verify.issue.emptyDesc]
+other = "仓库描述为空"
+
+[cmd.verify.issue.missingDir]
+other = "缺少必需目录：{{.dir}}"
+
+[cmd.verify.issue.manifestMissing]
+other = "未找到清单文件"
+
+[cmd.verify.issue.manifestRead]
+other = "读取清单失败：{{.error}}"
+
+[cmd.verify.issue.manifestParse]
+other = "解析清单失败：{{.error}}"
+
+[cmd.verify.issue.nameMismatch]
+other = "清单中的仓库名称与配置不一致"
+
+[cmd.verify.issue.missingSHA]
+other = "{{.id}}（{{.version}}）缺少 SHA256。请重新生成清单或关闭签名校验。"
+
+[cmd.verify.issue.hashFail]
+other = "计算 {{.id}}（{{.version}}）哈希失败：{{.error}}"
+
+[cmd.verify.issue.hashMismatch]
+other = "{{.id}}（{{.version}}）哈希不匹配，期望 {{.expected}}，实际 {{.actual}}"
+
+[cmd.verify.issue.apkMissing]
+other = "{{.id}}（{{.version}}）的 APK 文件缺失"
+
+[cmd.verify.issue.apkCountMismatch]
+other = "APK 数量不一致：实际 {{.found}} 个，清单记录 {{.expected}} 个"
+
+[cmd.verify.issue.iconsMissing]
+other = "缺少 icons 目录"
+
+[cmd.verify.issue.iconsEmpty]
+other = "未找到图标文件"
+
+[cmd.verify.issue.infosMissing]
+other = "缺少 infos 目录"
+
+[cmd.verify.issue.manifestNoSignature]
+other = "清单缺少签名元数据。请配置 signing_key_fingerprint/signer，或运行时禁用 --verify-signature。"
+
+[cmd.verify.issue.manifestSignerUntrusted]
+other = "清单签名者 {{.fingerprint}} 不在 trusted_keys 中。添加指纹或放宽 signature_policy。"
+
+[cmd.verify.issue.manifestSignedAtMissing]
+other = "清单签名时间戳缺失。请重新生成清单刷新签名元数据。"
+
+[cmd.verify.issue.apkSignatureMissing]
+other = "{{.id}}（{{.version}}）缺少 APK 签名指纹。"
+
+[cmd.verify.issue.apkSignerUntrusted]
+other = "签名者 {{.fingerprint}} 不被信任：{{.id}}（{{.version}}）。请更新 trusted_keys 或关闭签名校验。"
+
+[cmd.verify.results.title]
+other = "📊 校验结果"
+
+[cmd.verify.results.time]
+other = "⏱️ 校验耗时：{{.duration}}"
+
+[cmd.verify.results.total]
+other = "📁 文件总数：{{.count}}"
+
+[cmd.verify.results.valid]
+other = "✅ 有效文件：{{.count}}"
+
+[cmd.verify.results.issues]
+other = "❌ 问题数量：{{.count}}"
+
+[cmd.verify.results.breakdown]
+other = "📋 问题分布："
+
+[cmd.verify.results.missing]
+other = "   缺失文件：{{.count}}"
+
+[cmd.verify.results.corrupted]
+other = "   损坏文件：{{.count}}"
+
+[cmd.verify.results.orphaned]
+other = "   孤立文件：{{.count}}"
+
+[cmd.verify.results.invalid]
+other = "   元数据问题：{{.count}}"
+
+[cmd.verify.results.icons]
+other = "   缺失图标：{{.count}}"
+
+[cmd.verify.results.details]
+other = "🔍 详细问题："
+
+[cmd.verify.results.item]
+other = "   {{.index}}. {{.severity}} {{.desc}}{{.fixable}}"
+
+[cmd.verify.results.file]
+other = "      文件：{{.file}}"
+
+[cmd.verify.results.fixable]
+other = "（可修复）"
+
+[cmd.verify.results.pass]
+other = "🎉 仓库校验通过，未发现问题。"
+
+[cmd.verify.results.fixableCount]
+other = "💡 有 {{.count}} 个问题可用 --fix 自动修复"
+
+[cmd.verify.results.attention]
+other = "⚠️ 仓库存在完整性问题，需要关注。"
+
+[cmd.verify.fix.title]
+other = "🔧 自动修复结果"
+
+[cmd.verify.fix.fixed]
+other = "✅ 已修复（{{.count}}）："
+
+[cmd.verify.fix.failed]
+other = "❌ 修复失败（{{.count}}）："
+
+[cmd.verify.fix.skipped]
+other = "⏭️ 已跳过（{{.count}}）："
+
+[cmd.verify.fix.errCreateDir]
+other = "创建目录 %s 失败：%v"
+
+[cmd.verify.fix.createdDir]
+other = "已创建目录：%s"
+
+[cmd.verify.fix.confirmOrphan]
+other = "删除孤立文件 %s？[y/N]: "
+
+[cmd.verify.fix.errRemove]
+other = "删除 %s 失败：%v"
+
+[cmd.verify.fix.removedOrphan]
+other = "已删除孤立文件：%s"
+
+[cmd.verify.fix.skipOrphan]
+other = "已跳过删除：%s"
+
+[cmd.verify.flag.fix]
+other = "尝试自动修复问题"
+
+[cmd.verify.flag.deep]
+other = "执行深度校验（更慢但更全面）"
+
+[cmd.verify.flag.quiet]
+other = "减少输出"
+
+[cmd.verify.flag.report]
+other = "生成 JSON 报告文件"
+
+[cmd.verify.flag.verifySignatures]
+other = "校验清单签名元数据和 APK 哈希"
 
 # 扫描命令
 [cmd.scan.deps.limited]

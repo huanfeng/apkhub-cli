@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/huanfeng/apkhub-cli/internal/config"
+	"github.com/huanfeng/apkhub-cli/internal/i18n"
 	"github.com/huanfeng/apkhub-cli/pkg/models"
 	"github.com/huanfeng/apkhub-cli/pkg/repo"
 	"github.com/spf13/cobra"
@@ -22,25 +23,25 @@ var (
 
 var exportCmd = &cobra.Command{
 	Use:   "export",
-	Short: "Export repository data in various formats",
-	Long:  `Export repository data to different formats including JSON, CSV, and markdown for analysis or migration.`,
+	Short: i18n.T("cmd.export.short"),
+	Long:  i18n.T("cmd.export.long"),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Load configuration
 		cfg, err := config.Load(cfgFile)
 		if err != nil {
-			return fmt.Errorf("failed to load configuration: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.export.errLoadConfig"), err)
 		}
 
 		// Create repository instance
 		repository, err := repo.NewRepository(workDir, cfg)
 		if err != nil {
-			return fmt.Errorf("failed to create repository: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.export.errCreateRepo"), err)
 		}
 
 		// Load manifest
 		manifest, err := repository.BuildManifestFromInfos()
 		if err != nil {
-			return fmt.Errorf("failed to load manifest: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.export.errLoadManifest"), err)
 		}
 
 		// Determine output file
@@ -48,9 +49,9 @@ var exportCmd = &cobra.Command{
 			exportOutput = fmt.Sprintf("apkhub_export.%s", exportFormat)
 		}
 
-		fmt.Printf("Exporting repository data...\n")
-		fmt.Printf("Format: %s\n", exportFormat)
-		fmt.Printf("Output: %s\n", exportOutput)
+		fmt.Printf("%s\n", i18n.T("cmd.export.start"))
+		fmt.Printf("%s\n", i18n.T("cmd.export.format", map[string]interface{}{"format": exportFormat}))
+		fmt.Printf("%s\n", i18n.T("cmd.export.output", map[string]interface{}{"output": exportOutput}))
 
 		// Export based on format
 		switch exportFormat {
@@ -63,14 +64,14 @@ var exportCmd = &cobra.Command{
 		case "fdroid":
 			err = exportFDroid(manifest, exportOutput)
 		default:
-			return fmt.Errorf("unsupported export format: %s", exportFormat)
+			return fmt.Errorf("%s: %s", i18n.T("cmd.export.errUnsupported"), exportFormat)
 		}
 
 		if err != nil {
-			return fmt.Errorf("export failed: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.export.errFailed"), err)
 		}
 
-		fmt.Printf("\n✓ Export completed successfully!\n")
+		fmt.Printf("\n%s\n", i18n.T("cmd.export.success"))
 		return nil
 	},
 }
@@ -78,28 +79,28 @@ var exportCmd = &cobra.Command{
 func init() {
 	repoCmd.AddCommand(exportCmd)
 
-	exportCmd.Flags().StringVarP(&exportFormat, "format", "f", "json", "Export format: json, csv, md, fdroid")
-	exportCmd.Flags().StringVarP(&exportOutput, "output", "o", "", "Output file path")
-	exportCmd.Flags().StringSliceVar(&exportFields, "fields", []string{}, "Fields to export (CSV only)")
+	exportCmd.Flags().StringVarP(&exportFormat, "format", "f", "json", i18n.T("cmd.export.flag.format"))
+	exportCmd.Flags().StringVarP(&exportOutput, "output", "o", "", i18n.T("cmd.export.flag.output"))
+	exportCmd.Flags().StringSliceVar(&exportFields, "fields", []string{}, i18n.T("cmd.export.flag.fields"))
 }
 
 func exportJSON(manifest *models.ManifestIndex, output string) error {
 	// Create output directory if needed
 	if dir := filepath.Dir(output); dir != "." {
 		if err := os.MkdirAll(dir, 0755); err != nil {
-			return fmt.Errorf("failed to create output directory: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.export.errOutputDir"), err)
 		}
 	}
 
 	// Marshal to JSON
 	data, err := json.MarshalIndent(manifest, "", "  ")
 	if err != nil {
-		return fmt.Errorf("failed to marshal JSON: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T("cmd.export.errMarshalJSON"), err)
 	}
 
 	// Write to file
 	if err := os.WriteFile(output, data, 0644); err != nil {
-		return fmt.Errorf("failed to write file: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T("cmd.export.errWriteFile"), err)
 	}
 
 	return nil
@@ -109,7 +110,7 @@ func exportCSV(manifest *models.ManifestIndex, output string) error {
 	// Create output file
 	file, err := os.Create(output)
 	if err != nil {
-		return fmt.Errorf("failed to create file: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T("cmd.export.errCreateFile"), err)
 	}
 	defer file.Close()
 
@@ -123,7 +124,7 @@ func exportCSV(manifest *models.ManifestIndex, output string) error {
 
 	// Write header
 	if err := writer.Write(exportFields); err != nil {
-		return fmt.Errorf("failed to write header: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T("cmd.export.errWriteHeader"), err)
 	}
 
 	// Write data
@@ -165,7 +166,7 @@ func exportCSV(manifest *models.ManifestIndex, output string) error {
 			}
 
 			if err := writer.Write(row); err != nil {
-				return fmt.Errorf("failed to write row: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.export.errWriteRow"), err)
 			}
 		}
 	}
@@ -176,7 +177,7 @@ func exportCSV(manifest *models.ManifestIndex, output string) error {
 func exportMarkdown(manifest *models.ManifestIndex, output string) error {
 	file, err := os.Create(output)
 	if err != nil {
-		return fmt.Errorf("failed to create file: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T("cmd.export.errCreateFile"), err)
 	}
 	defer file.Close()
 
