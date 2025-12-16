@@ -43,6 +43,13 @@ ApkHub CLI 是一个**分布式 APK 仓库系统**，工作方式类似 Scoop �
 - **设备管理**: 监控和管理连接的 Android 设备
 - **依赖处理**: 自动工具检测和安装
 
+### 🌍 多语言
+- 内置中英文输出，按 `--lang`、`APKHUB_LANG`、系统语言自动选择
+- 无匹配时回退英文
+- 快速切换示例：
+  - `apkhub --lang zh info com.example.app`
+  - `APKHUB_LANG=en apkhub search maps`
+
 ## 📦 安装
 
 ### 预编译二进制文件

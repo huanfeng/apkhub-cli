@@ -43,6 +43,13 @@ Consume APK repositories like a package manager:
 - **Device Management**: Monitor and manage connected Android devices
 - **Dependency Handling**: Automatic tool detection and installation
 
+### 🌍 Internationalization
+- Built-in English/Chinese output with auto detection from `--lang`, `APKHUB_LANG`, and OS locale
+- Fallback to English when no match is found
+- Quick switch examples:
+  - `apkhub --lang zh info com.example.app`
+  - `APKHUB_LANG=en apkhub search maps`
+
 ## 📦 Installation
 
 ### Pre-built Binaries
