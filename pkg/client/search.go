@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/huanfeng/apkhub-cli/pkg/models"
+	"github.com/huanfeng/apkhub/pkg/models"
 )
 
 // SearchResult represents a search result

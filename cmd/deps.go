@@ -7,8 +7,8 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/huanfeng/apkhub-cli/internal/i18n"
-	"github.com/huanfeng/apkhub-cli/pkg/system"
+	"github.com/huanfeng/apkhub/internal/i18n"
+	"github.com/huanfeng/apkhub/pkg/system"
 	"github.com/spf13/cobra"
 )
 

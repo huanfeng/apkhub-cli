@@ -1,6 +1,6 @@
 package cmd
 
-import "github.com/huanfeng/apkhub-cli/internal/i18n"
+import "github.com/huanfeng/apkhub/internal/i18n"
 
 // applyCommandLocalization updates command and flag descriptions after i18n is initialized.
 func applyCommandLocalization() {

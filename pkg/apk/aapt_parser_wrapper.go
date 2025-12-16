@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/huanfeng/apkhub-cli/pkg/models"
+	"github.com/huanfeng/apkhub/pkg/models"
 )
 
 // AAPTParserWrapper wraps the AAPT parser for the parser chain

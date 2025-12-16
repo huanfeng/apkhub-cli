@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/huanfeng/apkhub-cli/pkg/client"
+	"github.com/huanfeng/apkhub/pkg/client"
 )
 
 func parseDeviceList(devices []string) []string {

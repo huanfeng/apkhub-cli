@@ -7,10 +7,10 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/huanfeng/apkhub-cli/internal/i18n"
-	"github.com/huanfeng/apkhub-cli/pkg/apk"
-	"github.com/huanfeng/apkhub-cli/pkg/client"
-	"github.com/huanfeng/apkhub-cli/pkg/models"
+	"github.com/huanfeng/apkhub/internal/i18n"
+	"github.com/huanfeng/apkhub/pkg/apk"
+	"github.com/huanfeng/apkhub/pkg/client"
+	"github.com/huanfeng/apkhub/pkg/models"
 	"github.com/spf13/cobra"
 )
 

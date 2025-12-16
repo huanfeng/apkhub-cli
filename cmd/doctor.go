@@ -5,10 +5,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/huanfeng/apkhub-cli/internal/errors"
-	"github.com/huanfeng/apkhub-cli/internal/i18n"
-	"github.com/huanfeng/apkhub-cli/pkg/system"
-	"github.com/huanfeng/apkhub-cli/pkg/utils"
+	"github.com/huanfeng/apkhub/internal/errors"
+	"github.com/huanfeng/apkhub/internal/i18n"
+	"github.com/huanfeng/apkhub/pkg/system"
+	"github.com/huanfeng/apkhub/pkg/utils"
 	"github.com/spf13/cobra"
 )
 

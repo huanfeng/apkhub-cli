@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/huanfeng/apkhub-cli/pkg/models"
+	"github.com/huanfeng/apkhub/pkg/models"
 )
 
 // BucketHealth represents the health status of a bucket

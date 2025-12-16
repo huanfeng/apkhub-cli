@@ -6,9 +6,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/huanfeng/apkhub-cli/internal/config"
-	"github.com/huanfeng/apkhub-cli/internal/i18n"
-	"github.com/huanfeng/apkhub-cli/pkg/models"
+	"github.com/huanfeng/apkhub/internal/config"
+	"github.com/huanfeng/apkhub/internal/i18n"
+	"github.com/huanfeng/apkhub/pkg/models"
 	"github.com/spf13/cobra"
 )
 
@@ -346,10 +346,10 @@ func getDefaultTemplate() string {
 repository:
   # Repository name
   name: "My APK Repository"
-  
+
   # Repository description
   description: "Private APK repository for my applications"
-  
+
   # Base URL for downloads (will be prepended to relative paths)
   # Options:
   # - "" (empty): Use relative paths only
@@ -358,10 +358,10 @@ repository:
   # - "https://example.com/apk-repo": Remote HTTP server
   # - "file:///absolute/path": Specific file path
   base_url: ""
-  
+
   # Number of versions to keep (0 = keep all)
   keep_versions: 0
-  
+
   # How to handle different signatures:
   # - "mark": Mark versions with different signatures (default)
   # - "separate": Create separate entries for different signatures
@@ -371,21 +371,21 @@ repository:
 scanning:
   # Scan directories recursively
   recursive: true
-  
+
   # Follow symbolic links
   follow_symlinks: false
-  
+
   # Include patterns (glob)
   include_pattern:
     - "*.apk"
     - "*.xapk"
     - "*.apkm"
-  
+
   # Exclude patterns (glob)
   exclude_pattern:
     - "*.tmp"
     - "backup/*"
-  
+
   # Parse APK information (slower but provides more details)
   parse_apk_info: true
 `

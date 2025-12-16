@@ -10,13 +10,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/huanfeng/apkhub-cli/internal/config"
-	"github.com/huanfeng/apkhub-cli/internal/i18n"
-	"github.com/huanfeng/apkhub-cli/pkg/apk"
-	"github.com/huanfeng/apkhub-cli/pkg/models"
-	"github.com/huanfeng/apkhub-cli/pkg/repo"
-	"github.com/huanfeng/apkhub-cli/pkg/system"
-	"github.com/huanfeng/apkhub-cli/pkg/utils"
+	"github.com/huanfeng/apkhub/internal/config"
+	"github.com/huanfeng/apkhub/internal/i18n"
+	"github.com/huanfeng/apkhub/pkg/apk"
+	"github.com/huanfeng/apkhub/pkg/models"
+	"github.com/huanfeng/apkhub/pkg/repo"
+	"github.com/huanfeng/apkhub/pkg/system"
+	"github.com/huanfeng/apkhub/pkg/utils"
 	"github.com/spf13/cobra"
 )
 

@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/huanfeng/apkhub-cli/pkg/apk"
-	"github.com/huanfeng/apkhub-cli/pkg/models"
+	"github.com/huanfeng/apkhub/pkg/apk"
+	"github.com/huanfeng/apkhub/pkg/models"
 )
 
 // Repository manages the APK repository structure

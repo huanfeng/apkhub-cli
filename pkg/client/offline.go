@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/huanfeng/apkhub-cli/pkg/models"
+	"github.com/huanfeng/apkhub/pkg/models"
 )
 
 // OfflineManager handles offline mode detection and fallback strategies

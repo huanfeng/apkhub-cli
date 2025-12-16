@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/huanfeng/apkhub-cli/pkg/apk"
+	"github.com/huanfeng/apkhub/pkg/apk"
 )
 
 // ADBManager handles ADB operations

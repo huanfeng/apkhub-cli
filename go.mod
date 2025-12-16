@@ -1,4 +1,4 @@
-module github.com/huanfeng/apkhub-cli
+module github.com/huanfeng/apkhub
 
 go 1.23.0
 

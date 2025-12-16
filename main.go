@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/huanfeng/apkhub-cli/cmd"
+	"github.com/huanfeng/apkhub/cmd"
 )
 
 func main() {

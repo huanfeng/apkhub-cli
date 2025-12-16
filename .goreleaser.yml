@@ -22,9 +22,9 @@ builds:
     # 自动注入版本信息
     ldflags:
       - -s -w
-      - -X github.com/huanfeng/apkhub-cli/internal/version.Version={{.Version}}
-      - -X github.com/huanfeng/apkhub-cli/internal/version.Commit={{.Commit}}
-      - -X github.com/huanfeng/apkhub-cli/internal/version.BuildDate={{.Date}}
+      - -X github.com/huanfeng/apkhub/internal/version.Version={{.Version}}
+      - -X github.com/huanfeng/apkhub/internal/version.Commit={{.Commit}}
+      - -X github.com/huanfeng/apkhub/internal/version.BuildDate={{.Date}}
 
 # 打包配置
 archives:
@@ -66,7 +66,7 @@ release:
     #### Linux/macOS
     ```bash
     # Download the appropriate archive for your system
-    curl -L https://github.com/huanfeng/apkhub-cli/releases/download/{{.Tag}}/{{ .ProjectName }}-{{.Version}}-linux-x86_64.tar.gz -o apkhub.tar.gz
+    curl -L https://github.com/huanfeng/apkhub/releases/download/{{.Tag}}/{{ .ProjectName }}-{{.Version}}-linux-x86_64.tar.gz -o apkhub.tar.gz
 
     # Extract
     tar xzf apkhub.tar.gz
@@ -115,7 +115,7 @@ brews:
 
     # Formula description
     description: "A command-line tool for managing distributed APK repositories"
-    homepage: "https://github.com/huanfeng/apkhub-cli"
+    homepage: "https://github.com/huanfeng/apkhub"
     license: "MIT"
 
     # Dependencies
@@ -134,7 +134,7 @@ scoops:
   - name: apkhub
     directory: "bucket"
     commit_msg_template: "Update ApkHub CLI scoop manifest to {{ .Tag }}"
-    homepage: "https://github.com/huanfeng/apkhub-cli"
+    homepage: "https://github.com/huanfeng/apkhub"
     description: "ApkHub CLI – manage distributed APK repositories"
     license: MIT
     skip_upload: false

@@ -5,10 +5,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/huanfeng/apkhub-cli/internal/config"
-	"github.com/huanfeng/apkhub-cli/internal/i18n"
-	"github.com/huanfeng/apkhub-cli/pkg/models"
-	"github.com/huanfeng/apkhub-cli/pkg/repo"
+	"github.com/huanfeng/apkhub/internal/config"
+	"github.com/huanfeng/apkhub/internal/i18n"
+	"github.com/huanfeng/apkhub/pkg/models"
+	"github.com/huanfeng/apkhub/pkg/repo"
 	"github.com/spf13/cobra"
 )
 

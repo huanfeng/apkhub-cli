@@ -191,7 +191,7 @@ func captureStack() []string {
 		}
 
 		// Only include frames from our project
-		if strings.Contains(file, "apkhub-cli") {
+		if strings.Contains(file, "apkhub") {
 			stack = append(stack, fmt.Sprintf("%s:%d %s", file, line, fn.Name()))
 		}
 	}

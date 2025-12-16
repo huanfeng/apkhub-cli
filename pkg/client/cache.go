@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/huanfeng/apkhub-cli/pkg/models"
+	"github.com/huanfeng/apkhub/pkg/models"
 )
 
 // CacheManager handles caching operations

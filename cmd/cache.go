@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/huanfeng/apkhub-cli/internal/i18n"
-	"github.com/huanfeng/apkhub-cli/pkg/client"
+	"github.com/huanfeng/apkhub/internal/i18n"
+	"github.com/huanfeng/apkhub/pkg/client"
 	"github.com/spf13/cobra"
 )
 
