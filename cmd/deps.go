@@ -7,6 +7,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
+	"github.com/huanfeng/apkhub-cli/internal/i18n"
 	"github.com/huanfeng/apkhub-cli/pkg/system"
 	"github.com/spf13/cobra"
 )
@@ -19,15 +20,15 @@ var (
 
 var depsCmd = &cobra.Command{
 	Use:   "deps",
-	Short: "Check dependencies for ApkHub CLI",
-	Long:  `Check system dependencies required for ApkHub CLI commands and show installation guidance.`,
+	Short: i18n.T("cmd.deps.short"),
+	Long:  i18n.T("cmd.deps.long"),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		depManager := system.NewDependencyManager()
 		installer := system.NewInstallationGuide()
 
 		if depsCache {
 			depManager.ClearCache()
-			fmt.Println("✅ Dependency cache cleared")
+			fmt.Println(i18n.T("cmd.deps.cacheCleared"))
 			return nil
 		}
 
@@ -40,14 +41,14 @@ var depsCmd = &cobra.Command{
 }
 
 func checkCommandDependencies(depManager system.DependencyManager, installer system.InstallationGuide, command string) error {
-	fmt.Printf("🔍 Checking dependencies for command: %s\n", command)
+	fmt.Printf("%s\n", i18n.T("cmd.deps.checkCommand", map[string]interface{}{"command": command}))
 	fmt.Println("=" + strings.Repeat("=", len(command)+35))
 	fmt.Println()
 
 	deps := depManager.CheckForCommand(command)
 
 	if len(deps) == 0 {
-		fmt.Printf("✅ Command '%s' has no external dependencies\n", command)
+		fmt.Printf("%s\n", i18n.T("cmd.deps.noDeps", map[string]interface{}{"command": command}))
 		return nil
 	}
 
@@ -57,7 +58,7 @@ func checkCommandDependencies(depManager system.DependencyManager, installer sys
 
 	// Display dependencies
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "DEPENDENCY\tSTATUS\tVERSION\tPATH\tREQUIRED")
+	fmt.Fprintln(w, i18n.T("cmd.deps.table.command.header"))
 	fmt.Fprintln(w, "----------\t------\t-------\t----\t--------")
 
 	var missingRequired []string
@@ -92,41 +93,47 @@ func checkCommandDependencies(depManager system.DependencyManager, installer sys
 
 	// Show installation guidance
 	if len(missingRequired) > 0 || len(missingOptional) > 0 {
-		fmt.Println("\n📋 Installation Guidance:")
+		fmt.Println()
+		fmt.Println(i18n.T("cmd.deps.install.title"))
 		fmt.Println("========================")
 
 		allMissing := append(missingRequired, missingOptional...)
 		for _, depName := range allMissing {
 			fmt.Printf("\n🔧 %s:\n", depName)
+			fmt.Printf("%s\n", i18n.T("cmd.deps.install.for", map[string]interface{}{"name": depName}))
 
 			steps := installer.GetPlatformInstructions(depName)
 			for i, step := range steps {
 				if step.Manual {
-					fmt.Printf("   %d. %s (Manual)\n", i+1, step.Description)
+					fmt.Printf(i18n.T("cmd.deps.install.manual")+"\n", i+1, step.Description)
 				} else {
-					fmt.Printf("   %d. %s\n", i+1, step.Description)
+					fmt.Printf(i18n.T("cmd.deps.install.step")+"\n", i+1, step.Description)
 					if step.Command != "" {
-						fmt.Printf("      Command: %s\n", step.Command)
+						fmt.Printf(i18n.T("cmd.deps.install.command")+"\n", step.Command)
 					}
 				}
 			}
 		}
 
 		if len(missingRequired) > 0 {
-			fmt.Printf("\n❌ Command '%s' cannot run without: %s\n", command, strings.Join(missingRequired, ", "))
+			fmt.Printf("\n%s\n", i18n.T("cmd.deps.install.missingRequired", map[string]interface{}{
+				"command": command, "deps": strings.Join(missingRequired, ", "),
+			}))
 		}
 		if len(missingOptional) > 0 {
-			fmt.Printf("\n⚠️  Command '%s' will have limited functionality without: %s\n", command, strings.Join(missingOptional, ", "))
+			fmt.Printf("\n%s\n", i18n.T("cmd.deps.install.missingOptional", map[string]interface{}{
+				"command": command, "deps": strings.Join(missingOptional, ", "),
+			}))
 		}
 	} else {
-		fmt.Printf("\n✅ All dependencies for '%s' are satisfied!\n", command)
+		fmt.Printf("\n%s\n", i18n.T("cmd.deps.install.allGood", map[string]interface{}{"command": command}))
 	}
 
 	return nil
 }
 
 func checkAllDependencies(depManager system.DependencyManager, installer system.InstallationGuide) error {
-	fmt.Println("🔍 Checking all ApkHub CLI dependencies")
+	fmt.Println(i18n.T("cmd.deps.checkAll.title"))
 	fmt.Println("======================================")
 	fmt.Println()
 
@@ -138,7 +145,7 @@ func checkAllDependencies(depManager system.DependencyManager, installer system.
 
 	// Display all dependencies
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "DEPENDENCY\tSTATUS\tVERSION\tPATH\tUSED BY")
+	fmt.Fprintln(w, i18n.T("cmd.deps.table.all.header"))
 	fmt.Fprintln(w, "----------\t------\t-------\t----\t-------")
 
 	var missingRequired []string
@@ -173,7 +180,7 @@ func checkAllDependencies(depManager system.DependencyManager, installer system.
 	w.Flush()
 
 	// Summary
-	fmt.Println("\n📊 Summary:")
+	fmt.Println("\n" + i18n.T("cmd.deps.summary.title"))
 	fmt.Println("===========")
 
 	available := 0
@@ -184,19 +191,26 @@ func checkAllDependencies(depManager system.DependencyManager, installer system.
 		}
 	}
 
-	fmt.Printf("Available: %d/%d dependencies\n", available, total)
+	fmt.Printf("%s\n", i18n.T("cmd.deps.summary.available", map[string]interface{}{
+		"available": available, "total": total,
+	}))
 
 	if len(missingRequired) > 0 {
-		fmt.Printf("❌ Missing required: %s\n", strings.Join(missingRequired, ", "))
+		fmt.Printf("%s\n", i18n.T("cmd.deps.summary.missingRequired", map[string]interface{}{
+			"deps": strings.Join(missingRequired, ", "),
+		}))
 	}
 	if len(missingOptional) > 0 {
-		fmt.Printf("⚠️  Missing optional: %s\n", strings.Join(missingOptional, ", "))
+		fmt.Printf("%s\n", i18n.T("cmd.deps.summary.missingOptional", map[string]interface{}{
+			"deps": strings.Join(missingOptional, ", "),
+		}))
 	}
 
 	if len(missingRequired) == 0 && len(missingOptional) == 0 {
-		fmt.Println("✅ All dependencies are satisfied!")
+		fmt.Println(i18n.T("cmd.deps.summary.allGood"))
 	} else {
-		fmt.Println("\n💡 Run 'apkhub doctor --fix' to install missing dependencies")
+		fmt.Println()
+		fmt.Println(i18n.T("cmd.deps.summary.suggestion"))
 	}
 
 	return nil
@@ -211,7 +225,7 @@ func outputJSON(data interface{}) error {
 func init() {
 	rootCmd.AddCommand(depsCmd)
 
-	depsCmd.Flags().StringVarP(&depsCommand, "command", "c", "", "Check dependencies for specific command")
-	depsCmd.Flags().BoolVar(&depsJSON, "json", false, "Output in JSON format")
-	depsCmd.Flags().BoolVar(&depsCache, "clear-cache", false, "Clear dependency cache")
+	depsCmd.Flags().StringVarP(&depsCommand, "command", "c", "", i18n.T("cmd.deps.flag.command"))
+	depsCmd.Flags().BoolVar(&depsJSON, "json", false, i18n.T("cmd.deps.flag.json"))
+	depsCmd.Flags().BoolVar(&depsCache, "clear-cache", false, i18n.T("cmd.deps.flag.clearCache"))
 }

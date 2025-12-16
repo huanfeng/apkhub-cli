@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/huanfeng/apkhub-cli/internal/device"
+	"github.com/huanfeng/apkhub-cli/internal/i18n"
 	"github.com/huanfeng/apkhub-cli/pkg/client"
 	"github.com/spf13/cobra"
 )
@@ -29,13 +30,13 @@ var (
 
 var devicesCmd = &cobra.Command{
 	Use:   "devices",
-	Short: "List and manage connected Android devices",
-	Long:  `List connected Android devices with detailed information and status.`,
+	Short: i18n.T("cmd.devices.short"),
+	Long:  i18n.T("cmd.devices.long"),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Load client config
 		config, err := client.Load()
 		if err != nil {
-			return fmt.Errorf("failed to load config: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.devices.errLoadConfig"), err)
 		}
 
 		// Create ADB manager
@@ -51,7 +52,7 @@ var devicesCmd = &cobra.Command{
 
 var devicesInfoCmd = &cobra.Command{
 	Use:   "info <device-id>",
-	Short: "Show detailed information about a specific device",
+	Short: i18n.T("cmd.devices.info.short"),
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		deviceID := args[0]
@@ -59,7 +60,7 @@ var devicesInfoCmd = &cobra.Command{
 		// Load client config
 		config, err := client.Load()
 		if err != nil {
-			return fmt.Errorf("failed to load config: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.devices.errLoadConfig"), err)
 		}
 
 		// Create ADB manager
@@ -68,7 +69,7 @@ var devicesInfoCmd = &cobra.Command{
 		// Get device info
 		device, err := adbMgr.GetDeviceInfo(deviceID)
 		if err != nil {
-			return fmt.Errorf("failed to get device info: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.devices.errGetInfo"), err)
 		}
 
 		// Display device information
@@ -80,7 +81,7 @@ var devicesInfoCmd = &cobra.Command{
 
 var devicesWaitCmd = &cobra.Command{
 	Use:   "wait <device-id>",
-	Short: "Wait for a device to come online",
+	Short: i18n.T("cmd.devices.wait.short"),
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		deviceID := args[0]
@@ -88,7 +89,7 @@ var devicesWaitCmd = &cobra.Command{
 		// Load client config
 		config, err := client.Load()
 		if err != nil {
-			return fmt.Errorf("failed to load config: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.devices.errLoadConfig"), err)
 		}
 
 		// Create ADB manager
@@ -97,7 +98,7 @@ var devicesWaitCmd = &cobra.Command{
 		// Wait for device
 		timeout := 60 * time.Second
 		if err := adbMgr.WaitForDevice(deviceID, timeout); err != nil {
-			return fmt.Errorf("failed to wait for device: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.devices.errWait"), err)
 		}
 
 		return nil
@@ -106,15 +107,15 @@ var devicesWaitCmd = &cobra.Command{
 
 var devicesLogsCmd = &cobra.Command{
 	Use:   "logs",
-	Short: "Capture application logs from connected devices",
+	Short: i18n.T("cmd.devices.logs.short"),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if devicesLogPackage == "" {
-			return fmt.Errorf("--package is required")
+			return fmt.Errorf(i18n.T("cmd.devices.logs.packageRequired"))
 		}
 
 		config, err := client.Load()
 		if err != nil {
-			return fmt.Errorf("failed to load config: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.devices.errLoadConfig"), err)
 		}
 
 		adbMgr := client.NewADBManager(config)
@@ -143,7 +144,7 @@ var devicesLogsCmd = &cobra.Command{
 func showDevices(adbMgr *client.ADBManager) error {
 	status, err := adbMgr.GetDeviceStatus()
 	if err != nil {
-		return fmt.Errorf("failed to get device status: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T("cmd.devices.errGetStatus"), err)
 	}
 
 	switch devicesFormat {
@@ -158,22 +159,23 @@ func showDevices(adbMgr *client.ADBManager) error {
 
 // showDevicesDefault displays devices in default format
 func showDevicesDefault(status *client.DeviceStatus) error {
-	fmt.Printf("📱 Android Devices\n")
+	fmt.Printf("%s\n", i18n.T("cmd.devices.default.title"))
 	fmt.Printf("==================\n\n")
 
 	if status.Total == 0 {
-		fmt.Println("❌ No devices found")
-		fmt.Println("\n💡 Troubleshooting:")
-		fmt.Println("   • Connect your Android device via USB")
-		fmt.Println("   • Enable USB debugging in Developer Options")
-		fmt.Println("   • Authorize this computer when prompted")
-		fmt.Println("   • Try running 'adb devices' manually")
+		fmt.Println(i18n.T("cmd.devices.default.none"))
+		fmt.Println()
+		fmt.Println(i18n.T("cmd.devices.default.troubleshoot"))
+		fmt.Println(i18n.T("cmd.devices.default.tipUSB"))
+		fmt.Println(i18n.T("cmd.devices.default.tipDebug"))
+		fmt.Println(i18n.T("cmd.devices.default.tipAuth"))
+		fmt.Println(i18n.T("cmd.devices.default.tipADB"))
 		return nil
 	}
 
 	// Online devices
 	if len(status.Online) > 0 {
-		fmt.Printf("🟢 Online Devices (%d):\n", len(status.Online))
+		fmt.Printf("%s\n", i18n.T("cmd.devices.default.online", map[string]interface{}{"count": len(status.Online)}))
 		for i, device := range status.Online {
 			fmt.Printf("%d. %s\n", i+1, formatDeviceInfo(device))
 		}
@@ -182,25 +184,26 @@ func showDevicesDefault(status *client.DeviceStatus) error {
 
 	// Offline devices
 	if len(status.Offline) > 0 {
-		fmt.Printf("🔴 Offline Devices (%d):\n", len(status.Offline))
+		fmt.Printf("%s\n", i18n.T("cmd.devices.default.offline", map[string]interface{}{"count": len(status.Offline)}))
 		for i, device := range status.Offline {
 			fmt.Printf("%d. %s\n", i+1, formatDeviceInfo(device))
 		}
-		fmt.Println("   💡 Try reconnecting or restarting the device")
+		fmt.Println(i18n.T("cmd.devices.default.tipReconnect"))
 	}
 
 	// Unauthorized devices
 	if len(status.Unauthorized) > 0 {
-		fmt.Printf("🔒 Unauthorized Devices (%d):\n", len(status.Unauthorized))
+		fmt.Printf("%s\n", i18n.T("cmd.devices.default.unauthorized", map[string]interface{}{"count": len(status.Unauthorized)}))
 		for i, device := range status.Unauthorized {
 			fmt.Printf("%d. %s\n", i+1, formatDeviceInfo(device))
 		}
-		fmt.Println("   💡 Allow USB debugging when prompted on the device")
+		fmt.Println(i18n.T("cmd.devices.default.tipAuthorize"))
 	}
 
 	// Summary
-	fmt.Printf("📊 Summary: %d total, %d online, %d offline, %d unauthorized\n",
-		status.Total, len(status.Online), len(status.Offline), len(status.Unauthorized))
+	fmt.Printf("%s\n", i18n.T("cmd.devices.default.summary", map[string]interface{}{
+		"total": status.Total, "online": len(status.Online), "offline": len(status.Offline), "unauth": len(status.Unauthorized),
+	}))
 
 	return nil
 }
@@ -208,12 +211,12 @@ func showDevicesDefault(status *client.DeviceStatus) error {
 // showDevicesTable displays devices in table format
 func showDevicesTable(status *client.DeviceStatus) error {
 	if status.Total == 0 {
-		fmt.Println("No devices found")
+		fmt.Println(i18n.T("cmd.devices.default.none"))
 		return nil
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintln(w, "DEVICE ID\tSTATUS\tMODEL\tANDROID\tMANUFACTURER\tTYPE")
+	fmt.Fprintln(w, i18n.T("cmd.devices.table.header"))
 	fmt.Fprintln(w, "---------\t------\t-----\t-------\t------------\t----")
 
 	// Combine all devices
@@ -244,6 +247,10 @@ func showDevicesTable(status *client.DeviceStatus) error {
 	}
 
 	w.Flush()
+	fmt.Printf("\n%s\n", i18n.T("cmd.devices.table.total", map[string]interface{}{"count": status.Total}))
+	fmt.Printf("%s\n", i18n.T("cmd.devices.table.breakdown", map[string]interface{}{
+		"online": len(status.Online), "offline": len(status.Offline), "unauth": len(status.Unauthorized),
+	}))
 	return nil
 }
 
@@ -251,7 +258,7 @@ func showDevicesTable(status *client.DeviceStatus) error {
 func showDevicesJSON(status *client.DeviceStatus) error {
 	data, err := json.MarshalIndent(status, "", "  ")
 	if err != nil {
-		return fmt.Errorf("failed to marshal JSON: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T("cmd.devices.errMarshal"), err)
 	}
 
 	fmt.Println(string(data))
@@ -288,65 +295,67 @@ func formatDeviceInfo(device client.Device) string {
 
 // showDeviceDetails displays detailed information about a single device
 func showDeviceDetails(device *client.Device) {
-	fmt.Printf("📱 Device Information\n")
+	fmt.Printf("%s\n", i18n.T("cmd.devices.details.title"))
 	fmt.Printf("====================\n\n")
 
-	fmt.Printf("Device ID: %s\n", device.ID)
-	fmt.Printf("Status: %s\n", device.Status)
+	fmt.Printf("%s\n", i18n.T("cmd.devices.details.id", map[string]interface{}{"id": device.ID}))
+	fmt.Printf("%s\n", i18n.T("cmd.devices.details.status", map[string]interface{}{"status": device.Status}))
 
 	if device.Model != "" {
-		fmt.Printf("Model: %s\n", device.Model)
+		fmt.Printf("%s\n", i18n.T("cmd.devices.details.model", map[string]interface{}{"model": device.Model}))
 	}
 
 	if device.Manufacturer != "" {
-		fmt.Printf("Manufacturer: %s\n", device.Manufacturer)
+		fmt.Printf("%s\n", i18n.T("cmd.devices.details.manufacturer", map[string]interface{}{"m": device.Manufacturer}))
 	}
 
 	if device.Brand != "" {
-		fmt.Printf("Brand: %s\n", device.Brand)
+		fmt.Printf("%s\n", i18n.T("cmd.devices.details.brand", map[string]interface{}{"brand": device.Brand}))
 	}
 
 	if device.Product != "" {
-		fmt.Printf("Product: %s\n", device.Product)
+		fmt.Printf("%s\n", i18n.T("cmd.devices.details.product", map[string]interface{}{"product": device.Product}))
 	}
 
 	if device.Device != "" {
-		fmt.Printf("Device: %s\n", device.Device)
+		fmt.Printf("%s\n", i18n.T("cmd.devices.details.device", map[string]interface{}{"device": device.Device}))
 	}
 
 	if device.AndroidVer != "" {
-		fmt.Printf("Android Version: %s\n", device.AndroidVer)
+		fmt.Printf("%s\n", i18n.T("cmd.devices.details.androidVer", map[string]interface{}{"ver": device.AndroidVer}))
 	}
 
 	if device.AndroidAPI > 0 {
-		fmt.Printf("API Level: %d\n", device.AndroidAPI)
+		fmt.Printf("%s\n", i18n.T("cmd.devices.details.apiLevel", map[string]interface{}{"api": device.AndroidAPI}))
 	}
 
 	if device.Transport != "" {
-		fmt.Printf("Transport ID: %s\n", device.Transport)
+		fmt.Printf("%s\n", i18n.T("cmd.devices.details.transport", map[string]interface{}{"transport": device.Transport}))
 	}
 
-	fmt.Printf("Type: %s\n", map[bool]string{true: "Emulator", false: "Physical Device"}[device.IsEmulator])
+	fmt.Printf("%s\n", i18n.T("cmd.devices.details.type", map[string]interface{}{
+		"type": map[bool]string{true: i18n.T("cmd.devices.details.typeEmu"), false: i18n.T("cmd.devices.details.typePhy")}[device.IsEmulator],
+	}))
 
 	if !device.LastSeen.IsZero() {
-		fmt.Printf("Last Seen: %s\n", device.LastSeen.Format("2006-01-02 15:04:05"))
+		fmt.Printf("%s\n", i18n.T("cmd.devices.details.lastSeen", map[string]interface{}{"time": device.LastSeen.Format("2006-01-02 15:04:05")}))
 	}
 
 	// Status-specific information
 	switch device.Status {
 	case "device":
-		fmt.Printf("\n✅ Device is online and ready for use\n")
+		fmt.Printf("\n%s\n", i18n.T("cmd.devices.details.online"))
 	case "offline":
-		fmt.Printf("\n🔴 Device is offline\n")
-		fmt.Printf("💡 Try:\n")
-		fmt.Printf("   • Reconnecting the USB cable\n")
-		fmt.Printf("   • Restarting the device\n")
-		fmt.Printf("   • Running 'adb kill-server && adb start-server'\n")
+		fmt.Printf("\n%s\n", i18n.T("cmd.devices.details.offline"))
+		fmt.Printf("%s\n", i18n.T("cmd.devices.details.fixTitle"))
+		fmt.Printf("%s\n", i18n.T("cmd.devices.details.fixReconnect"))
+		fmt.Printf("%s\n", i18n.T("cmd.devices.details.fixRestart"))
+		fmt.Printf("%s\n", i18n.T("cmd.devices.details.fixADB"))
 	case "unauthorized":
-		fmt.Printf("\n🔒 Device is unauthorized\n")
-		fmt.Printf("💡 To fix:\n")
-		fmt.Printf("   • Allow USB debugging when prompted on the device\n")
-		fmt.Printf("   • Check 'Always allow from this computer' if available\n")
+		fmt.Printf("\n%s\n", i18n.T("cmd.devices.details.unauthorized"))
+		fmt.Printf("%s\n", i18n.T("cmd.devices.details.fixTitle"))
+		fmt.Printf("%s\n", i18n.T("cmd.devices.details.fixAllowDebug"))
+		fmt.Printf("%s\n", i18n.T("cmd.devices.details.fixAlwaysAllow"))
 	}
 }
 
@@ -389,23 +398,25 @@ func summarizeLogCaptures(results []device.Result[*client.LogCaptureResult]) err
 		failures = append(failures, fmt.Sprintf("%s: no result", res.DeviceID))
 	}
 
-	fmt.Println("\n📊 Log capture summary:")
+	fmt.Println("\n" + i18n.T("cmd.devices.logs.summary"))
 	if len(successes) > 0 {
-		fmt.Printf("   ✅ %d captured:\n", len(successes))
+		fmt.Printf(i18n.T("cmd.devices.logs.captured")+"\n", len(successes))
 		for _, s := range successes {
 			fmt.Printf("      • %s\n", s)
 		}
 	}
 
 	if len(failures) > 0 {
-		fmt.Printf("   ❌ %d failed:\n", len(failures))
+		fmt.Printf(i18n.T("cmd.devices.logs.failed")+"\n", len(failures))
 		for _, f := range failures {
 			fmt.Printf("      • %s\n", f)
 		}
 	}
 
 	if len(failures) > 0 {
-		return fmt.Errorf("log capture failed on %d device(s)", len(failures))
+		return fmt.Errorf(i18n.T("cmd.devices.logs.errCapture", map[string]interface{}{
+			"count": len(failures),
+		}))
 	}
 
 	return nil
@@ -413,16 +424,22 @@ func summarizeLogCaptures(results []device.Result[*client.LogCaptureResult]) err
 
 // watchDevices continuously monitors device status
 func watchDevices(adbMgr *client.ADBManager) error {
-	fmt.Printf("👀 Watching devices (refresh every %ds, press Ctrl+C to stop)...\n\n", devicesRefresh)
+	fmt.Printf("%s\n\n", i18n.T("cmd.devices.watch.start", map[string]interface{}{
+		"seconds": devicesRefresh,
+	}))
 
 	for {
 		// Clear screen (simple approach)
 		fmt.Print("\033[2J\033[H")
 
-		fmt.Printf("🕐 Last updated: %s\n\n", time.Now().Format("15:04:05"))
+		fmt.Printf("%s\n\n", i18n.T("cmd.devices.watch.updated", map[string]interface{}{
+			"time": time.Now().Format("15:04:05"),
+		}))
 
 		if err := showDevices(adbMgr); err != nil {
-			fmt.Printf("Error: %v\n", err)
+			fmt.Printf("%s\n", i18n.T("cmd.devices.watch.err", map[string]interface{}{
+				"error": err,
+			}))
 		}
 
 		time.Sleep(time.Duration(devicesRefresh) * time.Second)
@@ -438,13 +455,13 @@ func init() {
 	devicesCmd.AddCommand(devicesLogsCmd)
 
 	// Add flags
-	devicesCmd.Flags().StringVar(&devicesFormat, "format", "default", "Output format: default, table, json")
-	devicesCmd.Flags().BoolVar(&devicesWatch, "watch", false, "Watch device status continuously")
-	devicesCmd.Flags().IntVar(&devicesRefresh, "refresh", 3, "Refresh interval in seconds for watch mode")
-	devicesCmd.PersistentFlags().BoolVar(&devicesAll, "all-devices", false, "Target all online devices")
-	devicesCmd.PersistentFlags().StringSliceVar(&devicesTargets, "devices", nil, "Comma-separated list of target devices")
+	devicesCmd.Flags().StringVar(&devicesFormat, "format", "default", i18n.T("cmd.devices.flag.format"))
+	devicesCmd.Flags().BoolVar(&devicesWatch, "watch", false, i18n.T("cmd.devices.flag.watch"))
+	devicesCmd.Flags().IntVar(&devicesRefresh, "refresh", 3, i18n.T("cmd.devices.flag.refresh"))
+	devicesCmd.PersistentFlags().BoolVar(&devicesAll, "all-devices", false, i18n.T("cmd.devices.flag.allDevices"))
+	devicesCmd.PersistentFlags().StringSliceVar(&devicesTargets, "devices", nil, i18n.T("cmd.devices.flag.devices"))
 
-	devicesLogsCmd.Flags().StringVar(&devicesLogPackage, "package", "", "Package ID to filter logs")
-	devicesLogsCmd.Flags().StringVar(&devicesLogLevel, "level", "I", "Minimum log level (V, D, I, W, E, F, S)")
-	devicesLogsCmd.Flags().StringVar(&devicesLogOutput, "output", "", "Optional output file or directory for logs")
+	devicesLogsCmd.Flags().StringVar(&devicesLogPackage, "package", "", i18n.T("cmd.devices.flag.logPackage"))
+	devicesLogsCmd.Flags().StringVar(&devicesLogLevel, "level", "I", i18n.T("cmd.devices.flag.logLevel"))
+	devicesLogsCmd.Flags().StringVar(&devicesLogOutput, "output", "", i18n.T("cmd.devices.flag.logOutput"))
 }

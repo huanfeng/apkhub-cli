@@ -5,27 +5,28 @@ import (
 	"os"
 	"text/tabwriter"
 
+	"github.com/huanfeng/apkhub-cli/internal/i18n"
 	"github.com/huanfeng/apkhub-cli/pkg/apk"
 	"github.com/spf13/cobra"
 )
 
 var parserInfoCmd = &cobra.Command{
 	Use:   "parser-info",
-	Short: "Show information about available APK parsers",
-	Long:  `Display information about all available APK parsers and their capabilities.`,
+	Short: i18n.T("cmd.parserInfo.short"),
+	Long:  i18n.T("cmd.parserInfo.long"),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Create parser to get info
 		parser := apk.NewParser(".")
 		parsers := parser.GetParserInfo()
 
 		if len(parsers) == 0 {
-			fmt.Println("No parsers available")
+			fmt.Println(i18n.T("cmd.parserInfo.none"))
 			return nil
 		}
 
 		// Display parser information
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-		fmt.Fprintln(w, "NAME\tVERSION\tAVAILABLE\tPRIORITY\tCAPABILITIES")
+		fmt.Fprintln(w, i18n.T("cmd.parserInfo.header"))
 		fmt.Fprintln(w, "----\t-------\t---------\t--------\t------------")
 
 		for _, info := range parsers {

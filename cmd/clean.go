@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/huanfeng/apkhub-cli/internal/config"
+	"github.com/huanfeng/apkhub-cli/internal/i18n"
 	"github.com/huanfeng/apkhub-cli/pkg/apk"
 	"github.com/huanfeng/apkhub-cli/pkg/models"
 	"github.com/huanfeng/apkhub-cli/pkg/repo"
@@ -22,13 +23,13 @@ var (
 
 var cleanCmd = &cobra.Command{
 	Use:   "clean",
-	Short: "Clean up repository by removing old versions and orphan files",
-	Long:  `Clean up the repository by removing old versions based on keep_versions configuration and orphan files.`,
+	Short: i18n.T("cmd.clean.short"),
+	Long:  i18n.T("cmd.clean.long"),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Load configuration
 		cfg, err := config.Load(cfgFile)
 		if err != nil {
-			return fmt.Errorf("failed to load configuration: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.clean.errLoadConfig"), err)
 		}
 
 		// Override keep versions if specified
@@ -41,23 +42,23 @@ var cleanCmd = &cobra.Command{
 		// Create repository instance
 		repository, err := repo.NewRepository(workDir, cfg)
 		if err != nil {
-			return fmt.Errorf("failed to create repository: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.clean.errCreateRepo"), err)
 		}
 
-		fmt.Printf("=== Repository Cleanup ===\n")
-		fmt.Printf("Repository: %s\n", repository.GetRootDir())
+		fmt.Printf("%s\n", i18n.T("cmd.clean.title"))
+		fmt.Printf("%s\n", i18n.T("cmd.clean.repoPath", map[string]interface{}{"path": repository.GetRootDir()}))
 		if dryRun {
-			fmt.Printf("Mode: DRY RUN (no files will be deleted)\n")
+			fmt.Printf("%s\n", i18n.T("cmd.clean.modeDryRun"))
 		}
 		if keepVersions > 0 {
-			fmt.Printf("Keep Versions: %d\n", keepVersions)
+			fmt.Printf("%s\n", i18n.T("cmd.clean.keepVersions", map[string]interface{}{"count": keepVersions}))
 		}
 		fmt.Printf("\n")
 
 		// Load all APK infos
 		infos, err := repository.LoadAllAPKInfos()
 		if err != nil {
-			return fmt.Errorf("failed to load APK infos: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.clean.errLoadInfos"), err)
 		}
 
 		// Group by package ID
@@ -72,7 +73,7 @@ var cleanCmd = &cobra.Command{
 
 		// Process each package
 		if keepVersions > 0 {
-			fmt.Printf("=== Version Cleanup ===\n")
+			fmt.Printf("%s\n", i18n.T("cmd.clean.versionCleanup"))
 
 			for packageID, versions := range packageGroups {
 				if len(versions) <= keepVersions {
@@ -85,15 +86,16 @@ var cleanCmd = &cobra.Command{
 				})
 
 				// Mark old versions for removal
-				fmt.Printf("\nPackage: %s\n", packageID)
-				fmt.Printf("  Current versions: %d\n", len(versions))
+				fmt.Printf("\n%s\n", i18n.T("cmd.clean.package", map[string]interface{}{"id": packageID}))
+				fmt.Printf("%s\n", i18n.T("cmd.clean.packageVersions", map[string]interface{}{"count": len(versions)}))
 
 				for i := keepVersions; i < len(versions); i++ {
 					version := versions[i]
-					fmt.Printf("  Remove: v%s (Code: %d) - %s\n",
-						version.Version,
-						version.VersionCode,
-						formatSize(version.Size))
+					fmt.Printf("%s\n", i18n.T("cmd.clean.removeVersion", map[string]interface{}{
+						"version": version.Version,
+						"code":    version.VersionCode,
+						"size":    formatSize(version.Size),
+					}))
 
 					// Add files to removal list
 					apkPath := filepath.Join(repository.GetRootDir(), version.FilePath)
@@ -108,15 +110,15 @@ var cleanCmd = &cobra.Command{
 
 		// Find orphan files
 		if removeOrphans {
-			fmt.Printf("\n=== Orphan File Detection ===\n")
+			fmt.Printf("\n%s\n", i18n.T("cmd.clean.orphanTitle"))
 
 			// Check for orphan APKs
 			apksDir := filepath.Join(repository.GetRootDir(), "apks")
 			orphanAPKs, err := findOrphanFiles(apksDir, infos, "apks")
 			if err != nil {
-				fmt.Printf("Warning: failed to check orphan APKs: %v\n", err)
+				fmt.Printf("%s\n", i18n.T("cmd.clean.orphanWarnAPK", map[string]interface{}{"error": err}))
 			} else if len(orphanAPKs) > 0 {
-				fmt.Printf("\nOrphan APK files:\n")
+				fmt.Printf("\n%s\n", i18n.T("cmd.clean.orphanAPKTitle"))
 				for _, orphan := range orphanAPKs {
 					fmt.Printf("  - %s\n", orphan)
 					filesToRemove = append(filesToRemove, orphan)
@@ -127,9 +129,9 @@ var cleanCmd = &cobra.Command{
 			infosDir := filepath.Join(repository.GetRootDir(), "infos")
 			orphanInfos, err := findOrphanInfoFiles(infosDir, infos)
 			if err != nil {
-				fmt.Printf("Warning: failed to check orphan infos: %v\n", err)
+				fmt.Printf("%s\n", i18n.T("cmd.clean.orphanWarnInfo", map[string]interface{}{"error": err}))
 			} else if len(orphanInfos) > 0 {
-				fmt.Printf("\nOrphan info files:\n")
+				fmt.Printf("\n%s\n", i18n.T("cmd.clean.orphanInfoTitle"))
 				for _, orphan := range orphanInfos {
 					fmt.Printf("  - %s\n", orphan)
 					filesToRemove = append(filesToRemove, orphan)
@@ -138,48 +140,51 @@ var cleanCmd = &cobra.Command{
 		}
 
 		// Summary
-		fmt.Printf("\n=== Summary ===\n")
-		fmt.Printf("Files to remove: %d\n", len(filesToRemove))
-		fmt.Printf("APKs to remove: %d\n", totalRemoved)
-		fmt.Printf("Space to free: %s\n", formatSize(totalSize))
+		fmt.Printf("\n%s\n", i18n.T("cmd.clean.summaryTitle"))
+		fmt.Printf("%s\n", i18n.T("cmd.clean.summaryFiles", map[string]interface{}{"count": len(filesToRemove)}))
+		fmt.Printf("%s\n", i18n.T("cmd.clean.summaryAPKs", map[string]interface{}{"count": totalRemoved}))
+		fmt.Printf("%s\n", i18n.T("cmd.clean.summarySpace", map[string]interface{}{"size": formatSize(totalSize)}))
 
 		if len(filesToRemove) == 0 {
-			fmt.Printf("\nNothing to clean up!\n")
+			fmt.Printf("\n%s\n", i18n.T("cmd.clean.nothing"))
 			return nil
 		}
 
 		// Confirm deletion
 		if !dryRun && !skipConfirm {
-			fmt.Print("\nProceed with cleanup? [y/N]: ")
+			fmt.Print("\n" + i18n.T("cmd.clean.confirm"))
 			var response string
 			fmt.Scanln(&response)
 			if strings.ToLower(response) != "y" {
-				fmt.Println("Cleanup cancelled.")
+				fmt.Println(i18n.T("cmd.clean.cancel"))
 				return nil
 			}
 		}
 
 		// Delete files
 		if !dryRun {
-			fmt.Printf("\n=== Removing Files ===\n")
+			fmt.Printf("\n%s\n", i18n.T("cmd.clean.removing"))
 			var removed int
 			for _, file := range filesToRemove {
 				if err := os.Remove(file); err != nil {
-					fmt.Printf("Failed to remove %s: %v\n", file, err)
+					fmt.Printf("%s\n", i18n.T("cmd.clean.errRemove", map[string]interface{}{
+						"file":  file,
+						"error": err,
+					}))
 				} else {
 					removed++
 				}
 			}
 
-			fmt.Printf("\nRemoved %d files\n", removed)
+			fmt.Printf("\n%s\n", i18n.T("cmd.clean.removedFiles", map[string]interface{}{"count": removed}))
 
 			// Update manifest
-			fmt.Printf("Updating manifest...\n")
+			fmt.Printf("%s\n", i18n.T("cmd.clean.updateManifest"))
 			if err := repository.UpdateManifest(); err != nil {
-				return fmt.Errorf("failed to update manifest: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.clean.errUpdateManifest"), err)
 			}
 
-			fmt.Printf("\n✓ Cleanup completed successfully!\n")
+			fmt.Printf("\n%s\n", i18n.T("cmd.clean.success"))
 		}
 
 		return nil
@@ -189,10 +194,10 @@ var cleanCmd = &cobra.Command{
 func init() {
 	repoCmd.AddCommand(cleanCmd)
 
-	cleanCmd.Flags().BoolVar(&dryRun, "dry-run", false, "Show what would be deleted without actually deleting")
-	cleanCmd.Flags().IntVarP(&keepVersions, "keep", "k", 0, "Number of versions to keep (overrides config)")
-	cleanCmd.Flags().BoolVar(&removeOrphans, "orphans", true, "Remove orphan files")
-	cleanCmd.Flags().BoolVarP(&skipConfirm, "yes", "y", false, "Skip confirmation prompt")
+	cleanCmd.Flags().BoolVar(&dryRun, "dry-run", false, i18n.T("cmd.clean.flag.dryRun"))
+	cleanCmd.Flags().IntVarP(&keepVersions, "keep", "k", 0, i18n.T("cmd.clean.flag.keep"))
+	cleanCmd.Flags().BoolVar(&removeOrphans, "orphans", true, i18n.T("cmd.clean.flag.orphans"))
+	cleanCmd.Flags().BoolVarP(&skipConfirm, "yes", "y", false, i18n.T("cmd.clean.flag.yes"))
 }
 
 // findOrphanFiles finds files that don't have corresponding info entries

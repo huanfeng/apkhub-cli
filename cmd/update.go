@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/huanfeng/apkhub-cli/internal/i18n"
 	"github.com/huanfeng/apkhub-cli/pkg/client"
 	"github.com/spf13/cobra"
 )
@@ -10,18 +11,13 @@ import (
 // updateCmd represents the update command (alias for bucket update)
 var updateCmd = &cobra.Command{
 	Use:   "update [name]",
-	Short: "Update bucket manifests (alias for 'bucket update')",
-	Long: `Update bucket manifests from their sources. This is an alias for 'apkhub bucket update'.
-
-Examples:
-  apkhub update              # Update all enabled buckets
-  apkhub update main         # Update specific bucket named 'main'
-  apkhub update --all        # Update all buckets (including disabled ones)`,
+	Short: i18n.T("cmd.update.short"),
+	Long:  i18n.T("cmd.update.long"),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Load client config
 		config, err := client.Load()
 		if err != nil {
-			return fmt.Errorf("failed to load config: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.update.errLoadConfig"), err)
 		}
 
 		bucketMgr := client.NewBucketManager(config)
@@ -30,23 +26,26 @@ Examples:
 		if len(args) > 0 {
 			// Update specific bucket
 			name := args[0]
-			fmt.Printf("Updating bucket '%s'...\n", name)
+			fmt.Printf("%s\n", i18n.T("cmd.update.single", map[string]interface{}{"name": name}))
 			if _, err := bucketMgr.FetchManifest(name); err != nil {
-				return fmt.Errorf("failed to update bucket: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.update.errUpdate"), err)
 			}
-			fmt.Printf("✓ Updated bucket '%s'\n", name)
+			fmt.Printf("%s\n", i18n.T("cmd.update.singleSuccess", map[string]interface{}{"name": name}))
 		} else {
 			// Update all buckets
 			if updateAll {
 				// Update all buckets including disabled ones
-				fmt.Println("🔄 Updating all buckets (including disabled)...")
+				fmt.Println(i18n.T("cmd.update.allIncludingDisabled"))
 
 				for name := range config.Buckets {
-					fmt.Printf("📡 Fetching '%s'...\n", name)
+					fmt.Printf("%s\n", i18n.T("cmd.update.fetching", map[string]interface{}{"name": name}))
 					if _, err := bucketMgr.FetchManifest(name); err != nil {
-						fmt.Printf("❌ Failed to update '%s': %v\n", name, err)
+						fmt.Printf("%s\n", i18n.T("cmd.update.updateFail", map[string]interface{}{
+							"name":  name,
+							"error": err,
+						}))
 					} else {
-						fmt.Printf("✅ Updated '%s'\n", name)
+						fmt.Printf("%s\n", i18n.T("cmd.update.updateSuccess", map[string]interface{}{"name": name}))
 					}
 				}
 			} else {
@@ -55,7 +54,8 @@ Examples:
 					return err
 				}
 			}
-			fmt.Println("\n✓ Update completed")
+			fmt.Println()
+			fmt.Println(i18n.T("cmd.update.completed"))
 		}
 
 		return nil
@@ -68,6 +68,6 @@ func init() {
 	rootCmd.AddCommand(updateCmd)
 
 	// Add flags
-	updateCmd.Flags().BoolVar(&updateAll, "all", false, "Update all buckets including disabled ones")
-	updateCmd.Flags().BoolVar(&bucketVerifySignature, "verify-signature", true, "Verify bucket manifest signatures during update")
+	updateCmd.Flags().BoolVar(&updateAll, "all", false, i18n.T("cmd.update.flag.all"))
+	updateCmd.Flags().BoolVar(&bucketVerifySignature, "verify-signature", true, i18n.T("cmd.update.flag.verifySignature"))
 }

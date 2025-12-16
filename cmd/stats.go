@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"github.com/huanfeng/apkhub-cli/internal/config"
+	"github.com/huanfeng/apkhub-cli/internal/i18n"
 	"github.com/huanfeng/apkhub-cli/pkg/models"
 	"github.com/huanfeng/apkhub-cli/pkg/repo"
 	"github.com/spf13/cobra"
@@ -12,78 +13,89 @@ import (
 
 var statsCmd = &cobra.Command{
 	Use:   "stats",
-	Short: "Display repository statistics",
-	Long:  `Display detailed statistics about the APK repository including package counts, version distributions, and storage usage.`,
+	Short: i18n.T("cmd.stats.short"),
+	Long:  i18n.T("cmd.stats.long"),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Load configuration
 		cfg, err := config.Load(cfgFile)
 		if err != nil {
-			return fmt.Errorf("failed to load configuration: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.stats.errLoadConfig"), err)
 		}
 
 		// Create repository instance
 		repository, err := repo.NewRepository(workDir, cfg)
 		if err != nil {
-			return fmt.Errorf("failed to create repository: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.stats.errCreateRepo"), err)
 		}
 
 		// Load manifest
 		manifest, err := repository.BuildManifestFromInfos()
 		if err != nil {
-			return fmt.Errorf("failed to load manifest: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.stats.errLoadManifest"), err)
 		}
 
 		// Calculate statistics
 		stats := calculateStats(manifest)
 
 		// Display statistics
-		fmt.Printf("=== ApkHub Repository Statistics ===\n\n")
-		fmt.Printf("Repository: %s\n", repository.GetRootDir())
-		fmt.Printf("Name: %s\n", manifest.Name)
-		fmt.Printf("Description: %s\n", manifest.Description)
-		fmt.Printf("Last Updated: %s\n\n", manifest.UpdatedAt.Format("2006-01-02 15:04:05"))
+		fmt.Printf("%s\n\n", i18n.T("cmd.stats.title"))
+		fmt.Printf("%s\n", i18n.T("cmd.stats.repo", map[string]interface{}{"path": repository.GetRootDir()}))
+		fmt.Printf("%s\n", i18n.T("cmd.stats.name", map[string]interface{}{"name": manifest.Name}))
+		fmt.Printf("%s\n", i18n.T("cmd.stats.description", map[string]interface{}{"desc": manifest.Description}))
+		fmt.Printf("%s\n\n", i18n.T("cmd.stats.updated", map[string]interface{}{
+			"time": manifest.UpdatedAt.Format("2006-01-02 15:04:05"),
+		}))
 
-		fmt.Printf("=== Package Summary ===\n")
-		fmt.Printf("Total Packages: %d\n", stats.TotalPackages)
-		fmt.Printf("Total APKs: %d\n", stats.TotalAPKs)
-		fmt.Printf("Total Size: %.2f MB\n", float64(stats.TotalSize)/(1024*1024))
-		fmt.Printf("Average APK Size: %.2f MB\n", stats.AverageSize/(1024*1024))
+		fmt.Printf("%s\n", i18n.T("cmd.stats.packageTitle"))
+		fmt.Printf("%s\n", i18n.T("cmd.stats.totalPackages", map[string]interface{}{"count": stats.TotalPackages}))
+		fmt.Printf("%s\n", i18n.T("cmd.stats.totalAPKs", map[string]interface{}{"count": stats.TotalAPKs}))
+		fmt.Printf("%s\n", i18n.T("cmd.stats.totalSizeMB", map[string]interface{}{
+			"size": float64(stats.TotalSize) / (1024 * 1024),
+		}))
+		fmt.Printf("%s\n", i18n.T("cmd.stats.avgSizeMB", map[string]interface{}{
+			"size": stats.AverageSize / (1024 * 1024),
+		}))
 
-		fmt.Printf("\n=== Version Distribution ===\n")
-		fmt.Printf("Packages with Multiple Versions: %d\n", stats.MultiVersionPackages)
-		fmt.Printf("Average Versions per Package: %.2f\n", stats.AverageVersionsPerPackage)
+		fmt.Printf("\n%s\n", i18n.T("cmd.stats.versionTitle"))
+		fmt.Printf("%s\n", i18n.T("cmd.stats.multiVersion", map[string]interface{}{"count": stats.MultiVersionPackages}))
+		fmt.Printf("%s\n", i18n.T("cmd.stats.avgVersions", map[string]interface{}{"avg": stats.AverageVersionsPerPackage}))
 
 		// Display top packages by version count
 		if len(stats.TopPackagesByVersions) > 0 {
-			fmt.Printf("\nTop Packages by Version Count:\n")
+			fmt.Printf("\n%s\n", i18n.T("cmd.stats.topPackages"))
 			for i, pkg := range stats.TopPackagesByVersions {
 				if i >= 5 {
 					break
 				}
-				fmt.Printf("  %d. %s: %d versions\n", i+1, pkg.Name, pkg.Count)
+				fmt.Printf("%s\n", i18n.T("cmd.stats.topPackageItem", map[string]interface{}{
+					"index": i + 1, "name": pkg.Name, "count": pkg.Count,
+				}))
 			}
 		}
 
-		fmt.Printf("\n=== SDK Version Analysis ===\n")
-		fmt.Printf("Min SDK Versions:\n")
+		fmt.Printf("\n%s\n", i18n.T("cmd.stats.sdkTitle"))
+		fmt.Printf("%s\n", i18n.T("cmd.stats.sdkMin"))
 		displaySDKStats(stats.MinSDKDistribution)
-		fmt.Printf("\nTarget SDK Versions:\n")
+		fmt.Printf("\n%s\n", i18n.T("cmd.stats.sdkTarget"))
 		displaySDKStats(stats.TargetSDKDistribution)
 
-		fmt.Printf("\n=== Architecture Distribution ===\n")
+		fmt.Printf("\n%s\n", i18n.T("cmd.stats.abiTitle"))
 		displayDistribution(stats.ABIDistribution)
 
-		fmt.Printf("\n=== Signature Analysis ===\n")
-		fmt.Printf("Unique Signatures: %d\n", stats.UniqueSignatures)
-		fmt.Printf("Packages with Multiple Signatures: %d\n", stats.MultiSignaturePackages)
+		fmt.Printf("\n%s\n", i18n.T("cmd.stats.signatureTitle"))
+		fmt.Printf("%s\n", i18n.T("cmd.stats.signatureUnique", map[string]interface{}{"count": stats.UniqueSignatures}))
+		fmt.Printf("%s\n", i18n.T("cmd.stats.signatureMulti", map[string]interface{}{"count": stats.MultiSignaturePackages}))
 
 		if len(stats.LargestAPKs) > 0 {
-			fmt.Printf("\n=== Largest APKs ===\n")
+			fmt.Printf("\n%s\n", i18n.T("cmd.stats.largestTitle"))
 			for i, apk := range stats.LargestAPKs {
 				if i >= 5 {
 					break
 				}
-				fmt.Printf("  %d. %s v%s: %.2f MB\n", i+1, apk.PackageID, apk.Version, float64(apk.Size)/(1024*1024))
+				fmt.Printf("%s\n", i18n.T("cmd.stats.largestItem", map[string]interface{}{
+					"index": i + 1, "id": apk.PackageID, "version": apk.Version,
+					"size": float64(apk.Size) / (1024 * 1024),
+				}))
 			}
 		}
 
@@ -205,7 +217,7 @@ func calculateStats(manifest *models.ManifestIndex) *RepositoryStats {
 
 func displaySDKStats(distribution map[int]int) {
 	if len(distribution) == 0 {
-		fmt.Println("  No data available")
+		fmt.Println(i18n.T("cmd.stats.noData"))
 		return
 	}
 
@@ -220,17 +232,19 @@ func displaySDKStats(distribution map[int]int) {
 	for i, sdk := range sdks {
 		if i >= 5 && i < len(sdks)-1 {
 			if i == 5 {
-				fmt.Printf("  ... (%d more)\n", len(sdks)-6)
+				fmt.Printf("%s\n", i18n.T("cmd.stats.more", map[string]interface{}{"count": len(sdks) - 6}))
 			}
 			continue
 		}
-		fmt.Printf("  API %d: %d APKs\n", sdk, distribution[sdk])
+		fmt.Printf("%s\n", i18n.T("cmd.stats.sdkItem", map[string]interface{}{
+			"sdk": sdk, "count": distribution[sdk],
+		}))
 	}
 }
 
 func displayDistribution(distribution map[string]int) {
 	if len(distribution) == 0 {
-		fmt.Println("  No data available")
+		fmt.Println(i18n.T("cmd.stats.noData"))
 		return
 	}
 
@@ -248,7 +262,9 @@ func displayDistribution(distribution map[string]int) {
 	})
 
 	for _, item := range sorted {
-		fmt.Printf("  %s: %d APKs\n", item.Key, item.Value)
+		fmt.Printf("%s\n", i18n.T("cmd.stats.distributionItem", map[string]interface{}{
+			"key": item.Key, "count": item.Value,
+		}))
 	}
 }
 

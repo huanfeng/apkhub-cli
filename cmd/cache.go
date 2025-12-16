@@ -4,24 +4,25 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/huanfeng/apkhub-cli/internal/i18n"
 	"github.com/huanfeng/apkhub-cli/pkg/client"
 	"github.com/spf13/cobra"
 )
 
 var cacheCmd = &cobra.Command{
 	Use:   "cache",
-	Short: "Manage cache operations",
-	Long:  `Manage cache operations including viewing statistics, cleaning expired entries, and clearing cache.`,
+	Short: i18n.T("cmd.cache.short"),
+	Long:  i18n.T("cmd.cache.long"),
 }
 
 var cacheStatsCmd = &cobra.Command{
 	Use:   "stats",
-	Short: "Show cache statistics",
+	Short: i18n.T("cmd.cache.stats.short"),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Load client config
 		config, err := client.Load()
 		if err != nil {
-			return fmt.Errorf("failed to load config: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.cache.errLoadConfig"), err)
 		}
 
 		// Create cache manager
@@ -41,29 +42,29 @@ var cacheStatsCmd = &cobra.Command{
 
 var cacheCleanCmd = &cobra.Command{
 	Use:   "clean",
-	Short: "Remove expired cache entries",
+	Short: i18n.T("cmd.cache.clean.short"),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Load client config
 		config, err := client.Load()
 		if err != nil {
-			return fmt.Errorf("failed to load config: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.cache.errLoadConfig"), err)
 		}
 
 		// Create cache manager
 		cacheManager := client.NewCacheManager(config)
 
-		fmt.Println("🧹 Cleaning expired cache entries...")
+		fmt.Println(i18n.T("cmd.cache.clean.start"))
 
 		// Clean expired entries
 		removed, err := cacheManager.CleanExpired()
 		if err != nil {
-			return fmt.Errorf("failed to clean cache: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.cache.errClean"), err)
 		}
 
 		if removed > 0 {
-			fmt.Printf("✅ Removed %d expired cache entries\n", removed)
+			fmt.Printf(i18n.T("cmd.cache.clean.removed")+"\n", removed)
 		} else {
-			fmt.Println("✅ No expired entries found")
+			fmt.Println(i18n.T("cmd.cache.clean.none"))
 		}
 
 		// Show updated statistics
@@ -74,12 +75,12 @@ var cacheCleanCmd = &cobra.Command{
 
 var cacheClearCmd = &cobra.Command{
 	Use:   "clear",
-	Short: "Clear all cache entries",
+	Short: i18n.T("cmd.cache.clear.short"),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Load client config
 		config, err := client.Load()
 		if err != nil {
-			return fmt.Errorf("failed to load config: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.cache.errLoadConfig"), err)
 		}
 
 		// Create cache manager
@@ -87,23 +88,23 @@ var cacheClearCmd = &cobra.Command{
 
 		// Confirm clearing
 		if !skipConfirm {
-			fmt.Print("⚠️  This will remove all cached data. Continue? [y/N]: ")
+			fmt.Print(i18n.T("cmd.cache.clear.confirm"))
 			var response string
 			fmt.Scanln(&response)
 			if !strings.EqualFold(response, "y") && !strings.EqualFold(response, "yes") {
-				fmt.Println("❌ Cancelled")
+				fmt.Println(i18n.T("cmd.cache.clear.cancel"))
 				return nil
 			}
 		}
 
-		fmt.Println("🗑️  Clearing all cache entries...")
+		fmt.Println(i18n.T("cmd.cache.clear.start"))
 
 		// Clear cache
 		if err := cacheManager.Clear(); err != nil {
-			return fmt.Errorf("failed to clear cache: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.cache.errClear"), err)
 		}
 
-		fmt.Println("✅ Cache cleared successfully")
+		fmt.Println(i18n.T("cmd.cache.clear.success"))
 		return nil
 	},
 }
@@ -117,5 +118,5 @@ func init() {
 	cacheCmd.AddCommand(cacheClearCmd)
 
 	// Add flags
-	cacheClearCmd.Flags().BoolVarP(&skipConfirm, "yes", "y", false, "Skip confirmation prompt")
+	cacheClearCmd.Flags().BoolVarP(&skipConfirm, "yes", "y", false, i18n.T("cmd.cache.flag.yes"))
 }

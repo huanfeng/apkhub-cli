@@ -451,11 +451,152 @@ other = "管理缓存"
 [cmd.cache.long]
 other = "查看或清理 ApkHub 缓存。"
 
+[cmd.cache.stats.short]
+other = "显示缓存统计"
+
+[cmd.cache.clean.short]
+other = "移除过期缓存"
+
+[cmd.cache.clear.short]
+other = "清空所有缓存"
+
+[cmd.cache.errLoadConfig]
+other = "加载配置失败"
+
+[cmd.cache.errClean]
+other = "清理缓存失败"
+
+[cmd.cache.errClear]
+other = "清空缓存失败"
+
+[cmd.cache.clean.start]
+other = "🧹 正在清理过期缓存..."
+
+[cmd.cache.clean.removed]
+other = "✅ 已移除 %d 条过期缓存"
+
+[cmd.cache.clean.none]
+other = "✅ 未发现过期缓存"
+
+[cmd.cache.clear.confirm]
+other = "⚠️  将删除所有缓存数据，是否继续？[y/N]: "
+
+[cmd.cache.clear.cancel]
+other = "❌ 已取消"
+
+[cmd.cache.clear.start]
+other = "🗑️  正在清空所有缓存..."
+
+[cmd.cache.clear.success]
+other = "✅ 缓存清理完成"
+
+[cmd.cache.flag.yes]
+other = "跳过确认提示"
+
 [cmd.clean.short]
 other = "清理仓库产物"
 
 [cmd.clean.long]
 other = "清理生成的产物或临时文件。"
+
+[cmd.clean.errLoadConfig]
+other = "加载配置失败"
+
+[cmd.clean.errCreateRepo]
+other = "创建仓库失败"
+
+[cmd.clean.errLoadInfos]
+other = "加载 APK 信息失败"
+
+[cmd.clean.errUpdateManifest]
+other = "更新清单失败"
+
+[cmd.clean.errRemove]
+other = "删除 {{.file}} 失败：{{.error}}"
+
+[cmd.clean.title]
+other = "=== 仓库清理 ==="
+
+[cmd.clean.repoPath]
+other = "仓库路径：{{.path}}"
+
+[cmd.clean.modeDryRun]
+other = "模式：预演（不删除文件）"
+
+[cmd.clean.keepVersions]
+other = "保留版本数：{{.count}}"
+
+[cmd.clean.versionCleanup]
+other = "=== 版本清理 ==="
+
+[cmd.clean.package]
+other = "包：{{.id}}"
+
+[cmd.clean.packageVersions]
+other = "  当前版本数：{{.count}}"
+
+[cmd.clean.removeVersion]
+other = "  移除：v{{.version}}（版本号：{{.code}}）- {{.size}}"
+
+[cmd.clean.orphanTitle]
+other = "=== 孤立文件检测 ==="
+
+[cmd.clean.orphanWarnAPK]
+other = "警告：检查孤立 APK 失败：{{.error}}"
+
+[cmd.clean.orphanWarnInfo]
+other = "警告：检查孤立 info 文件失败：{{.error}}"
+
+[cmd.clean.orphanAPKTitle]
+other = "孤立的 APK 文件："
+
+[cmd.clean.orphanInfoTitle]
+other = "孤立的 info 文件："
+
+[cmd.clean.summaryTitle]
+other = "=== 汇总 ==="
+
+[cmd.clean.summaryFiles]
+other = "待删除文件：{{.count}}"
+
+[cmd.clean.summaryAPKs]
+other = "待删除 APK：{{.count}}"
+
+[cmd.clean.summarySpace]
+other = "预计释放空间：{{.size}}"
+
+[cmd.clean.nothing]
+other = "无需清理。"
+
+[cmd.clean.confirm]
+other = "继续清理？[y/N]: "
+
+[cmd.clean.cancel]
+other = "已取消清理。"
+
+[cmd.clean.removing]
+other = "=== 正在删除文件 ==="
+
+[cmd.clean.removedFiles]
+other = "已删除 {{.count}} 个文件"
+
+[cmd.clean.updateManifest]
+other = "正在更新清单..."
+
+[cmd.clean.success]
+other = "✓ 清理完成！"
+
+[cmd.clean.flag.dryRun]
+other = "仅显示将被删除的文件，不实际删除"
+
+[cmd.clean.flag.keep]
+other = "要保留的版本数量（覆盖配置）"
+
+[cmd.clean.flag.orphans]
+other = "删除孤立文件"
+
+[cmd.clean.flag.yes]
+other = "跳过确认提示"
 
 [cmd.deps.short]
 other = "显示依赖"
@@ -463,11 +604,272 @@ other = "显示依赖"
 [cmd.deps.long]
 other = "展示指定命令的依赖状态。"
 
+[cmd.deps.cacheCleared]
+other = "✅ 依赖缓存已清除"
+
+[cmd.deps.checkCommand]
+other = "🔍 正在检查命令依赖：{{.command}}"
+
+[cmd.deps.noDeps]
+other = "✅ 命令 '{{.command}}' 无外部依赖"
+
+[cmd.deps.table.command.header]
+other = "DEPENDENCY\tSTATUS\tVERSION\tPATH\tREQUIRED"
+
+[cmd.deps.install.title]
+other = "📋 安装指南："
+
+[cmd.deps.install.for]
+other = "🔧 {{.name}}:"
+
+[cmd.deps.install.manual]
+other = "   {{.index}}. {{.desc}}（手动）"
+
+[cmd.deps.install.step]
+other = "   {{.index}}. {{.desc}}"
+
+[cmd.deps.install.command]
+other = "      命令：{{.cmd}}"
+
+[cmd.deps.install.missingRequired]
+other = "❌ 命令 '{{.command}}' 无法运行，缺少：{{.deps}}"
+
+[cmd.deps.install.missingOptional]
+other = "⚠️  命令 '{{.command}}' 功能受限，缺少：{{.deps}}"
+
+[cmd.deps.install.allGood]
+other = "✅ 命令 '{{.command}}' 的依赖已满足"
+
+[cmd.deps.checkAll.title]
+other = "🔍 正在检查 ApkHub CLI 的全部依赖"
+
+[cmd.deps.table.all.header]
+other = "DEPENDENCY\tSTATUS\tVERSION\tPATH\tUSED BY"
+
+[cmd.deps.summary.title]
+other = "📊 汇总："
+
+[cmd.deps.summary.available]
+other = "可用依赖：{{.available}}/{{.total}}"
+
+[cmd.deps.summary.missingRequired]
+other = "❌ 缺少必需：{{.deps}}"
+
+[cmd.deps.summary.missingOptional]
+other = "⚠️  缺少可选：{{.deps}}"
+
+[cmd.deps.summary.allGood]
+other = "✅ 所有依赖均已满足"
+
+[cmd.deps.summary.suggestion]
+other = "💡 运行 'apkhub doctor --fix' 安装缺失依赖"
+
+[cmd.deps.flag.command]
+other = "检查指定命令的依赖"
+
+[cmd.deps.flag.json]
+other = "以 JSON 格式输出"
+
+[cmd.deps.flag.clearCache]
+other = "清除依赖缓存"
+
 [cmd.devices.short]
 other = "列出设备"
 
 [cmd.devices.long]
 other = "列出已连接的 Android 设备及其状态。"
+
+[cmd.devices.errLoadConfig]
+other = "加载配置失败"
+
+[cmd.devices.errGetStatus]
+other = "获取设备状态失败"
+
+[cmd.devices.errGetInfo]
+other = "获取设备信息失败"
+
+[cmd.devices.errWait]
+other = "等待设备上线失败"
+
+[cmd.devices.errMarshal]
+other = "序列化 JSON 失败"
+
+[cmd.devices.info.short]
+other = "显示指定设备的详细信息"
+
+[cmd.devices.wait.short]
+other = "等待设备上线"
+
+[cmd.devices.logs.short]
+other = "从设备捕获应用日志"
+
+[cmd.devices.logs.packageRequired]
+other = "必须指定 --package"
+
+[cmd.devices.default.title]
+other = "📱 Android 设备"
+
+[cmd.devices.default.none]
+other = "❌ 未找到设备"
+
+[cmd.devices.default.troubleshoot]
+other = "💡 排查："
+
+[cmd.devices.default.tipUSB]
+other = "   • 通过 USB 连接设备"
+
+[cmd.devices.default.tipDebug]
+other = "   • 在开发者选项开启 USB 调试"
+
+[cmd.devices.default.tipAuth]
+other = "   • 在提示时授权此电脑"
+
+[cmd.devices.default.tipADB]
+other = "   • 尝试手动运行 'adb devices'"
+
+[cmd.devices.default.online]
+other = "🟢 在线设备（{{.count}}）："
+
+[cmd.devices.default.offline]
+other = "🔴 离线设备（{{.count}}）："
+
+[cmd.devices.default.tipReconnect]
+other = "   💡 尝试重新连接或重启设备"
+
+[cmd.devices.default.unauthorized]
+other = "🔒 未授权设备（{{.count}}）："
+
+[cmd.devices.default.tipAuthorize]
+other = "   💡 在设备上允许 USB 调试"
+
+[cmd.devices.default.summary]
+other = "📊 汇总：共 {{.total}} 台，{{.online}} 在线，{{.offline}} 离线，{{.unauth}} 未授权"
+
+[cmd.devices.table.header]
+other = "DEVICE ID\tSTATUS\tMODEL\tANDROID\tMANUFACTURER\tTYPE"
+
+[cmd.devices.table.total]
+other = "设备总数：{{.count}}"
+
+[cmd.devices.table.breakdown]
+other = "在线：{{.online}}，离线：{{.offline}}，未授权：{{.unauth}}"
+
+[cmd.devices.details.title]
+other = "📱 设备信息"
+
+[cmd.devices.details.id]
+other = "设备 ID：{{.id}}"
+
+[cmd.devices.details.status]
+other = "状态：{{.status}}"
+
+[cmd.devices.details.model]
+other = "型号：{{.model}}"
+
+[cmd.devices.details.manufacturer]
+other = "制造商：{{.m}}"
+
+[cmd.devices.details.brand]
+other = "品牌：{{.brand}}"
+
+[cmd.devices.details.product]
+other = "产品：{{.product}}"
+
+[cmd.devices.details.device]
+other = "设备：{{.device}}"
+
+[cmd.devices.details.androidVer]
+other = "Android 版本：{{.ver}}"
+
+[cmd.devices.details.apiLevel]
+other = "API 等级：{{.api}}"
+
+[cmd.devices.details.transport]
+other = "传输 ID：{{.transport}}"
+
+[cmd.devices.details.type]
+other = "类型：{{.type}}"
+
+[cmd.devices.details.typeEmu]
+other = "模拟器"
+
+[cmd.devices.details.typePhy]
+other = "实体设备"
+
+[cmd.devices.details.lastSeen]
+other = "上次出现：{{.time}}"
+
+[cmd.devices.details.online]
+other = "✅ 设备在线，可正常使用"
+
+[cmd.devices.details.offline]
+other = "🔴 设备离线"
+
+[cmd.devices.details.unauthorized]
+other = "🔒 设备未授权"
+
+[cmd.devices.details.fixTitle]
+other = "💡 试试："
+
+[cmd.devices.details.fixReconnect]
+other = "   • 重新插拔 USB 线"
+
+[cmd.devices.details.fixRestart]
+other = "   • 重启设备"
+
+[cmd.devices.details.fixADB]
+other = "   • 执行 'adb kill-server && adb start-server'"
+
+[cmd.devices.details.fixAllowDebug]
+other = "   • 在设备上允许 USB 调试"
+
+[cmd.devices.details.fixAlwaysAllow]
+other = "   • 勾选“始终允许来自此计算机”"
+
+[cmd.devices.logs.summary]
+other = "📊 日志捕获汇总："
+
+[cmd.devices.logs.captured]
+other = "   ✅ 成功：{{.count}} 台"
+
+[cmd.devices.logs.failed]
+other = "   ❌ 失败：{{.count}} 台"
+
+[cmd.devices.logs.errCapture]
+other = "日志捕获在 {{.count}} 台设备失败"
+
+[cmd.devices.watch.start]
+other = "👀 正在监听设备（每 {{.seconds}} 秒刷新，Ctrl+C 退出）..."
+
+[cmd.devices.watch.updated]
+other = "🕐 上次更新时间：{{.time}}"
+
+[cmd.devices.watch.err]
+other = "错误：{{.error}}"
+
+[cmd.devices.flag.format]
+other = "输出格式：default、table、json"
+
+[cmd.devices.flag.watch]
+other = "持续监听设备状态"
+
+[cmd.devices.flag.refresh]
+other = "监听模式下的刷新间隔（秒）"
+
+[cmd.devices.flag.allDevices]
+other = "选择所有在线设备"
+
+[cmd.devices.flag.devices]
+other = "逗号分隔的目标设备列表"
+
+[cmd.devices.flag.logPackage]
+other = "按包名过滤日志"
+
+[cmd.devices.flag.logLevel]
+other = "最低日志级别（V/D/I/W/E/F/S）"
+
+[cmd.devices.flag.logOutput]
+other = "日志输出文件或目录（可选）"
 
 [cmd.export.short]
 other = "导出仓库数据"
@@ -485,7 +887,130 @@ other = "从文件或归档中导入仓库数据。"
 other = "显示应用信息"
 
 [cmd.info.long]
-other = "显示指定包的详细信息。"
+other = "显示应用的详细信息（含所有版本）。可输入包名从仓库获取，也可指定本地 APK 路径。"
+
+[cmd.info.errLoadConfig]
+other = "加载配置失败"
+
+[cmd.info.errCreateDir]
+other = "创建目录失败"
+
+[cmd.info.errGetInfo]
+other = "获取包信息失败"
+
+[cmd.info.title]
+other = "=== 应用信息 ==="
+
+[cmd.info.packageID]
+other = "包名：{{.id}}"
+
+[cmd.info.name]
+other = "名称：{{.name}}"
+
+[cmd.info.description]
+other = "描述：{{.desc}}"
+
+[cmd.info.category]
+other = "分类：{{.category}}"
+
+[cmd.info.latest]
+other = "最新版本：{{.version}}（版本号：{{.code}}）"
+
+[cmd.info.sizeMB]
+other = "大小：{{.size}} MB"
+
+[cmd.info.sdk]
+other = "最低 SDK：{{.min}}，目标 SDK：{{.target}}"
+
+[cmd.info.availableVersions]
+other = "=== 可用版本 ==="
+
+[cmd.info.table.header]
+other = "VERSION\tCODE\tSIZE\tSDK\tBUCKET\tFEATURES"
+
+[cmd.info.hints.title]
+other = "命令："
+
+[cmd.info.hints.download]
+other = "  下载：apkhub download {{.id}}"
+
+[cmd.info.hints.install]
+other = "  安装：apkhub install {{.id}}"
+
+[cmd.info.hints.specific]
+other = "  指定版本：apkhub download {{.id}} --version <version>"
+
+[cmd.info.errAPKNotFound]
+other = "APK 文件未找到：{{.path}}"
+
+[cmd.info.errAccessAPK]
+other = "无法访问 APK 文件"
+
+[cmd.info.errPathIsDir]
+other = "路径是目录而不是文件：{{.path}}"
+
+[cmd.info.local.title]
+other = "=== 本地 APK 信息 ==="
+
+[cmd.info.local.path]
+other = "文件路径：{{.path}}"
+
+[cmd.info.local.sizeMB]
+other = "文件大小：{{.size}} MB"
+
+[cmd.info.local.modified]
+other = "修改时间：{{.time}}"
+
+[cmd.info.local.analysis]
+other = "=== APK 分析 ==="
+
+[cmd.info.local.parseFail]
+other = "❌ 解析 APK 失败：{{.error}}"
+
+[cmd.info.local.parseHintsTitle]
+other = "可能原因："
+
+[cmd.info.local.parseHintCorrupt]
+other = "  • APK 文件损坏"
+
+[cmd.info.local.parseHintUnsupported]
+other = "  • 不支持的 APK 格式"
+
+[cmd.info.local.parseHintDeps]
+other = "  • 缺少解析依赖"
+
+[cmd.info.local.parseDoctor]
+other = "💡 运行 'apkhub doctor' 检查依赖"
+
+[cmd.info.local.packageID]
+other = "包名：{{.id}}"
+
+[cmd.info.local.appName]
+other = "应用名称：{{.name}}"
+
+[cmd.info.local.version]
+other = "版本：{{.version}}（版本号：{{.code}}）"
+
+[cmd.info.local.sdk]
+other = "最低 SDK：{{.min}}，目标 SDK：{{.target}}"
+
+[cmd.info.local.abis]
+other = "架构：{{.abis}}"
+
+[cmd.info.local.permissionsTitle]
+other = "=== 权限（{{.count}}） ==="
+
+[cmd.info.local.featuresTitle]
+other = "=== 功能（{{.count}}） ==="
+
+[cmd.info.local.fileAnalysis]
+other = "=== 文件分析 ==="
+
+[cmd.info.local.sha256]
+other = "SHA256：{{.sha}}"
+
+[cmd.info.local.signatureSHA]
+other = "签名 SHA256：{{.sha}}"
 
 [cmd.parse.short]
 other = "解析 APK 文件"
@@ -493,11 +1018,29 @@ other = "解析 APK 文件"
 [cmd.parse.long]
 other = "解析 APK 文件并展示提取的元数据。"
 
+[cmd.parse.errAPKPath]
+other = "解析 APK 路径失败"
+
+[cmd.parse.errWorkDir]
+other = "解析工作目录失败"
+
+[cmd.parse.errParse]
+other = "解析 APK 失败"
+
+[cmd.parse.errMarshal]
+other = "序列化 APK 信息失败"
+
 [cmd.parserInfo.short]
 other = "解析器信息"
 
 [cmd.parserInfo.long]
 other = "显示可用 APK 解析器的相关信息。"
+
+[cmd.parserInfo.none]
+other = "没有可用的解析器"
+
+[cmd.parserInfo.header]
+other = "NAME\tVERSION\tAVAILABLE\tPRIORITY\tCAPABILITIES"
 
 [cmd.stats.short]
 other = "显示仓库统计"
@@ -505,11 +1048,137 @@ other = "显示仓库统计"
 [cmd.stats.long]
 other = "展示仓库的统计信息。"
 
+[cmd.stats.errLoadConfig]
+other = "加载配置失败"
+
+[cmd.stats.errCreateRepo]
+other = "创建仓库失败"
+
+[cmd.stats.errLoadManifest]
+other = "加载清单失败"
+
+[cmd.stats.title]
+other = "=== ApkHub 仓库统计 ==="
+
+[cmd.stats.repo]
+other = "仓库路径：{{.path}}"
+
+[cmd.stats.name]
+other = "仓库名称：{{.name}}"
+
+[cmd.stats.description]
+other = "描述：{{.desc}}"
+
+[cmd.stats.updated]
+other = "最后更新：{{.time}}"
+
+[cmd.stats.packageTitle]
+other = "=== 包统计 ==="
+
+[cmd.stats.totalPackages]
+other = "包总数：{{.count}}"
+
+[cmd.stats.totalAPKs]
+other = "APK 总数：{{.count}}"
+
+[cmd.stats.totalSizeMB]
+other = "总大小：{{.size}} MB"
+
+[cmd.stats.avgSizeMB]
+other = "平均 APK 大小：{{.size}} MB"
+
+[cmd.stats.versionTitle]
+other = "=== 版本分布 ==="
+
+[cmd.stats.multiVersion]
+other = "有多个版本的包：{{.count}}"
+
+[cmd.stats.avgVersions]
+other = "平均每个包的版本数：{{.avg}}"
+
+[cmd.stats.topPackages]
+other = "版本数最多的包："
+
+[cmd.stats.topPackageItem]
+other = "  {{.index}}. {{.name}}：{{.count}} 个版本"
+
+[cmd.stats.sdkTitle]
+other = "=== SDK 版本分析 ==="
+
+[cmd.stats.sdkMin]
+other = "最低 SDK："
+
+[cmd.stats.sdkTarget]
+other = "目标 SDK："
+
+[cmd.stats.abiTitle]
+other = "=== 架构分布 ==="
+
+[cmd.stats.signatureTitle]
+other = "=== 签名分析 ==="
+
+[cmd.stats.signatureUnique]
+other = "唯一签名数：{{.count}}"
+
+[cmd.stats.signatureMulti]
+other = "存在多重签名的包：{{.count}}"
+
+[cmd.stats.largestTitle]
+other = "=== 最大的 APK ==="
+
+[cmd.stats.largestItem]
+other = "  {{.index}}. {{.id}} v{{.version}}：{{.size}} MB"
+
+[cmd.stats.noData]
+other = "  暂无数据"
+
+[cmd.stats.more]
+other = "  ... （还有 {{.count}} 个）"
+
+[cmd.stats.sdkItem]
+other = "  API {{.sdk}}：{{.count}} 个 APK"
+
+[cmd.stats.distributionItem]
+other = "  {{.key}}：{{.count}} 个 APK"
+
 [cmd.update.short]
 other = "更新仓库或桶"
 
 [cmd.update.long]
 other = "更新仓库清单或桶数据。"
+
+[cmd.update.errLoadConfig]
+other = "加载配置失败"
+
+[cmd.update.errUpdate]
+other = "更新仓库失败"
+
+[cmd.update.single]
+other = "正在更新仓库 '{{.name}}'..."
+
+[cmd.update.singleSuccess]
+other = "✓ 仓库 '{{.name}}' 更新完成"
+
+[cmd.update.allIncludingDisabled]
+other = "🔄 正在更新所有仓库（包含已禁用）..."
+
+[cmd.update.fetching]
+other = "📡 正在获取 '{{.name}}'..."
+
+[cmd.update.updateFail]
+other = "❌ 更新 '{{.name}}' 失败：{{.error}}"
+
+[cmd.update.updateSuccess]
+other = "✅ '{{.name}}' 更新完成"
+
+[cmd.update.completed]
+other = "✓ 更新完成"
+
+[cmd.update.flag.all]
+other = "更新所有仓库（包含已禁用）"
+
+[cmd.update.flag.verifySignature]
+other = "更新时校验仓库清单签名"
 
 [cmd.verify.short]
 other = "校验仓库完整性"

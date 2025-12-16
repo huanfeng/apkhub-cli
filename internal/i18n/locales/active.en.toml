@@ -451,11 +451,152 @@ other = "Manage cache"
 [cmd.cache.long]
 other = "View or clean ApkHub cache."
 
+[cmd.cache.stats.short]
+other = "Show cache statistics"
+
+[cmd.cache.clean.short]
+other = "Remove expired cache entries"
+
+[cmd.cache.clear.short]
+other = "Clear all cache entries"
+
+[cmd.cache.errLoadConfig]
+other = "Failed to load config"
+
+[cmd.cache.errClean]
+other = "Failed to clean cache"
+
+[cmd.cache.errClear]
+other = "Failed to clear cache"
+
+[cmd.cache.clean.start]
+other = "🧹 Cleaning expired cache entries..."
+
+[cmd.cache.clean.removed]
+other = "✅ Removed %d expired cache entries"
+
+[cmd.cache.clean.none]
+other = "✅ No expired entries found"
+
+[cmd.cache.clear.confirm]
+other = "⚠️  This will remove all cached data. Continue? [y/N]: "
+
+[cmd.cache.clear.cancel]
+other = "❌ Cancelled"
+
+[cmd.cache.clear.start]
+other = "🗑️  Clearing all cache entries..."
+
+[cmd.cache.clear.success]
+other = "✅ Cache cleared successfully"
+
+[cmd.cache.flag.yes]
+other = "Skip confirmation prompt"
+
 [cmd.clean.short]
 other = "Clean repository artifacts"
 
 [cmd.clean.long]
 other = "Clean generated artifacts or temporary files."
+
+[cmd.clean.errLoadConfig]
+other = "Failed to load configuration"
+
+[cmd.clean.errCreateRepo]
+other = "Failed to create repository"
+
+[cmd.clean.errLoadInfos]
+other = "Failed to load APK infos"
+
+[cmd.clean.errUpdateManifest]
+other = "Failed to update manifest"
+
+[cmd.clean.errRemove]
+other = "Failed to remove {{.file}}: {{.error}}"
+
+[cmd.clean.title]
+other = "=== Repository Cleanup ==="
+
+[cmd.clean.repoPath]
+other = "Repository: {{.path}}"
+
+[cmd.clean.modeDryRun]
+other = "Mode: DRY RUN (no files will be deleted)"
+
+[cmd.clean.keepVersions]
+other = "Keep Versions: {{.count}}"
+
+[cmd.clean.versionCleanup]
+other = "=== Version Cleanup ==="
+
+[cmd.clean.package]
+other = "Package: {{.id}}"
+
+[cmd.clean.packageVersions]
+other = "  Current versions: {{.count}}"
+
+[cmd.clean.removeVersion]
+other = "  Remove: v{{.version}} (Code: {{.code}}) - {{.size}}"
+
+[cmd.clean.orphanTitle]
+other = "=== Orphan File Detection ==="
+
+[cmd.clean.orphanWarnAPK]
+other = "Warning: failed to check orphan APKs: {{.error}}"
+
+[cmd.clean.orphanWarnInfo]
+other = "Warning: failed to check orphan infos: {{.error}}"
+
+[cmd.clean.orphanAPKTitle]
+other = "Orphan APK files:"
+
+[cmd.clean.orphanInfoTitle]
+other = "Orphan info files:"
+
+[cmd.clean.summaryTitle]
+other = "=== Summary ==="
+
+[cmd.clean.summaryFiles]
+other = "Files to remove: {{.count}}"
+
+[cmd.clean.summaryAPKs]
+other = "APKs to remove: {{.count}}"
+
+[cmd.clean.summarySpace]
+other = "Space to free: {{.size}}"
+
+[cmd.clean.nothing]
+other = "Nothing to clean up!"
+
+[cmd.clean.confirm]
+other = "Proceed with cleanup? [y/N]: "
+
+[cmd.clean.cancel]
+other = "Cleanup cancelled."
+
+[cmd.clean.removing]
+other = "=== Removing Files ==="
+
+[cmd.clean.removedFiles]
+other = "Removed {{.count}} files"
+
+[cmd.clean.updateManifest]
+other = "Updating manifest..."
+
+[cmd.clean.success]
+other = "✓ Cleanup completed successfully!"
+
+[cmd.clean.flag.dryRun]
+other = "Show what would be deleted without actually deleting"
+
+[cmd.clean.flag.keep]
+other = "Number of versions to keep (overrides config)"
+
+[cmd.clean.flag.orphans]
+other = "Remove orphan files"
+
+[cmd.clean.flag.yes]
+other = "Skip confirmation prompt"
 
 [cmd.deps.short]
 other = "Show dependencies"
@@ -463,11 +604,272 @@ other = "Show dependencies"
 [cmd.deps.long]
 other = "Display dependency status for specific commands."
 
+[cmd.deps.cacheCleared]
+other = "✅ Dependency cache cleared"
+
+[cmd.deps.checkCommand]
+other = "🔍 Checking dependencies for command: {{.command}}"
+
+[cmd.deps.noDeps]
+other = "✅ Command '{{.command}}' has no external dependencies"
+
+[cmd.deps.table.command.header]
+other = "DEPENDENCY\tSTATUS\tVERSION\tPATH\tREQUIRED"
+
+[cmd.deps.install.title]
+other = "📋 Installation Guidance:"
+
+[cmd.deps.install.for]
+other = "🔧 {{.name}}:"
+
+[cmd.deps.install.manual]
+other = "   {{.index}}. {{.desc}} (Manual)"
+
+[cmd.deps.install.step]
+other = "   {{.index}}. {{.desc}}"
+
+[cmd.deps.install.command]
+other = "      Command: {{.cmd}}"
+
+[cmd.deps.install.missingRequired]
+other = "❌ Command '{{.command}}' cannot run without: {{.deps}}"
+
+[cmd.deps.install.missingOptional]
+other = "⚠️  Command '{{.command}}' will have limited functionality without: {{.deps}}"
+
+[cmd.deps.install.allGood]
+other = "✅ All dependencies for '{{.command}}' are satisfied!"
+
+[cmd.deps.checkAll.title]
+other = "🔍 Checking all ApkHub CLI dependencies"
+
+[cmd.deps.table.all.header]
+other = "DEPENDENCY\tSTATUS\tVERSION\tPATH\tUSED BY"
+
+[cmd.deps.summary.title]
+other = "📊 Summary:"
+
+[cmd.deps.summary.available]
+other = "Available: {{.available}}/{{.total}} dependencies"
+
+[cmd.deps.summary.missingRequired]
+other = "❌ Missing required: {{.deps}}"
+
+[cmd.deps.summary.missingOptional]
+other = "⚠️  Missing optional: {{.deps}}"
+
+[cmd.deps.summary.allGood]
+other = "✅ All dependencies are satisfied!"
+
+[cmd.deps.summary.suggestion]
+other = "💡 Run 'apkhub doctor --fix' to install missing dependencies"
+
+[cmd.deps.flag.command]
+other = "Check dependencies for specific command"
+
+[cmd.deps.flag.json]
+other = "Output in JSON format"
+
+[cmd.deps.flag.clearCache]
+other = "Clear dependency cache"
+
 [cmd.devices.short]
 other = "List connected devices"
 
 [cmd.devices.long]
 other = "List connected Android devices and their statuses."
+
+[cmd.devices.errLoadConfig]
+other = "Failed to load config"
+
+[cmd.devices.errGetStatus]
+other = "Failed to get device status"
+
+[cmd.devices.errGetInfo]
+other = "Failed to get device info"
+
+[cmd.devices.errWait]
+other = "Failed to wait for device"
+
+[cmd.devices.errMarshal]
+other = "Failed to marshal JSON"
+
+[cmd.devices.info.short]
+other = "Show detailed information about a specific device"
+
+[cmd.devices.wait.short]
+other = "Wait for a device to come online"
+
+[cmd.devices.logs.short]
+other = "Capture application logs from connected devices"
+
+[cmd.devices.logs.packageRequired]
+other = "--package is required"
+
+[cmd.devices.default.title]
+other = "📱 Android Devices"
+
+[cmd.devices.default.none]
+other = "❌ No devices found"
+
+[cmd.devices.default.troubleshoot]
+other = "💡 Troubleshooting:"
+
+[cmd.devices.default.tipUSB]
+other = "   • Connect your Android device via USB"
+
+[cmd.devices.default.tipDebug]
+other = "   • Enable USB debugging in Developer Options"
+
+[cmd.devices.default.tipAuth]
+other = "   • Authorize this computer when prompted"
+
+[cmd.devices.default.tipADB]
+other = "   • Try running 'adb devices' manually"
+
+[cmd.devices.default.online]
+other = "🟢 Online Devices ({{.count}}):"
+
+[cmd.devices.default.offline]
+other = "🔴 Offline Devices ({{.count}}):"
+
+[cmd.devices.default.tipReconnect]
+other = "   💡 Try reconnecting or restarting the device"
+
+[cmd.devices.default.unauthorized]
+other = "🔒 Unauthorized Devices ({{.count}}):"
+
+[cmd.devices.default.tipAuthorize]
+other = "   💡 Allow USB debugging when prompted on the device"
+
+[cmd.devices.default.summary]
+other = "📊 Summary: {{.total}} total, {{.online}} online, {{.offline}} offline, {{.unauth}} unauthorized"
+
+[cmd.devices.table.header]
+other = "DEVICE ID\tSTATUS\tMODEL\tANDROID\tMANUFACTURER\tTYPE"
+
+[cmd.devices.table.total]
+other = "Total devices: {{.count}}"
+
+[cmd.devices.table.breakdown]
+other = "Online: {{.online}}, Offline: {{.offline}}, Unauthorized: {{.unauth}}"
+
+[cmd.devices.details.title]
+other = "📱 Device Information"
+
+[cmd.devices.details.id]
+other = "Device ID: {{.id}}"
+
+[cmd.devices.details.status]
+other = "Status: {{.status}}"
+
+[cmd.devices.details.model]
+other = "Model: {{.model}}"
+
+[cmd.devices.details.manufacturer]
+other = "Manufacturer: {{.m}}"
+
+[cmd.devices.details.brand]
+other = "Brand: {{.brand}}"
+
+[cmd.devices.details.product]
+other = "Product: {{.product}}"
+
+[cmd.devices.details.device]
+other = "Device: {{.device}}"
+
+[cmd.devices.details.androidVer]
+other = "Android Version: {{.ver}}"
+
+[cmd.devices.details.apiLevel]
+other = "API Level: {{.api}}"
+
+[cmd.devices.details.transport]
+other = "Transport ID: {{.transport}}"
+
+[cmd.devices.details.type]
+other = "Type: {{.type}}"
+
+[cmd.devices.details.typeEmu]
+other = "Emulator"
+
+[cmd.devices.details.typePhy]
+other = "Physical Device"
+
+[cmd.devices.details.lastSeen]
+other = "Last Seen: {{.time}}"
+
+[cmd.devices.details.online]
+other = "✅ Device is online and ready for use"
+
+[cmd.devices.details.offline]
+other = "🔴 Device is offline"
+
+[cmd.devices.details.unauthorized]
+other = "🔒 Device is unauthorized"
+
+[cmd.devices.details.fixTitle]
+other = "💡 Try:"
+
+[cmd.devices.details.fixReconnect]
+other = "   • Reconnecting the USB cable"
+
+[cmd.devices.details.fixRestart]
+other = "   • Restarting the device"
+
+[cmd.devices.details.fixADB]
+other = "   • Running 'adb kill-server && adb start-server'"
+
+[cmd.devices.details.fixAllowDebug]
+other = "   • Allow USB debugging when prompted on the device"
+
+[cmd.devices.details.fixAlwaysAllow]
+other = "   • Check 'Always allow from this computer' if available"
+
+[cmd.devices.logs.summary]
+other = "📊 Log capture summary:"
+
+[cmd.devices.logs.captured]
+other = "   ✅ %d captured:"
+
+[cmd.devices.logs.failed]
+other = "   ❌ %d failed:"
+
+[cmd.devices.logs.errCapture]
+other = "Log capture failed on {{.count}} device(s)"
+
+[cmd.devices.watch.start]
+other = "👀 Watching devices (refresh every {{.seconds}}s, press Ctrl+C to stop)..."
+
+[cmd.devices.watch.updated]
+other = "🕐 Last updated: {{.time}}"
+
+[cmd.devices.watch.err]
+other = "Error: {{.error}}"
+
+[cmd.devices.flag.format]
+other = "Output format: default, table, json"
+
+[cmd.devices.flag.watch]
+other = "Watch device status continuously"
+
+[cmd.devices.flag.refresh]
+other = "Refresh interval in seconds for watch mode"
+
+[cmd.devices.flag.allDevices]
+other = "Target all online devices"
+
+[cmd.devices.flag.devices]
+other = "Comma-separated list of target devices"
+
+[cmd.devices.flag.logPackage]
+other = "Package ID to filter logs"
+
+[cmd.devices.flag.logLevel]
+other = "Minimum log level (V, D, I, W, E, F, S)"
+
+[cmd.devices.flag.logOutput]
+other = "Optional output file or directory for logs"
 
 [cmd.export.short]
 other = "Export repository data"
@@ -485,7 +887,130 @@ other = "Import repository data from files or archives."
 other = "Show app info"
 
 [cmd.info.long]
-other = "Show detailed information for a specific package."
+other = "Show detailed information about an application including all available versions. You can specify either a package ID to get info from repositories, or a local APK file path."
+
+[cmd.info.errLoadConfig]
+other = "Failed to load config"
+
+[cmd.info.errCreateDir]
+other = "Failed to create directories"
+
+[cmd.info.errGetInfo]
+other = "Failed to get package info"
+
+[cmd.info.title]
+other = "=== Application Information ==="
+
+[cmd.info.packageID]
+other = "Package ID: {{.id}}"
+
+[cmd.info.name]
+other = "Name: {{.name}}"
+
+[cmd.info.description]
+other = "Description: {{.desc}}"
+
+[cmd.info.category]
+other = "Category: {{.category}}"
+
+[cmd.info.latest]
+other = "Latest Version: {{.version}} (Code: {{.code}})"
+
+[cmd.info.sizeMB]
+other = "Size: {{.size}} MB"
+
+[cmd.info.sdk]
+other = "Min SDK: {{.min}}, Target SDK: {{.target}}"
+
+[cmd.info.availableVersions]
+other = "=== Available Versions ==="
+
+[cmd.info.table.header]
+other = "VERSION\tCODE\tSIZE\tSDK\tBUCKET\tFEATURES"
+
+[cmd.info.hints.title]
+other = "Commands:"
+
+[cmd.info.hints.download]
+other = "  Download: apkhub download {{.id}}"
+
+[cmd.info.hints.install]
+other = "  Install:  apkhub install {{.id}}"
+
+[cmd.info.hints.specific]
+other = "  Specific: apkhub download {{.id}} --version <version>"
+
+[cmd.info.errAPKNotFound]
+other = "APK file not found: {{.path}}"
+
+[cmd.info.errAccessAPK]
+other = "Cannot access APK file"
+
+[cmd.info.errPathIsDir]
+other = "Path is a directory, not a file: {{.path}}"
+
+[cmd.info.local.title]
+other = "=== Local APK File Information ==="
+
+[cmd.info.local.path]
+other = "File Path: {{.path}}"
+
+[cmd.info.local.sizeMB]
+other = "File Size: {{.size}} MB"
+
+[cmd.info.local.modified]
+other = "Modified: {{.time}}"
+
+[cmd.info.local.analysis]
+other = "=== APK Analysis ==="
+
+[cmd.info.local.parseFail]
+other = "❌ Failed to parse APK: {{.error}}"
+
+[cmd.info.local.parseHintsTitle]
+other = "This might indicate:"
+
+[cmd.info.local.parseHintCorrupt]
+other = "  • Corrupted APK file"
+
+[cmd.info.local.parseHintUnsupported]
+other = "  • Unsupported APK format"
+
+[cmd.info.local.parseHintDeps]
+other = "  • Missing parsing dependencies"
+
+[cmd.info.local.parseDoctor]
+other = "💡 Try running 'apkhub doctor' to check dependencies"
+
+[cmd.info.local.packageID]
+other = "Package ID: {{.id}}"
+
+[cmd.info.local.appName]
+other = "App Name: {{.name}}"
+
+[cmd.info.local.version]
+other = "Version: {{.version}} (Code: {{.code}})"
+
+[cmd.info.local.sdk]
+other = "Min SDK: {{.min}}, Target SDK: {{.target}}"
+
+[cmd.info.local.abis]
+other = "Architectures: {{.abis}}"
+
+[cmd.info.local.permissionsTitle]
+other = "=== Permissions ({{.count}}) ==="
+
+[cmd.info.local.featuresTitle]
+other = "=== Features ({{.count}}) ==="
+
+[cmd.info.local.fileAnalysis]
+other = "=== File Analysis ==="
+
+[cmd.info.local.sha256]
+other = "SHA256: {{.sha}}"
+
+[cmd.info.local.signatureSHA]
+other = "Signature SHA256: {{.sha}}"
 
 [cmd.parse.short]
 other = "Parse APK file"
@@ -493,11 +1018,29 @@ other = "Parse APK file"
 [cmd.parse.long]
 other = "Parse an APK file and display extracted metadata."
 
+[cmd.parse.errAPKPath]
+other = "Failed to resolve APK path"
+
+[cmd.parse.errWorkDir]
+other = "Failed to resolve work directory"
+
+[cmd.parse.errParse]
+other = "Failed to parse APK"
+
+[cmd.parse.errMarshal]
+other = "Failed to marshal APK info"
+
 [cmd.parserInfo.short]
 other = "Parser information"
 
 [cmd.parserInfo.long]
 other = "Show information about available APK parsers."
+
+[cmd.parserInfo.none]
+other = "No parsers available"
+
+[cmd.parserInfo.header]
+other = "NAME\tVERSION\tAVAILABLE\tPRIORITY\tCAPABILITIES"
 
 [cmd.stats.short]
 other = "Show repository stats"
@@ -505,11 +1048,137 @@ other = "Show repository stats"
 [cmd.stats.long]
 other = "Display statistics of the repository."
 
+[cmd.stats.errLoadConfig]
+other = "Failed to load configuration"
+
+[cmd.stats.errCreateRepo]
+other = "Failed to create repository"
+
+[cmd.stats.errLoadManifest]
+other = "Failed to load manifest"
+
+[cmd.stats.title]
+other = "=== ApkHub Repository Statistics ==="
+
+[cmd.stats.repo]
+other = "Repository: {{.path}}"
+
+[cmd.stats.name]
+other = "Name: {{.name}}"
+
+[cmd.stats.description]
+other = "Description: {{.desc}}"
+
+[cmd.stats.updated]
+other = "Last Updated: {{.time}}"
+
+[cmd.stats.packageTitle]
+other = "=== Package Summary ==="
+
+[cmd.stats.totalPackages]
+other = "Total Packages: {{.count}}"
+
+[cmd.stats.totalAPKs]
+other = "Total APKs: {{.count}}"
+
+[cmd.stats.totalSizeMB]
+other = "Total Size: {{.size}} MB"
+
+[cmd.stats.avgSizeMB]
+other = "Average APK Size: {{.size}} MB"
+
+[cmd.stats.versionTitle]
+other = "=== Version Distribution ==="
+
+[cmd.stats.multiVersion]
+other = "Packages with Multiple Versions: {{.count}}"
+
+[cmd.stats.avgVersions]
+other = "Average Versions per Package: {{.avg}}"
+
+[cmd.stats.topPackages]
+other = "Top Packages by Version Count:"
+
+[cmd.stats.topPackageItem]
+other = "  {{.index}}. {{.name}}: {{.count}} versions"
+
+[cmd.stats.sdkTitle]
+other = "=== SDK Version Analysis ==="
+
+[cmd.stats.sdkMin]
+other = "Min SDK Versions:"
+
+[cmd.stats.sdkTarget]
+other = "Target SDK Versions:"
+
+[cmd.stats.abiTitle]
+other = "=== Architecture Distribution ==="
+
+[cmd.stats.signatureTitle]
+other = "=== Signature Analysis ==="
+
+[cmd.stats.signatureUnique]
+other = "Unique Signatures: {{.count}}"
+
+[cmd.stats.signatureMulti]
+other = "Packages with Multiple Signatures: {{.count}}"
+
+[cmd.stats.largestTitle]
+other = "=== Largest APKs ==="
+
+[cmd.stats.largestItem]
+other = "  {{.index}}. {{.id}} v{{.version}}: {{.size}} MB"
+
+[cmd.stats.noData]
+other = "  No data available"
+
+[cmd.stats.more]
+other = "  ... ({{.count}} more)"
+
+[cmd.stats.sdkItem]
+other = "  API {{.sdk}}: {{.count}} APKs"
+
+[cmd.stats.distributionItem]
+other = "  {{.key}}: {{.count}} APKs"
+
 [cmd.update.short]
 other = "Update repositories or buckets"
 
 [cmd.update.long]
 other = "Update repository manifests or bucket data."
+
+[cmd.update.errLoadConfig]
+other = "Failed to load config"
+
+[cmd.update.errUpdate]
+other = "Failed to update bucket"
+
+[cmd.update.single]
+other = "Updating bucket '{{.name}}'..."
+
+[cmd.update.singleSuccess]
+other = "✓ Updated bucket '{{.name}}'"
+
+[cmd.update.allIncludingDisabled]
+other = "🔄 Updating all buckets (including disabled)..."
+
+[cmd.update.fetching]
+other = "📡 Fetching '{{.name}}'..."
+
+[cmd.update.updateFail]
+other = "❌ Failed to update '{{.name}}': {{.error}}"
+
+[cmd.update.updateSuccess]
+other = "✅ Updated '{{.name}}'"
+
+[cmd.update.completed]
+other = "✓ Update completed"
+
+[cmd.update.flag.all]
+other = "Update all buckets including disabled ones"
+
+[cmd.update.flag.verifySignature]
+other = "Verify bucket manifest signatures during update"
 
 [cmd.verify.short]
 other = "Verify repository integrity"

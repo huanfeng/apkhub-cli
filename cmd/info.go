@@ -7,6 +7,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
+	"github.com/huanfeng/apkhub-cli/internal/i18n"
 	"github.com/huanfeng/apkhub-cli/pkg/apk"
 	"github.com/huanfeng/apkhub-cli/pkg/client"
 	"github.com/huanfeng/apkhub-cli/pkg/models"
@@ -15,10 +16,9 @@ import (
 
 var infoCmd = &cobra.Command{
 	Use:   "info <package-id|apk-path>",
-	Short: "Show detailed information about an application",
-	Long: `Show detailed information about an application including all available versions.
-You can specify either a package ID to get info from repositories, or a local APK file path.`,
-	Args: cobra.ExactArgs(1),
+	Short: i18n.T("cmd.info.short"),
+	Long:  i18n.T("cmd.info.long"),
+	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		target := args[0]
 
@@ -33,12 +33,12 @@ You can specify either a package ID to get info from repositories, or a local AP
 		// Load client config
 		config, err := client.Load()
 		if err != nil {
-			return fmt.Errorf("failed to load config: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.info.errLoadConfig"), err)
 		}
 
 		// Ensure directories exist
 		if err := config.EnsureDirectories(); err != nil {
-			return fmt.Errorf("failed to create directories: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.info.errCreateDir"), err)
 		}
 
 		// Create managers
@@ -48,31 +48,37 @@ You can specify either a package ID to get info from repositories, or a local AP
 		// Get package info
 		pkg, err := downloadMgr.GetPackageInfo(packageID)
 		if err != nil {
-			return fmt.Errorf("failed to get package info: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.info.errGetInfo"), err)
 		}
 
 		// Display package information
-		fmt.Printf("=== Application Information ===\n\n")
-		fmt.Printf("Package ID: %s\n", pkg.PackageID)
-		fmt.Printf("Name: %s\n", getDefaultName(pkg.Name))
+		fmt.Printf("%s\n\n", i18n.T("cmd.info.title"))
+		fmt.Printf("%s\n", i18n.T("cmd.info.packageID", map[string]interface{}{"id": pkg.PackageID}))
+		fmt.Printf("%s\n", i18n.T("cmd.info.name", map[string]interface{}{"name": getDefaultName(pkg.Name)}))
 		if desc := getDefaultName(pkg.Description); desc != "" {
-			fmt.Printf("Description: %s\n", desc)
+			fmt.Printf("%s\n", i18n.T("cmd.info.description", map[string]interface{}{"desc": desc}))
 		}
 		if pkg.Category != "" {
-			fmt.Printf("Category: %s\n", pkg.Category)
+			fmt.Printf("%s\n", i18n.T("cmd.info.category", map[string]interface{}{"category": pkg.Category}))
 		}
 
 		// Latest version info
 		if pkg.Latest != "" {
 			if latestVer, ok := pkg.Versions[pkg.Latest]; ok {
-				fmt.Printf("\nLatest Version: %s (Code: %d)\n", latestVer.Version, latestVer.VersionCode)
-				fmt.Printf("Size: %.2f MB\n", float64(latestVer.Size)/(1024*1024))
-				fmt.Printf("Min SDK: %d, Target SDK: %d\n", latestVer.MinSDK, latestVer.TargetSDK)
+				fmt.Printf("\n%s\n", i18n.T("cmd.info.latest", map[string]interface{}{
+					"version": latestVer.Version, "code": latestVer.VersionCode,
+				}))
+				fmt.Printf("%s\n", i18n.T("cmd.info.sizeMB", map[string]interface{}{
+					"size": fmt.Sprintf("%.2f", float64(latestVer.Size)/(1024*1024)),
+				}))
+				fmt.Printf("%s\n", i18n.T("cmd.info.sdk", map[string]interface{}{
+					"min": latestVer.MinSDK, "target": latestVer.TargetSDK,
+				}))
 			}
 		}
 
 		// Available versions
-		fmt.Printf("\n=== Available Versions ===\n\n")
+		fmt.Printf("\n%s\n\n", i18n.T("cmd.info.availableVersions"))
 
 		// Sort versions by version code (descending)
 		type versionEntry struct {
@@ -89,7 +95,7 @@ You can specify either a package ID to get info from repositories, or a local AP
 
 		// Display versions in table
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-		fmt.Fprintln(w, "VERSION\tCODE\tSIZE\tSDK\tBUCKET\tFEATURES")
+		fmt.Fprintln(w, i18n.T("cmd.info.table.header"))
 		fmt.Fprintln(w, "-------\t----\t----\t---\t------\t--------")
 
 		for _, entry := range versions {
@@ -124,11 +130,11 @@ You can specify either a package ID to get info from repositories, or a local AP
 		w.Flush()
 
 		// Commands hint
-		fmt.Println("\nCommands:")
-		fmt.Printf("  Download: apkhub download %s\n", pkg.PackageID)
-		fmt.Printf("  Install:  apkhub install %s\n", pkg.PackageID)
+		fmt.Println("\n" + i18n.T("cmd.info.hints.title"))
+		fmt.Printf("%s\n", i18n.T("cmd.info.hints.download", map[string]interface{}{"id": pkg.PackageID}))
+		fmt.Printf("%s\n", i18n.T("cmd.info.hints.install", map[string]interface{}{"id": pkg.PackageID}))
 		if len(versions) > 1 {
-			fmt.Printf("  Specific: apkhub download %s --version <version>\n", pkg.PackageID)
+			fmt.Printf("%s\n", i18n.T("cmd.info.hints.specific", map[string]interface{}{"id": pkg.PackageID}))
 		}
 
 		return nil
@@ -166,50 +172,72 @@ func showLocalAPKInfo(apkPath string) error {
 	info, err := os.Stat(apkPath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return fmt.Errorf("APK file not found: %s", apkPath)
+			return fmt.Errorf(i18n.T("cmd.info.errAPKNotFound", map[string]interface{}{
+				"path": apkPath,
+			}))
 		}
-		return fmt.Errorf("cannot access APK file: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T("cmd.info.errAccessAPK"), err)
 	}
 
 	if info.IsDir() {
-		return fmt.Errorf("path is a directory, not a file: %s", apkPath)
+		return fmt.Errorf(i18n.T("cmd.info.errPathIsDir", map[string]interface{}{
+			"path": apkPath,
+		}))
 	}
 
-	fmt.Printf("=== Local APK File Information ===\n\n")
-	fmt.Printf("File Path: %s\n", apkPath)
-	fmt.Printf("File Size: %.2f MB\n", float64(info.Size())/(1024*1024))
-	fmt.Printf("Modified: %s\n", info.ModTime().Format("2006-01-02 15:04:05"))
+	fmt.Printf("%s\n\n", i18n.T("cmd.info.local.title"))
+	fmt.Printf("%s\n", i18n.T("cmd.info.local.path", map[string]interface{}{"path": apkPath}))
+	fmt.Printf("%s\n", i18n.T("cmd.info.local.sizeMB", map[string]interface{}{
+		"size": fmt.Sprintf("%.2f", float64(info.Size())/(1024*1024)),
+	}))
+	fmt.Printf("%s\n", i18n.T("cmd.info.local.modified", map[string]interface{}{
+		"time": info.ModTime().Format("2006-01-02 15:04:05"),
+	}))
 
 	// Try to parse APK
-	fmt.Println("\n=== APK Analysis ===")
+	fmt.Println("\n" + i18n.T("cmd.info.local.analysis"))
 
 	parser := apk.NewParser(".")
 	apkInfo, err := parser.ParseAPK(apkPath)
 	if err != nil {
-		fmt.Printf("❌ Failed to parse APK: %v\n", err)
-		fmt.Println("\nThis might indicate:")
-		fmt.Println("  • Corrupted APK file")
-		fmt.Println("  • Unsupported APK format")
-		fmt.Println("  • Missing parsing dependencies")
-		fmt.Println("\n💡 Try running 'apkhub doctor' to check dependencies")
+		fmt.Printf("%s\n", i18n.T("cmd.info.local.parseFail", map[string]interface{}{"error": err}))
+		fmt.Println()
+		fmt.Println(i18n.T("cmd.info.local.parseHintsTitle"))
+		fmt.Println(i18n.T("cmd.info.local.parseHintCorrupt"))
+		fmt.Println(i18n.T("cmd.info.local.parseHintUnsupported"))
+		fmt.Println(i18n.T("cmd.info.local.parseHintDeps"))
+		fmt.Println()
+		fmt.Println(i18n.T("cmd.info.local.parseDoctor"))
 		return nil
 	}
 
 	// Display APK information
-	fmt.Printf("Package ID: %s\n", apkInfo.PackageID)
+	fmt.Printf("%s\n", i18n.T("cmd.info.local.packageID", map[string]interface{}{
+		"id": apkInfo.PackageID,
+	}))
 	if appName := getDefaultName(apkInfo.AppName); appName != "" {
-		fmt.Printf("App Name: %s\n", appName)
+		fmt.Printf("%s\n", i18n.T("cmd.info.local.appName", map[string]interface{}{
+			"name": appName,
+		}))
 	}
-	fmt.Printf("Version: %s (Code: %d)\n", apkInfo.Version, apkInfo.VersionCode)
-	fmt.Printf("Min SDK: %d, Target SDK: %d\n", apkInfo.MinSDK, apkInfo.TargetSDK)
+	fmt.Printf("%s\n", i18n.T("cmd.info.local.version", map[string]interface{}{
+		"version": apkInfo.Version, "code": apkInfo.VersionCode,
+	}))
+	fmt.Printf("%s\n", i18n.T("cmd.info.local.sdk", map[string]interface{}{
+		"min": apkInfo.MinSDK, "target": apkInfo.TargetSDK,
+	}))
 
 	if len(apkInfo.ABIs) > 0 {
-		fmt.Printf("Architectures: %s\n", strings.Join(apkInfo.ABIs, ", "))
+		fmt.Printf("%s\n", i18n.T("cmd.info.local.abis", map[string]interface{}{
+			"abis": strings.Join(apkInfo.ABIs, ", "),
+		}))
 	}
 
 	// Permissions
 	if len(apkInfo.Permissions) > 0 {
-		fmt.Printf("\n=== Permissions (%d) ===\n\n", len(apkInfo.Permissions))
+		fmt.Printf("\n%s\n\n", i18n.T("cmd.info.local.permissionsTitle", map[string]interface{}{
+			"count": len(apkInfo.Permissions),
+		}))
 
 		// Group permissions by category
 		permGroups := groupPermissions(apkInfo.Permissions)
@@ -225,7 +253,9 @@ func showLocalAPKInfo(apkPath string) error {
 
 	// Features
 	if len(apkInfo.Features) > 0 {
-		fmt.Printf("=== Features (%d) ===\n\n", len(apkInfo.Features))
+		fmt.Printf("%s\n\n", i18n.T("cmd.info.local.featuresTitle", map[string]interface{}{
+			"count": len(apkInfo.Features),
+		}))
 		for _, feature := range apkInfo.Features {
 			fmt.Printf("  • %s\n", feature)
 		}
@@ -233,10 +263,14 @@ func showLocalAPKInfo(apkPath string) error {
 	}
 
 	// File analysis
-	fmt.Printf("=== File Analysis ===\n\n")
-	fmt.Printf("SHA256: %s\n", apkInfo.SHA256)
+	fmt.Printf("%s\n\n", i18n.T("cmd.info.local.fileAnalysis"))
+	fmt.Printf("%s\n", i18n.T("cmd.info.local.sha256", map[string]interface{}{
+		"sha": apkInfo.SHA256,
+	}))
 	if apkInfo.SignatureInfo != nil && apkInfo.SignatureInfo.SHA256 != "" {
-		fmt.Printf("Signature SHA256: %s\n", apkInfo.SignatureInfo.SHA256)
+		fmt.Printf("%s\n", i18n.T("cmd.info.local.signatureSHA", map[string]interface{}{
+			"sha": apkInfo.SignatureInfo.SHA256,
+		}))
 	}
 
 	// Installation commands
