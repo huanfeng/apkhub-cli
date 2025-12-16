@@ -66,10 +66,10 @@ other = "Download an application"
 [cmd.download.long]
 other = "Download an application APK from configured buckets."
 
-[cmd.add.short]
+[cmd.repoAdd.short]
 other = "Add an APK file to the repository"
 
-[cmd.add.long]
+[cmd.repoAdd.long]
 other = "Analyze an APK, rename it following repository conventions, and copy it into the repository."
 
 [cmd.install.short]
@@ -438,124 +438,124 @@ other = "Force treating argument as local path"
 [cmd.install.flag.checkDeps]
 other = "Check dependencies before installation"
 
-[cmd.add.errLoadConfig]
+[cmd.repoAdd.errLoadConfig]
 other = "Failed to load configuration"
 
-[cmd.add.errAPKPath]
+[cmd.repoAdd.errAPKPath]
 other = "Invalid APK path"
 
-[cmd.add.errAPKNotFound]
+[cmd.repoAdd.errAPKNotFound]
 other = "APK file not found"
 
-[cmd.add.errCreateRepo]
+[cmd.repoAdd.errCreateRepo]
 other = "Failed to create repository"
 
-[cmd.add.errInitRepo]
+[cmd.repoAdd.errInitRepo]
 other = "Failed to initialize repository"
 
-[cmd.add.parsing]
+[cmd.repoAdd.parsing]
 other = "Parsing APK: {{.path}}"
 
-[cmd.add.errParse]
+[cmd.repoAdd.errParse]
 other = "Failed to parse APK"
 
-[cmd.add.info.title]
+[cmd.repoAdd.info.title]
 other = "=== APK Information ==="
 
-[cmd.add.info.package]
+[cmd.repoAdd.info.package]
 other = "Package ID: {{.id}}"
 
-[cmd.add.info.appName]
+[cmd.repoAdd.info.appName]
 other = "App Name: {{.name}}"
 
-[cmd.add.info.version]
+[cmd.repoAdd.info.version]
 other = "Version: {{.version}} (Code: {{.code}})"
 
-[cmd.add.info.size]
+[cmd.repoAdd.info.size]
 other = "Size: {{printf \"%.2f\" .size}} MB"
 
-[cmd.add.info.sdk]
+[cmd.repoAdd.info.sdk]
 other = "Min SDK: {{.min}}, Target SDK: {{.target}}"
 
-[cmd.add.info.sha256]
+[cmd.repoAdd.info.sha256]
 other = "SHA256: {{.sha}}"
 
-[cmd.add.info.signature]
+[cmd.repoAdd.info.signature]
 other = "Signature SHA256: {{.sha}}..."
 
-[cmd.add.info.signatureMissing]
+[cmd.repoAdd.info.signatureMissing]
 other = "Signature: (extraction failed)"
 
-[cmd.add.info.abis]
+[cmd.repoAdd.info.abis]
 other = "ABIs: {{.abis}}"
 
-[cmd.add.info.original]
+[cmd.repoAdd.info.original]
 other = "Original filename: {{.name}}"
 
-[cmd.add.info.newName]
+[cmd.repoAdd.info.newName]
 other = "New filename: {{.name}}"
 
-[cmd.add.info.target]
+[cmd.repoAdd.info.target]
 other = "Target location: {{.path}}"
 
-[cmd.add.confirm]
+[cmd.repoAdd.confirm]
 other = "Add this APK to repository? [y/N]: "
 
-[cmd.add.cancel]
+[cmd.repoAdd.cancel]
 other = "Operation cancelled."
 
-[cmd.add.errDuplicate]
+[cmd.repoAdd.errDuplicate]
 other = "APK with same name already exists in repository: {{.name}}"
 
-[cmd.add.copying]
+[cmd.repoAdd.copying]
 other = "Copying APK to repository..."
 
-[cmd.add.errCopy]
+[cmd.repoAdd.errCopy]
 other = "Failed to copy APK"
 
-[cmd.add.errMove]
+[cmd.repoAdd.errMove]
 other = "Failed to move APK"
 
-[cmd.add.saving]
+[cmd.repoAdd.saving]
 other = "Saving APK information..."
 
-[cmd.add.errSaveInfo]
+[cmd.repoAdd.errSaveInfo]
 other = "Failed to save APK info"
 
-[cmd.add.updating]
+[cmd.repoAdd.updating]
 other = "Updating repository manifest..."
 
-[cmd.add.errUpdateManifest]
+[cmd.repoAdd.errUpdateManifest]
 other = "Failed to update manifest"
 
-[cmd.add.success]
+[cmd.repoAdd.success]
 other = "✓ APK successfully added to repository!"
 
-[cmd.add.successLocation]
+[cmd.repoAdd.successLocation]
 other = "  Location: {{.path}}"
 
-[cmd.add.successInfo]
+[cmd.repoAdd.successInfo]
 other = "  Info: {{.path}}"
 
-[cmd.add.flag.yes]
+[cmd.repoAdd.flag.yes]
 other = "Skip confirmation prompt"
 
-[cmd.add.flag.copy]
+[cmd.repoAdd.flag.copy]
 other = "Copy file instead of moving"
 
-[cmd.add.errCreateDir]
+[cmd.repoAdd.errCreateDir]
 other = "Failed to create directory"
 
-[cmd.add.errOpenSrc]
+[cmd.repoAdd.errOpenSrc]
 other = "Failed to open source file"
 
-[cmd.add.errCreateDst]
+[cmd.repoAdd.errCreateDst]
 other = "Failed to create destination file"
 
-[cmd.add.errCopyContent]
+[cmd.repoAdd.errCopyContent]
 other = "Failed to copy file content"
 
-[cmd.add.errSync]
+[cmd.repoAdd.errSync]
 other = "Failed to sync file"
 
 [cmd.doctor.short]
@@ -716,13 +716,6 @@ other = "Print version information"
 
 [cmd.version.long]
 other = "Display detailed version information about ApkHub CLI."
-
-# Additional command descriptions (metadata only)
-[cmd.add.short]
-other = "Add a new bucket or package source"
-
-[cmd.add.long]
-other = "Add a new bucket or package source to ApkHub."
 
 [cmd.bucket.short]
 other = "Manage buckets"

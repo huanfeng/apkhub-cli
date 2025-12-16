@@ -66,10 +66,10 @@ other = "下载应用"
 [cmd.download.long]
 other = "从已配置的仓库下载应用 APK。"
 
-[cmd.add.short]
+[cmd.repoAdd.short]
 other = "将 APK 文件加入仓库"
 
-[cmd.add.long]
+[cmd.repoAdd.long]
 other = "分析 APK、按仓库命名规则重命名，并复制到仓库中。"
 
 [cmd.install.short]
@@ -438,124 +438,124 @@ other = "强制将参数视为本地路径"
 [cmd.install.flag.checkDeps]
 other = "安装前检查依赖"
 
-[cmd.add.errLoadConfig]
+[cmd.repoAdd.errLoadConfig]
 other = "加载配置失败"
 
-[cmd.add.errAPKPath]
+[cmd.repoAdd.errAPKPath]
 other = "无效的 APK 路径"
 
-[cmd.add.errAPKNotFound]
+[cmd.repoAdd.errAPKNotFound]
 other = "未找到 APK 文件"
 
-[cmd.add.errCreateRepo]
+[cmd.repoAdd.errCreateRepo]
 other = "创建仓库失败"
 
-[cmd.add.errInitRepo]
+[cmd.repoAdd.errInitRepo]
 other = "初始化仓库失败"
 
-[cmd.add.parsing]
+[cmd.repoAdd.parsing]
 other = "正在解析 APK：{{.path}}"
 
-[cmd.add.errParse]
+[cmd.repoAdd.errParse]
 other = "解析 APK 失败"
 
-[cmd.add.info.title]
+[cmd.repoAdd.info.title]
 other = "=== APK 信息 ==="
 
-[cmd.add.info.package]
+[cmd.repoAdd.info.package]
 other = "包名：{{.id}}"
 
-[cmd.add.info.appName]
+[cmd.repoAdd.info.appName]
 other = "应用名称：{{.name}}"
 
-[cmd.add.info.version]
+[cmd.repoAdd.info.version]
 other = "版本：{{.version}}（版本号：{{.code}}）"
 
-[cmd.add.info.size]
+[cmd.repoAdd.info.size]
 other = "大小：{{printf \"%.2f\" .size}} MB"
 
-[cmd.add.info.sdk]
+[cmd.repoAdd.info.sdk]
 other = "最低 SDK：{{.min}}，目标 SDK：{{.target}}"
 
-[cmd.add.info.sha256]
+[cmd.repoAdd.info.sha256]
 other = "SHA256：{{.sha}}"
 
-[cmd.add.info.signature]
+[cmd.repoAdd.info.signature]
 other = "签名 SHA256：{{.sha}}..."
 
-[cmd.add.info.signatureMissing]
+[cmd.repoAdd.info.signatureMissing]
 other = "签名： (提取失败)"
 
-[cmd.add.info.abis]
+[cmd.repoAdd.info.abis]
 other = "ABI：{{.abis}}"
 
-[cmd.add.info.original]
+[cmd.repoAdd.info.original]
 other = "原始文件名：{{.name}}"
 
-[cmd.add.info.newName]
+[cmd.repoAdd.info.newName]
 other = "新文件名：{{.name}}"
 
-[cmd.add.info.target]
+[cmd.repoAdd.info.target]
 other = "目标位置：{{.path}}"
 
-[cmd.add.confirm]
+[cmd.repoAdd.confirm]
 other = "将此 APK 加入仓库？[y/N]: "
 
-[cmd.add.cancel]
+[cmd.repoAdd.cancel]
 other = "操作已取消。"
 
-[cmd.add.errDuplicate]
+[cmd.repoAdd.errDuplicate]
 other = "仓库中已有同名 APK：{{.name}}"
 
-[cmd.add.copying]
+[cmd.repoAdd.copying]
 other = "正在复制 APK 到仓库..."
 
-[cmd.add.errCopy]
+[cmd.repoAdd.errCopy]
 other = "复制 APK 失败"
 
-[cmd.add.errMove]
+[cmd.repoAdd.errMove]
 other = "移动 APK 失败"
 
-[cmd.add.saving]
+[cmd.repoAdd.saving]
 other = "正在保存 APK 信息..."
 
-[cmd.add.errSaveInfo]
+[cmd.repoAdd.errSaveInfo]
 other = "保存 APK 信息失败"
 
-[cmd.add.updating]
+[cmd.repoAdd.updating]
 other = "正在更新仓库清单..."
 
-[cmd.add.errUpdateManifest]
+[cmd.repoAdd.errUpdateManifest]
 other = "更新清单失败"
 
-[cmd.add.success]
+[cmd.repoAdd.success]
 other = "✓ APK 已成功加入仓库！"
 
-[cmd.add.successLocation]
+[cmd.repoAdd.successLocation]
 other = "  文件位置：{{.path}}"
 
-[cmd.add.successInfo]
+[cmd.repoAdd.successInfo]
 other = "  信息文件：{{.path}}"
 
-[cmd.add.flag.yes]
+[cmd.repoAdd.flag.yes]
 other = "跳过确认提示"
 
-[cmd.add.flag.copy]
+[cmd.repoAdd.flag.copy]
 other = "复制文件而不是移动"
 
-[cmd.add.errCreateDir]
+[cmd.repoAdd.errCreateDir]
 other = "创建目录失败"
 
-[cmd.add.errOpenSrc]
+[cmd.repoAdd.errOpenSrc]
 other = "打开源文件失败"
 
-[cmd.add.errCreateDst]
+[cmd.repoAdd.errCreateDst]
 other = "创建目标文件失败"
 
-[cmd.add.errCopyContent]
+[cmd.repoAdd.errCopyContent]
 other = "复制文件内容失败"
 
-[cmd.add.errSync]
+[cmd.repoAdd.errSync]
 other = "同步文件失败"
 
 
@@ -717,13 +717,6 @@ other = "显示版本信息"
 
 [cmd.version.long]
 other = "展示 ApkHub CLI 的详细版本信息。"
-
-# 其他命令描述（仅元信息）
-[cmd.add.short]
-other = "添加新的仓库源"
-
-[cmd.add.long]
-other = "向 ApkHub 添加新的仓库或包源。"
 
 [cmd.bucket.short]
 other = "管理仓库"

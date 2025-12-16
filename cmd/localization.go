@@ -60,8 +60,8 @@ func applyCommandLocalization() {
 
 	// Additional command metadata (description only).
 	if addCmd != nil {
-		addCmd.Short = i18n.T("cmd.add.short")
-		addCmd.Long = i18n.T("cmd.add.long")
+		addCmd.Short = i18n.T("cmd.repoAdd.short")
+		addCmd.Long = i18n.T("cmd.repoAdd.long")
 	}
 	bucketCmd.Short = i18n.T("cmd.bucket.short")
 	bucketCmd.Long = i18n.T("cmd.bucket.long")

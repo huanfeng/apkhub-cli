@@ -94,6 +94,11 @@ func selectLanguage(langOverride string) language.Tag {
 		}
 	}
 
+	// On Windows, environment variables for locale are often missing.
+	if len(candidates) == 0 {
+		candidates = append(candidates, getPlatformLocales()...)
+	}
+
 	if len(candidates) == 0 {
 		return language.English
 	}
