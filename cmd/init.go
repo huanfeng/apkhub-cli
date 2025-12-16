@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/huanfeng/apkhub-cli/internal/config"
+	"github.com/huanfeng/apkhub-cli/internal/i18n"
 	"github.com/huanfeng/apkhub-cli/pkg/models"
 	"github.com/spf13/cobra"
 )
@@ -33,14 +34,17 @@ Supports interactive configuration, templates, and updating existing configurati
 		}
 
 		if configExists && !initForce && !initUpdate {
-			fmt.Printf("⚠️  Configuration file %s already exists\n", configPath)
-			fmt.Println("\nOptions:")
-			fmt.Println("  --force      Overwrite existing configuration")
-			fmt.Println("  --update     Update existing configuration")
-			fmt.Println("  --interactive Interactive configuration wizard")
+			fmt.Println(i18n.T("cmd.init.configExists", map[string]interface{}{
+				"path": configPath,
+			}))
+			fmt.Println()
+			fmt.Println(i18n.T("cmd.init.optionsTitle"))
+			fmt.Println(i18n.T("cmd.init.optionForce"))
+			fmt.Println(i18n.T("cmd.init.optionUpdate"))
+			fmt.Println(i18n.T("cmd.init.optionInteractive"))
 
 			if !initInteractive {
-				return fmt.Errorf("use --force to overwrite or --update to modify existing configuration")
+				return fmt.Errorf(i18n.T("cmd.init.configExistsAdvice"))
 			}
 		}
 
@@ -75,28 +79,37 @@ func createConfig(configPath string, exists bool) error {
 	}
 
 	if exists && initForce {
-		fmt.Printf("🔄 Overwriting existing configuration: %s\n", configPath)
+		fmt.Printf("%s\n", i18n.T("cmd.init.overwriteConfig", map[string]interface{}{
+			"path": configPath,
+		}))
 	} else {
-		fmt.Printf("📝 Creating new configuration: %s\n", configPath)
+		fmt.Printf("%s\n", i18n.T("cmd.init.createConfig", map[string]interface{}{
+			"path": configPath,
+		}))
 	}
 
 	if err = os.WriteFile(configPath, []byte(templateContent), 0644); err != nil {
-		return fmt.Errorf("failed to create configuration file: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T("cmd.init.errCreateConfig"), err)
 	}
 
 	// Create repository directory structure
 	if err := createRepositoryStructure(); err != nil {
-		fmt.Printf("⚠️  Warning: failed to create repository structure: %v\n", err)
+		fmt.Printf("%s\n", i18n.T("cmd.init.errCreateRepoStructure", map[string]interface{}{
+			"error": err,
+		}))
 	}
 
-	fmt.Printf("✅ Configuration file created: %s\n", configPath)
-	fmt.Printf("📁 Repository structure initialized\n")
+	fmt.Printf("%s\n", i18n.T("cmd.init.createdConfig", map[string]interface{}{
+		"path": configPath,
+	}))
+	fmt.Printf("%s\n", i18n.T("cmd.init.repoInitialized"))
 
 	if initTemplate != "minimal" {
-		fmt.Println("\n💡 Next steps:")
-		fmt.Println("   1. Edit the configuration file to customize settings")
-		fmt.Println("   2. Run 'apkhub repo scan <directory>' to add APK files")
-		fmt.Println("   3. Run 'apkhub repo stats' to view repository status")
+		fmt.Println()
+		fmt.Println(i18n.T("cmd.init.nextSteps"))
+		fmt.Println(i18n.T("cmd.init.nextStepsEdit"))
+		fmt.Println(i18n.T("cmd.init.nextStepsScan"))
+		fmt.Println(i18n.T("cmd.init.nextStepsStats"))
 	}
 
 	return nil
@@ -104,40 +117,46 @@ func createConfig(configPath string, exists bool) error {
 
 // updateExistingConfig updates an existing configuration
 func updateExistingConfig(configPath string) error {
-	fmt.Printf("🔄 Updating existing configuration: %s\n", configPath)
+	fmt.Printf("%s\n", i18n.T("cmd.init.updateConfig", map[string]interface{}{
+		"path": configPath,
+	}))
 
 	// Load existing config
 	existingConfig, err := config.Load(configPath)
 	if err != nil {
-		return fmt.Errorf("failed to load existing config: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T("cmd.init.errLoadExisting"), err)
 	}
 
 	// Validate and fix configuration
 	if err := validateAndFixConfig(existingConfig); err != nil {
-		return fmt.Errorf("failed to validate config: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T("cmd.init.errValidateConfig"), err)
 	}
 
 	// Backup existing config
 	backupPath := configPath + ".backup"
 	if err := copyConfigFile(configPath, backupPath); err != nil {
-		fmt.Printf("⚠️  Warning: failed to create backup: %v\n", err)
+		fmt.Printf("%s\n", i18n.T("cmd.init.errCreateBackup", map[string]interface{}{
+			"error": err,
+		}))
 	} else {
-		fmt.Printf("💾 Backup created: %s\n", backupPath)
+		fmt.Printf("%s\n", i18n.T("cmd.init.backupCreated", map[string]interface{}{
+			"path": backupPath,
+		}))
 	}
 
 	// Save updated config
 	if err := config.SaveConfig(existingConfig, configPath); err != nil {
-		return fmt.Errorf("failed to save updated config: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T("cmd.init.errSaveUpdated"), err)
 	}
 
-	fmt.Printf("✅ Configuration updated successfully\n")
+	fmt.Printf("%s\n", i18n.T("cmd.init.updateSuccess"))
 	return nil
 }
 
 // interactiveInit runs interactive configuration wizard
 func interactiveInit(configPath string, exists bool) error {
-	fmt.Println("🧙 ApkHub Repository Configuration Wizard")
-	fmt.Println("=========================================")
+	fmt.Println(i18n.T("cmd.init.wizardTitle"))
+	fmt.Println(strings.Repeat("=", len(i18n.T("cmd.init.wizardTitle"))))
 	fmt.Println()
 
 	reader := bufio.NewReader(os.Stdin)
@@ -153,19 +172,19 @@ func interactiveInit(configPath string, exists bool) error {
 	}
 
 	// Repository settings
-	fmt.Println("📦 Repository Settings")
-	fmt.Println("---------------------")
+	fmt.Println(i18n.T("cmd.init.repoSettings"))
+	fmt.Println(strings.Repeat("-", len(i18n.T("cmd.init.repoSettings"))))
 
-	repoName := promptWithDefault(reader, "Repository name", getConfigValue(existingConfig, "name", "My APK Repository"))
-	repoDesc := promptWithDefault(reader, "Repository description", getConfigValue(existingConfig, "description", "Private APK repository"))
-	baseURL := promptWithDefault(reader, "Base URL (optional)", getConfigValue(existingConfig, "base_url", ""))
+	repoName := promptWithDefault(reader, i18n.T("cmd.init.prompt.repoName"), getConfigValue(existingConfig, "name", "My APK Repository"))
+	repoDesc := promptWithDefault(reader, i18n.T("cmd.init.prompt.repoDescription"), getConfigValue(existingConfig, "description", "Private APK repository"))
+	baseURL := promptWithDefault(reader, i18n.T("cmd.init.prompt.baseURL"), getConfigValue(existingConfig, "base_url", ""))
 
 	fmt.Println()
-	fmt.Println("🔧 Scanning Settings")
-	fmt.Println("-------------------")
+	fmt.Println(i18n.T("cmd.init.scanSettings"))
+	fmt.Println(strings.Repeat("-", len(i18n.T("cmd.init.scanSettings"))))
 
-	recursive := promptBool(reader, "Scan directories recursively", getConfigBool(existingConfig, "recursive", true))
-	parseInfo := promptBool(reader, "Parse detailed APK information", getConfigBool(existingConfig, "parse_apk_info", true))
+	recursive := promptBool(reader, i18n.T("cmd.init.prompt.recursive"), getConfigBool(existingConfig, "recursive", true))
+	parseInfo := promptBool(reader, i18n.T("cmd.init.prompt.parseInfo"), getConfigBool(existingConfig, "parse_apk_info", true))
 
 	// Create configuration
 	newConfig := &models.Config{
@@ -187,17 +206,21 @@ func interactiveInit(configPath string, exists bool) error {
 
 	// Save configuration
 	if err := config.SaveConfig(newConfig, configPath); err != nil {
-		return fmt.Errorf("failed to save configuration: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T("cmd.init.errSaveConfig"), err)
 	}
 
 	// Create repository structure
 	if err := createRepositoryStructure(); err != nil {
-		fmt.Printf("⚠️  Warning: failed to create repository structure: %v\n", err)
+		fmt.Printf("%s\n", i18n.T("cmd.init.errCreateRepoStructure", map[string]interface{}{
+			"error": err,
+		}))
 	}
 
 	fmt.Println()
-	fmt.Printf("✅ Interactive configuration completed: %s\n", configPath)
-	fmt.Printf("📁 Repository structure initialized\n")
+	fmt.Printf("%s\n", i18n.T("cmd.init.wizardCompleted", map[string]interface{}{
+		"path": configPath,
+	}))
+	fmt.Printf("%s\n", i18n.T("cmd.init.repoInitialized"))
 
 	return nil
 }
@@ -277,7 +300,9 @@ func createRepositoryStructure() error {
 
 	for _, dir := range dirs {
 		if err := os.MkdirAll(dir, 0755); err != nil {
-			return fmt.Errorf("failed to create directory %s: %w", dir, err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.init.errCreateDirectory", map[string]interface{}{
+				"dir": dir,
+			}), err)
 		}
 	}
 
@@ -468,8 +493,8 @@ scanning:
 func init() {
 	repoCmd.AddCommand(initCmd)
 
-	initCmd.Flags().BoolVarP(&initForce, "force", "f", false, "Overwrite existing configuration")
-	initCmd.Flags().BoolVarP(&initInteractive, "interactive", "i", false, "Interactive configuration wizard")
-	initCmd.Flags().BoolVarP(&initUpdate, "update", "u", false, "Update existing configuration")
-	initCmd.Flags().StringVarP(&initTemplate, "template", "t", "default", "Configuration template (default, minimal, advanced, development, local)")
+	initCmd.Flags().BoolVarP(&initForce, "force", "f", false, i18n.T("cmd.init.flag.force"))
+	initCmd.Flags().BoolVarP(&initInteractive, "interactive", "i", false, i18n.T("cmd.init.flag.interactive"))
+	initCmd.Flags().BoolVarP(&initUpdate, "update", "u", false, i18n.T("cmd.init.flag.update"))
+	initCmd.Flags().StringVarP(&initTemplate, "template", "t", "default", i18n.T("cmd.init.flag.template"))
 }

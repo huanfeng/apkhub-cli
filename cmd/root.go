@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/huanfeng/apkhub-cli/internal/errors"
+	"github.com/huanfeng/apkhub-cli/internal/i18n"
 	"github.com/huanfeng/apkhub-cli/internal/version"
 	"github.com/huanfeng/apkhub-cli/pkg/utils"
 	"github.com/spf13/cobra"
@@ -18,13 +19,13 @@ var (
 	debug   bool
 	logFile string
 	noColor bool
+	lang    string
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "apkhub",
-	Short: "ApkHub CLI - A tool for managing APK repositories",
-	Long: `ApkHub CLI is a command-line tool for managing distributed APK repositories.
-It supports parsing APK files, generating repository indexes, and maintaining APK collections.`,
+	Use:     "apkhub",
+	Short:   i18n.T("cmd.root.short"),
+	Long:    i18n.T("cmd.root.long"),
 	Version: version.Short(),
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		return initializeGlobalSystems()
@@ -37,7 +38,9 @@ func Execute() {
 		if apkErr := errors.HandleWithRecovery(err); apkErr != nil {
 			fmt.Fprintf(os.Stderr, "%s\n", apkErr.FormatDetailed())
 		} else {
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			fmt.Fprintf(os.Stderr, "%s\n", i18n.T("errors.generic", map[string]interface{}{
+				"error": err,
+			}))
 		}
 		os.Exit(1)
 	}
@@ -91,13 +94,30 @@ func initializeGlobalSystems() error {
 }
 
 func init() {
+	cobra.OnInitialize(initLocalization)
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 
 	// Global flags
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (optional, for self-hosted repos)")
-	rootCmd.PersistentFlags().StringVarP(&workDir, "work-dir", "w", ".", "working directory for relative paths")
-	rootCmd.PersistentFlags().BoolVar(&verbose, "verbose", false, "enable verbose output")
-	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "enable debug output")
-	rootCmd.PersistentFlags().StringVar(&logFile, "log-file", "", "write logs to file")
-	rootCmd.PersistentFlags().BoolVar(&noColor, "no-color", false, "disable colored output")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", i18n.T("flags.config"))
+	rootCmd.PersistentFlags().StringVarP(&workDir, "work-dir", "w", ".", i18n.T("flags.workDir"))
+	rootCmd.PersistentFlags().BoolVar(&verbose, "verbose", false, i18n.T("flags.verbose"))
+	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, i18n.T("flags.debug"))
+	rootCmd.PersistentFlags().StringVar(&logFile, "log-file", "", i18n.T("flags.logFile"))
+	rootCmd.PersistentFlags().BoolVar(&noColor, "no-color", false, i18n.T("flags.noColor"))
+	rootCmd.PersistentFlags().StringVar(&lang, "lang", "", i18n.T("flags.lang"))
+
+	// Ensure help also goes through localization.
+	defaultHelp := rootCmd.HelpFunc()
+	rootCmd.SetHelpFunc(func(cmd *cobra.Command, args []string) {
+		initLocalization()
+		defaultHelp(cmd, args)
+	})
+}
+
+func initLocalization() {
+	if err := i18n.Init(lang); err != nil {
+		fmt.Fprintf(os.Stderr, "failed to initialize localization: %v\n", err)
+		return
+	}
+	applyCommandLocalization()
 }

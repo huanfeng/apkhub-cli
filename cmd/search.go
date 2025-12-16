@@ -7,6 +7,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
+	"github.com/huanfeng/apkhub-cli/internal/i18n"
 	"github.com/huanfeng/apkhub-cli/pkg/client"
 	"github.com/spf13/cobra"
 )
@@ -34,12 +35,12 @@ var searchCmd = &cobra.Command{
 		// Load client config
 		config, err := client.Load()
 		if err != nil {
-			return fmt.Errorf("failed to load config: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.search.errLoadConfig"), err)
 		}
 
 		// Ensure directories exist
 		if err := config.EnsureDirectories(); err != nil {
-			return fmt.Errorf("failed to create directories: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.search.errCreateDirs"), err)
 		}
 
 		// Search options
@@ -60,10 +61,10 @@ var searchCmd = &cobra.Command{
 
 		// Check if we're offline and handle accordingly
 		if offlineManager.IsOffline() {
-			fmt.Println("🔌 Network unavailable - searching cached data only")
+			fmt.Println(i18n.T("cmd.search.offline"))
 			results, err := offlineManager.GetOfflineSearch(query, options)
 			if err != nil {
-				return fmt.Errorf("offline search failed: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.search.errOfflineSearch"), err)
 			}
 
 			// Display results based on format
@@ -81,12 +82,12 @@ var searchCmd = &cobra.Command{
 		searchEngine := client.NewSearchEngine(bucketMgr)
 
 		if !strings.Contains(searchFormat, "json") {
-			fmt.Printf("🔍 Searching for '%s'", query)
+			fmt.Printf("%s", i18n.T("cmd.search.searchingFor", map[string]interface{}{"query": query}))
 			if searchBucket != "" {
-				fmt.Printf(" in bucket '%s'", searchBucket)
+				fmt.Printf(" %s", i18n.T("cmd.search.searchBucket", map[string]interface{}{"bucket": searchBucket}))
 			}
 			if searchCategory != "" {
-				fmt.Printf(" (category: %s)", searchCategory)
+				fmt.Printf(" %s", i18n.T("cmd.search.searchCategory", map[string]interface{}{"category": searchCategory}))
 			}
 			fmt.Println("...")
 		}
@@ -94,7 +95,7 @@ var searchCmd = &cobra.Command{
 		// Perform search
 		results, err := searchEngine.Search(query, options)
 		if err != nil {
-			return fmt.Errorf("search failed: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.search.errSearch"), err)
 		}
 
 		// Display results based on format
@@ -112,25 +113,38 @@ var searchCmd = &cobra.Command{
 // displayResultsDefault displays search results in default format
 func displayResultsDefault(results []client.SearchResult, verbose bool) error {
 	if len(results) == 0 {
-		fmt.Println("❌ No results found.")
-		fmt.Println("\n💡 Try:")
-		fmt.Println("   • Using a different search term")
-		fmt.Println("   • Updating buckets with 'apkhub bucket update'")
-		fmt.Println("   • Adding more buckets with 'apkhub bucket add'")
-		fmt.Println("   • Using --exact for exact matches")
+		fmt.Println(i18n.T("cmd.search.noResults"))
+		fmt.Println()
+		fmt.Println(i18n.T("cmd.search.suggestionTitle"))
+		fmt.Println(i18n.T("cmd.search.suggestionTerm"))
+		fmt.Println(i18n.T("cmd.search.suggestionUpdate"))
+		fmt.Println(i18n.T("cmd.search.suggestionAdd"))
+		fmt.Println(i18n.T("cmd.search.suggestionExact"))
 		return nil
 	}
 
-	fmt.Printf("📱 Found %d result(s):\n\n", len(results))
+	fmt.Printf("%s\n\n", i18n.T("cmd.search.foundResults", map[string]interface{}{
+		"count": len(results),
+	}))
 
 	for i, result := range results {
-		fmt.Printf("%d. %s (%s)\n", i+1, result.AppName, result.PackageID)
-		fmt.Printf("   Version: %s", result.Version)
+		fmt.Printf("%s\n", i18n.T("cmd.search.resultHeader", map[string]interface{}{
+			"index": i + 1,
+			"name":  result.AppName,
+			"id":    result.PackageID,
+		}))
+		fmt.Printf("%s", i18n.T("cmd.search.resultVersion", map[string]interface{}{
+			"version": result.Version,
+		}))
 		if result.BucketName != "" {
-			fmt.Printf(" | Bucket: %s", result.BucketName)
+			fmt.Printf(" %s", i18n.T("cmd.search.resultBucket", map[string]interface{}{
+				"bucket": result.BucketName,
+			}))
 		}
 		if verbose && result.Score > 0 {
-			fmt.Printf(" | Score: %.1f", result.Score)
+			fmt.Printf(" %s", i18n.T("cmd.search.resultScore", map[string]interface{}{
+				"score": result.Score,
+			}))
 		}
 		fmt.Println()
 
@@ -139,23 +153,29 @@ func displayResultsDefault(results []client.SearchResult, verbose bool) error {
 			if len(desc) > 80 && !verbose {
 				desc = desc[:77] + "..."
 			}
-			fmt.Printf("   %s\n", desc)
+			fmt.Printf("%s\n", i18n.T("cmd.search.resultDescription", map[string]interface{}{
+				"description": desc,
+			}))
 		}
 
 		if verbose && result.Category != "" {
-			fmt.Printf("   Category: %s\n", result.Category)
+			fmt.Printf("%s\n", i18n.T("cmd.search.resultCategory", map[string]interface{}{
+				"category": result.Category,
+			}))
 		}
 
 		fmt.Println()
 	}
 
 	if len(results) == searchLimit && searchLimit > 0 {
-		fmt.Printf("📄 Showing top %d results. Use --limit to see more\n\n", searchLimit)
+		fmt.Printf("%s\n\n", i18n.T("cmd.search.limitNotice", map[string]interface{}{
+			"limit": searchLimit,
+		}))
 	}
 
-	fmt.Println("💡 Next steps:")
-	fmt.Println("   • Use 'apkhub info <package-id>' for detailed information")
-	fmt.Println("   • Use 'apkhub install <package-id>' to install an app")
+	fmt.Println(i18n.T("cmd.search.nextStepsTitle"))
+	fmt.Println(i18n.T("cmd.search.nextStepsInfo"))
+	fmt.Println(i18n.T("cmd.search.nextStepsInstall"))
 
 	return nil
 }
@@ -163,14 +183,22 @@ func displayResultsDefault(results []client.SearchResult, verbose bool) error {
 // displayResultsTable displays search results in table format
 func displayResultsTable(results []client.SearchResult, verbose bool) error {
 	if len(results) == 0 {
-		fmt.Println("No results found.")
+		fmt.Println(i18n.T("cmd.search.noResults"))
 		return nil
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 
 	if verbose {
-		fmt.Fprintln(w, "PACKAGE ID\tNAME\tVERSION\tBUCKET\tCATEGORY\tSCORE\tDESCRIPTION")
+		fmt.Fprintln(w, fmt.Sprintf("%s\t%s\t%s\t%s\t%s\t%s\t%s",
+			i18n.T("cmd.search.columns.packageID"),
+			i18n.T("cmd.search.columns.name"),
+			i18n.T("cmd.search.columns.version"),
+			i18n.T("cmd.search.columns.bucket"),
+			i18n.T("cmd.search.columns.category"),
+			i18n.T("cmd.search.columns.score"),
+			i18n.T("cmd.search.columns.description"),
+		))
 		fmt.Fprintln(w, "----------\t----\t-------\t------\t--------\t-----\t-----------")
 
 		for _, result := range results {
@@ -190,7 +218,13 @@ func displayResultsTable(results []client.SearchResult, verbose bool) error {
 			)
 		}
 	} else {
-		fmt.Fprintln(w, "PACKAGE ID\tNAME\tVERSION\tBUCKET\tDESCRIPTION")
+		fmt.Fprintln(w, fmt.Sprintf("%s\t%s\t%s\t%s\t%s",
+			i18n.T("cmd.search.columns.packageID"),
+			i18n.T("cmd.search.columns.name"),
+			i18n.T("cmd.search.columns.version"),
+			i18n.T("cmd.search.columns.bucket"),
+			i18n.T("cmd.search.columns.description"),
+		))
 		fmt.Fprintln(w, "----------\t----\t-------\t------\t-----------")
 
 		for _, result := range results {
@@ -210,7 +244,9 @@ func displayResultsTable(results []client.SearchResult, verbose bool) error {
 	}
 
 	w.Flush()
-	fmt.Printf("\n%d result(s) found.\n", len(results))
+	fmt.Printf("\n%s\n", i18n.T("cmd.search.resultsCount", map[string]interface{}{
+		"count": len(results),
+	}))
 
 	return nil
 }
@@ -235,13 +271,13 @@ func init() {
 	rootCmd.AddCommand(searchCmd)
 
 	// Add flags
-	searchCmd.Flags().StringVarP(&searchBucket, "bucket", "b", "", "Search in specific bucket only")
-	searchCmd.Flags().IntVar(&searchMinSDK, "min-sdk", 0, "Minimum SDK version")
-	searchCmd.Flags().StringVarP(&searchCategory, "category", "c", "", "Filter by category")
-	searchCmd.Flags().IntVarP(&searchLimit, "limit", "l", 20, "Maximum number of results (0 = no limit)")
-	searchCmd.Flags().StringVar(&searchSort, "sort", "relevance", "Sort results by: relevance, name, version, size")
-	searchCmd.Flags().StringVar(&searchFormat, "format", "default", "Output format: default, table, json")
-	searchCmd.Flags().BoolVarP(&searchVerbose, "verbose", "v", false, "Show detailed information")
-	searchCmd.Flags().BoolVar(&searchExact, "exact", false, "Exact match search")
-	searchCmd.Flags().BoolVar(&searchInstalled, "installed", false, "Show installation status")
+	searchCmd.Flags().StringVarP(&searchBucket, "bucket", "b", "", i18n.T("cmd.search.flag.bucket"))
+	searchCmd.Flags().IntVar(&searchMinSDK, "min-sdk", 0, i18n.T("cmd.search.flag.minSDK"))
+	searchCmd.Flags().StringVarP(&searchCategory, "category", "c", "", i18n.T("cmd.search.flag.category"))
+	searchCmd.Flags().IntVarP(&searchLimit, "limit", "l", 20, i18n.T("cmd.search.flag.limit"))
+	searchCmd.Flags().StringVar(&searchSort, "sort", "relevance", i18n.T("cmd.search.flag.sort"))
+	searchCmd.Flags().StringVar(&searchFormat, "format", "default", i18n.T("cmd.search.flag.format"))
+	searchCmd.Flags().BoolVarP(&searchVerbose, "verbose", "v", false, i18n.T("cmd.search.flag.verbose"))
+	searchCmd.Flags().BoolVar(&searchExact, "exact", false, i18n.T("cmd.search.flag.exact"))
+	searchCmd.Flags().BoolVar(&searchInstalled, "installed", false, i18n.T("cmd.search.flag.installed"))
 }

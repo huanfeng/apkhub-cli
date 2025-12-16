@@ -662,6 +662,7 @@ func (a *ADBManager) WaitForDevice(deviceID string, timeout time.Duration) error
 	fmt.Println()
 	return fmt.Errorf("timeout waiting for device %s to come online", deviceID)
 }
+
 // isXAPKFile checks if the file is an XAPK or APKM file
 func isXAPKFile(path string) bool {
 	ext := strings.ToLower(filepath.Ext(path))
@@ -696,7 +697,7 @@ func (a *ADBManager) installXAPK(xapkPath string, deviceID string, options Insta
 
 	// Parse and extract XAPK with minimal output
 	fmt.Printf("📂 Extracting and analyzing package...\n")
-	
+
 	parser := apk.NewXAPKParser(tempDir)
 	xapkInfo, err := a.parseXAPKQuietly(parser, xapkPath)
 	if err != nil {
@@ -753,7 +754,7 @@ func (a *ADBManager) installXAPK(xapkPath string, deviceID string, options Insta
 
 	// Install APKs with optimized output
 	fmt.Printf("🚀 Installing to device...\n")
-	
+
 	if len(apkPaths) == 1 {
 		// Single APK installation
 		if err := a.installSingleAPKQuietly(apkPaths[0], deviceID, options); err != nil {
@@ -773,7 +774,7 @@ func (a *ADBManager) installXAPK(xapkPath string, deviceID string, options Insta
 	// Install OBB files if present
 	if len(xapkInfo.OBBFiles) > 0 {
 		fmt.Printf("📦 Installing OBB files...\n")
-		
+
 		if err := a.installOBBFiles(xapkInfo, tempDir, deviceID); err != nil {
 			fmt.Printf("⚠️  OBB installation failed, but APK was installed successfully\n")
 			// Don't fail the entire installation for OBB issues
@@ -791,13 +792,13 @@ func (a *ADBManager) installXAPK(xapkPath string, deviceID string, options Insta
 // installSingleAPK installs a single APK file
 func (a *ADBManager) installSingleAPK(apkPath string, deviceID string, options InstallOptions) error {
 	args := []string{}
-	
+
 	if deviceID != "" {
 		args = append(args, "-s", deviceID)
 	}
-	
+
 	args = append(args, "install")
-	
+
 	if options.Replace {
 		args = append(args, "-r")
 	}
@@ -807,35 +808,35 @@ func (a *ADBManager) installSingleAPK(apkPath string, deviceID string, options I
 	if options.GrantPermissions {
 		args = append(args, "-g")
 	}
-	
+
 	args = append(args, apkPath)
-	
+
 	fmt.Printf("   🔧 Installing: %s\n", filepath.Base(apkPath))
-	
+
 	cmd := exec.Command(a.config.ADB.Path, args...)
 	output, err := cmd.CombinedOutput()
-	
+
 	if err != nil {
 		return fmt.Errorf("adb install failed: %v, output: %s", err, string(output))
 	}
-	
+
 	if !strings.Contains(string(output), "Success") {
 		return fmt.Errorf("installation failed: %s", string(output))
 	}
-	
+
 	return nil
 }
 
 // installMultipleAPKs installs multiple APK files using install-multiple
 func (a *ADBManager) installMultipleAPKs(apkPaths []string, deviceID string, options InstallOptions) error {
 	args := []string{}
-	
+
 	if deviceID != "" {
 		args = append(args, "-s", deviceID)
 	}
-	
+
 	args = append(args, "install-multiple")
-	
+
 	if options.Replace {
 		args = append(args, "-r")
 	}
@@ -845,11 +846,11 @@ func (a *ADBManager) installMultipleAPKs(apkPaths []string, deviceID string, opt
 	if options.GrantPermissions {
 		args = append(args, "-g")
 	}
-	
+
 	// Sort APK paths to ensure base.apk is installed first
 	sortedPaths := make([]string, len(apkPaths))
 	copy(sortedPaths, apkPaths)
-	
+
 	// Move base.apk to front if present
 	for i, path := range sortedPaths {
 		if strings.Contains(strings.ToLower(filepath.Base(path)), "base.apk") {
@@ -859,25 +860,25 @@ func (a *ADBManager) installMultipleAPKs(apkPaths []string, deviceID string, opt
 			break
 		}
 	}
-	
+
 	args = append(args, sortedPaths...)
-	
+
 	fmt.Printf("   🔧 Installing split APKs: %d files\n", len(sortedPaths))
 	for _, path := range sortedPaths {
 		fmt.Printf("      - %s\n", filepath.Base(path))
 	}
-	
+
 	cmd := exec.Command(a.config.ADB.Path, args...)
 	output, err := cmd.CombinedOutput()
-	
+
 	if err != nil {
 		return fmt.Errorf("adb install-multiple failed: %v, output: %s", err, string(output))
 	}
-	
+
 	if !strings.Contains(string(output), "Success") {
 		return fmt.Errorf("installation failed: %s", string(output))
 	}
-	
+
 	return nil
 }
 
@@ -894,7 +895,7 @@ func (a *ADBManager) installOBBFiles(xapkInfo *apk.XAPKInfo, tempDir string, dev
 
 	// OBB files should be placed in /sdcard/Android/obb/<package_name>/
 	obbDir := fmt.Sprintf("/sdcard/Android/obb/%s/", packageID)
-	
+
 	// Create OBB directory on device
 	fmt.Printf("   📁 Creating OBB directory: %s\n", obbDir)
 	if err := a.createDeviceDirectory(obbDir, deviceID); err != nil {
@@ -905,9 +906,9 @@ func (a *ADBManager) installOBBFiles(xapkInfo *apk.XAPKInfo, tempDir string, dev
 	for _, obbFile := range xapkInfo.OBBFiles {
 		localOBBPath := filepath.Join(tempDir, obbFile)
 		remoteOBBPath := obbDir + filepath.Base(obbFile)
-		
+
 		fmt.Printf("   📦 Copying OBB: %s\n", filepath.Base(obbFile))
-		
+
 		if err := a.pushFile(localOBBPath, remoteOBBPath, deviceID); err != nil {
 			return fmt.Errorf("failed to copy OBB file %s: %v", obbFile, err)
 		}
@@ -919,40 +920,41 @@ func (a *ADBManager) installOBBFiles(xapkInfo *apk.XAPKInfo, tempDir string, dev
 // createDeviceDirectory creates a directory on the device
 func (a *ADBManager) createDeviceDirectory(dirPath string, deviceID string) error {
 	args := []string{}
-	
+
 	if deviceID != "" {
 		args = append(args, "-s", deviceID)
 	}
-	
+
 	args = append(args, "shell", "mkdir", "-p", dirPath)
-	
+
 	cmd := exec.Command(a.config.ADB.Path, args...)
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("mkdir command failed: %v", err)
 	}
-	
+
 	return nil
 }
 
 // pushFile copies a file from local to device
 func (a *ADBManager) pushFile(localPath string, remotePath string, deviceID string) error {
 	args := []string{}
-	
+
 	if deviceID != "" {
 		args = append(args, "-s", deviceID)
 	}
-	
+
 	args = append(args, "push", localPath, remotePath)
-	
+
 	cmd := exec.Command(a.config.ADB.Path, args...)
 	output, err := cmd.CombinedOutput()
-	
+
 	if err != nil {
 		return fmt.Errorf("adb push failed: %v, output: %s", err, string(output))
 	}
-	
+
 	return nil
 }
+
 // parseXAPKQuietly parses XAPK with minimal output
 func (a *ADBManager) parseXAPKQuietly(parser *apk.XAPKParser, xapkPath string) (*apk.XAPKInfo, error) {
 	// Use the quiet parsing method to reduce output noise
@@ -962,7 +964,7 @@ func (a *ADBManager) parseXAPKQuietly(parser *apk.XAPKParser, xapkPath string) (
 // prepareAPKsForInstallation filters APKs based on device compatibility
 func (a *ADBManager) prepareAPKsForInstallation(xapkInfo *apk.XAPKInfo, tempDir string, deviceID string) ([]string, error) {
 	var apkPaths []string
-	
+
 	// Get device ABI to filter compatible APKs
 	deviceABI, err := a.getDeviceABI(deviceID)
 	if err != nil {
@@ -1008,7 +1010,7 @@ func (a *ADBManager) getDeviceABI(deviceID string) (string, error) {
 func (a *ADBManager) isArchitectureAPK(filename string) bool {
 	archPatterns := []string{"x86", "x86_64", "arm64", "armeabi", "mips"}
 	lowerName := strings.ToLower(filename)
-	
+
 	for _, arch := range archPatterns {
 		if strings.Contains(lowerName, arch) {
 			return true
@@ -1042,13 +1044,13 @@ func (a *ADBManager) isCompatibleArchitecture(filename string, deviceABI string)
 // installSingleAPKQuietly installs a single APK with minimal output
 func (a *ADBManager) installSingleAPKQuietly(apkPath string, deviceID string, options InstallOptions) error {
 	args := []string{}
-	
+
 	if deviceID != "" {
 		args = append(args, "-s", deviceID)
 	}
-	
+
 	args = append(args, "install")
-	
+
 	if options.Replace {
 		args = append(args, "-r")
 	}
@@ -1058,33 +1060,33 @@ func (a *ADBManager) installSingleAPKQuietly(apkPath string, deviceID string, op
 	if options.GrantPermissions {
 		args = append(args, "-g")
 	}
-	
+
 	args = append(args, apkPath)
-	
+
 	cmd := exec.Command(a.config.ADB.Path, args...)
 	output, err := cmd.CombinedOutput()
-	
+
 	if err != nil {
 		return fmt.Errorf("installation failed: %s", strings.TrimSpace(string(output)))
 	}
-	
+
 	if !strings.Contains(string(output), "Success") {
 		return fmt.Errorf("installation failed: %s", strings.TrimSpace(string(output)))
 	}
-	
+
 	return nil
 }
 
 // installMultipleAPKsQuietly installs multiple APKs with minimal output
 func (a *ADBManager) installMultipleAPKsQuietly(apkPaths []string, deviceID string, options InstallOptions) error {
 	args := []string{}
-	
+
 	if deviceID != "" {
 		args = append(args, "-s", deviceID)
 	}
-	
+
 	args = append(args, "install-multiple")
-	
+
 	if options.Replace {
 		args = append(args, "-r")
 	}
@@ -1094,11 +1096,11 @@ func (a *ADBManager) installMultipleAPKsQuietly(apkPaths []string, deviceID stri
 	if options.GrantPermissions {
 		args = append(args, "-g")
 	}
-	
+
 	// Sort APK paths to ensure base.apk is installed first
 	sortedPaths := make([]string, len(apkPaths))
 	copy(sortedPaths, apkPaths)
-	
+
 	// Move base.apk to front if present
 	for i, path := range sortedPaths {
 		if strings.Contains(strings.ToLower(filepath.Base(path)), "base.apk") {
@@ -1108,27 +1110,27 @@ func (a *ADBManager) installMultipleAPKsQuietly(apkPaths []string, deviceID stri
 			break
 		}
 	}
-	
+
 	args = append(args, sortedPaths...)
-	
+
 	cmd := exec.Command(a.config.ADB.Path, args...)
 	output, err := cmd.CombinedOutput()
-	
+
 	if err != nil {
 		return fmt.Errorf("installation failed: %s", strings.TrimSpace(string(output)))
 	}
-	
+
 	if !strings.Contains(string(output), "Success") {
 		return fmt.Errorf("installation failed: %s", strings.TrimSpace(string(output)))
 	}
-	
+
 	return nil
 }
 
 // formatInstallError formats installation errors for better user experience
 func (a *ADBManager) formatInstallError(err error) string {
 	errStr := err.Error()
-	
+
 	// Extract meaningful error messages
 	if strings.Contains(errStr, "INSTALL_FAILED_NO_MATCHING_ABIS") {
 		return "Device architecture not supported by this package"
@@ -1145,7 +1147,7 @@ func (a *ADBManager) formatInstallError(err error) string {
 	if strings.Contains(errStr, "INSTALL_FAILED_VERSION_DOWNGRADE") {
 		return "Cannot downgrade application (try with --downgrade flag)"
 	}
-	
+
 	// Return cleaned error message
 	if strings.Contains(errStr, "installation failed:") {
 		parts := strings.Split(errStr, "installation failed:")
@@ -1153,14 +1155,14 @@ func (a *ADBManager) formatInstallError(err error) string {
 			return strings.TrimSpace(parts[1])
 		}
 	}
-	
+
 	return errStr
 }
 
 // getInstallSuggestions provides contextual suggestions based on error
 func (a *ADBManager) getInstallSuggestions(err error) []string {
 	errStr := err.Error()
-	
+
 	if strings.Contains(errStr, "INSTALL_FAILED_NO_MATCHING_ABIS") {
 		return []string{
 			"This package contains APKs for architectures not supported by your device",
@@ -1187,7 +1189,7 @@ func (a *ADBManager) getInstallSuggestions(err error) []string {
 			"Uninstall the existing app first",
 		}
 	}
-	
+
 	return []string{
 		"Check device storage space",
 		"Ensure USB debugging is enabled",

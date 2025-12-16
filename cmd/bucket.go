@@ -7,36 +7,37 @@ import (
 	"strings"
 	"text/tabwriter"
 
+	"github.com/huanfeng/apkhub-cli/internal/i18n"
 	"github.com/huanfeng/apkhub-cli/pkg/client"
 	"github.com/spf13/cobra"
 )
 
 var bucketCmd = &cobra.Command{
 	Use:   "bucket",
-	Short: "Manage APK repository buckets",
-	Long:  `Manage APK repository buckets (sources) for the client functionality.`,
+	Short: i18n.T("cmd.bucket.short"),
+	Long:  i18n.T("cmd.bucket.long"),
 }
 
 var bucketVerifySignature bool
 
 var bucketListCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List all configured buckets",
+	Short: i18n.T("cmd.bucket.list.short"),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Load client config
 		config, err := client.Load()
 		if err != nil {
-			return fmt.Errorf("failed to load config: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.bucket.errLoadConfig"), err)
 		}
 
 		if len(config.Buckets) == 0 {
-			fmt.Println("No buckets configured. Use 'apkhub bucket add' to add one.")
+			fmt.Println(i18n.T("cmd.bucket.list.empty"))
 			return nil
 		}
 
 		// Display buckets in table format
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-		fmt.Fprintln(w, "NAME\tDISPLAY NAME\tURL\tENABLED\tLAST UPDATED")
+		fmt.Fprintln(w, i18n.T("cmd.bucket.list.header"))
 		fmt.Fprintln(w, "----\t------------\t---\t-------\t------------")
 
 		for name, bucket := range config.Buckets {
@@ -62,7 +63,9 @@ var bucketListCmd = &cobra.Command{
 		w.Flush()
 
 		if config.DefaultBucket != "" {
-			fmt.Printf("\n* Default bucket: %s\n", config.DefaultBucket)
+			fmt.Printf("\n%s\n", i18n.T("cmd.bucket.list.default", map[string]interface{}{
+				"name": config.DefaultBucket,
+			}))
 		}
 
 		return nil
@@ -71,12 +74,9 @@ var bucketListCmd = &cobra.Command{
 
 var bucketAddCmd = &cobra.Command{
 	Use:   "add <name> <url-or-path> [display-name]",
-	Short: "Add a new bucket",
-	Long: `Add a new bucket source. The source can be either:
-  - HTTP/HTTPS URL: https://example.com/repo
-  - Local directory path: /path/to/local/repo
-  - Relative path: ./local-repo`,
-	Args: cobra.RangeArgs(2, 3),
+	Short: i18n.T("cmd.bucket.add.short"),
+	Long:  i18n.T("cmd.bucket.add.long"),
+	Args:  cobra.RangeArgs(2, 3),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name := args[0]
 		urlOrPath := args[1]
@@ -88,34 +88,42 @@ var bucketAddCmd = &cobra.Command{
 		// Load client config
 		config, err := client.Load()
 		if err != nil {
-			return fmt.Errorf("failed to load config: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.bucket.errLoadConfig"), err)
 		}
 
 		// Detect and validate the source type
 		bucketURL, bucketType, err := validateAndNormalizeBucketSource(urlOrPath)
 		if err != nil {
-			return fmt.Errorf("invalid bucket source: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.bucket.errInvalidSource"), err)
 		}
 
-		fmt.Printf("📦 Adding %s bucket '%s'...\n", bucketType, name)
-		fmt.Printf("   Source: %s\n", bucketURL)
+		fmt.Printf("%s\n", i18n.T("cmd.bucket.add.start", map[string]interface{}{
+			"type": bucketType, "name": name,
+		}))
+		fmt.Printf("%s\n", i18n.T("cmd.bucket.add.source", map[string]interface{}{
+			"source": bucketURL,
+		}))
 
 		// Add bucket
 		if err := config.AddBucket(name, bucketURL, displayName); err != nil {
-			return fmt.Errorf("failed to add bucket: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.bucket.errAdd"), err)
 		}
 
-		fmt.Printf("✓ Added bucket '%s' (%s)\n", name, bucketURL)
+		fmt.Printf("%s\n", i18n.T("cmd.bucket.add.success", map[string]interface{}{
+			"name": name, "source": bucketURL,
+		}))
 
 		// Update bucket index
-		fmt.Printf("Fetching bucket manifest...\n")
+		fmt.Printf("%s\n", i18n.T("cmd.bucket.add.fetch"))
 		bucketMgr := client.NewBucketManager(config)
 		bucketMgr.SetSignatureVerification(bucketVerifySignature && config.Security.VerifySignature)
 		if _, err := bucketMgr.FetchManifest(name); err != nil {
-			fmt.Printf("Warning: Failed to fetch manifest: %v\n", err)
-			fmt.Println("You can try updating later with 'apkhub bucket update'")
+			fmt.Printf("%s\n", i18n.T("cmd.bucket.add.fetchFail", map[string]interface{}{
+				"error": err,
+			}))
+			fmt.Println(i18n.T("cmd.bucket.add.fetchRetry"))
 		} else {
-			fmt.Println("✓ Bucket manifest fetched successfully")
+			fmt.Println(i18n.T("cmd.bucket.add.fetchSuccess"))
 		}
 
 		return nil
@@ -124,7 +132,7 @@ var bucketAddCmd = &cobra.Command{
 
 var bucketRemoveCmd = &cobra.Command{
 	Use:   "remove <name>",
-	Short: "Remove a bucket",
+	Short: i18n.T("cmd.bucket.remove.short"),
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name := args[0]
@@ -132,26 +140,30 @@ var bucketRemoveCmd = &cobra.Command{
 		// Load client config
 		config, err := client.Load()
 		if err != nil {
-			return fmt.Errorf("failed to load config: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.bucket.errLoadConfig"), err)
 		}
 
 		// Confirm removal
 		if !skipConfirm {
-			fmt.Printf("Remove bucket '%s'? [y/N]: ", name)
+			fmt.Printf("%s", i18n.T("cmd.bucket.remove.confirm", map[string]interface{}{
+				"name": name,
+			}))
 			var response string
 			fmt.Scanln(&response)
 			if response != "y" && response != "Y" {
-				fmt.Println("Cancelled.")
+				fmt.Println(i18n.T("cmd.bucket.remove.cancel"))
 				return nil
 			}
 		}
 
 		// Remove bucket
 		if err := config.RemoveBucket(name); err != nil {
-			return fmt.Errorf("failed to remove bucket: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.bucket.errRemove"), err)
 		}
 
-		fmt.Printf("✓ Removed bucket '%s'\n", name)
+		fmt.Printf("%s\n", i18n.T("cmd.bucket.remove.success", map[string]interface{}{
+			"name": name,
+		}))
 
 		// Clean up cache
 		cacheFile := fmt.Sprintf("%s/%s.json", config.Client.CacheDir, name)
@@ -163,12 +175,12 @@ var bucketRemoveCmd = &cobra.Command{
 
 var bucketUpdateCmd = &cobra.Command{
 	Use:   "update [name]",
-	Short: "Update bucket manifests",
+	Short: i18n.T("cmd.bucket.update.short"),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Load client config
 		config, err := client.Load()
 		if err != nil {
-			return fmt.Errorf("failed to load config: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.bucket.errLoadConfig"), err)
 		}
 
 		bucketMgr := client.NewBucketManager(config)
@@ -177,17 +189,22 @@ var bucketUpdateCmd = &cobra.Command{
 		if len(args) > 0 {
 			// Update specific bucket
 			name := args[0]
-			fmt.Printf("Updating bucket '%s'...\n", name)
+			fmt.Printf("%s\n", i18n.T("cmd.bucket.update.single", map[string]interface{}{
+				"name": name,
+			}))
 			if _, err := bucketMgr.FetchManifest(name); err != nil {
-				return fmt.Errorf("failed to update bucket: %w", err)
+				return fmt.Errorf("%s: %w", i18n.T("cmd.bucket.errUpdate"), err)
 			}
-			fmt.Printf("✓ Updated bucket '%s'\n", name)
+			fmt.Printf("%s\n", i18n.T("cmd.bucket.update.singleSuccess", map[string]interface{}{
+				"name": name,
+			}))
 		} else {
 			// Update all buckets
 			if err := bucketMgr.UpdateAll(); err != nil {
 				return err
 			}
-			fmt.Println("\n✓ All buckets updated")
+			fmt.Println()
+			fmt.Println(i18n.T("cmd.bucket.update.allSuccess"))
 		}
 
 		return nil
@@ -196,7 +213,7 @@ var bucketUpdateCmd = &cobra.Command{
 
 var bucketEnableCmd = &cobra.Command{
 	Use:   "enable <name>",
-	Short: "Enable a bucket",
+	Short: i18n.T("cmd.bucket.enable.short"),
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return setBucketEnabled(args[0], true)
@@ -205,7 +222,7 @@ var bucketEnableCmd = &cobra.Command{
 
 var bucketDisableCmd = &cobra.Command{
 	Use:   "disable <name>",
-	Short: "Disable a bucket",
+	Short: i18n.T("cmd.bucket.disable.short"),
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return setBucketEnabled(args[0], false)
@@ -214,13 +231,13 @@ var bucketDisableCmd = &cobra.Command{
 
 var bucketHealthCmd = &cobra.Command{
 	Use:   "health [name]",
-	Short: "Check bucket health status",
-	Long:  `Check the health status of buckets. If no name is provided, checks all enabled buckets.`,
+	Short: i18n.T("cmd.bucket.health.short"),
+	Long:  i18n.T("cmd.bucket.health.long"),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Load client config
 		config, err := client.Load()
 		if err != nil {
-			return fmt.Errorf("failed to load config: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.bucket.errLoadConfig"), err)
 		}
 
 		bucketMgr := client.NewBucketManager(config)
@@ -228,11 +245,16 @@ var bucketHealthCmd = &cobra.Command{
 		if len(args) > 0 {
 			// Check specific bucket
 			name := args[0]
-			fmt.Printf("🔍 Checking health of bucket '%s'...\n", name)
+			fmt.Printf("%s\n", i18n.T("cmd.bucket.health.checking", map[string]interface{}{
+				"name": name,
+			}))
 
 			health, err := bucketMgr.CheckBucketHealth(name)
 			if err != nil {
 				fmt.Printf("❌ Health check failed: %v\n", err)
+				fmt.Printf("%s\n", i18n.T("cmd.bucket.health.checkFail", map[string]interface{}{
+					"error": err,
+				}))
 			}
 
 			if health != nil {
@@ -240,17 +262,17 @@ var bucketHealthCmd = &cobra.Command{
 			}
 		} else {
 			// Check all buckets
-			fmt.Println("🔍 Checking health of all enabled buckets...")
+			fmt.Println(i18n.T("cmd.bucket.health.checkAll"))
 			bucketMgr.CheckAllHealth()
 			bucketMgr.PrintHealthStatus()
 
 			// Print summary
 			summary := bucketMgr.GetHealthSummary()
-			fmt.Printf("\n📊 Health Summary:\n")
-			fmt.Printf("   ✅ Healthy: %d\n", summary["healthy"])
-			fmt.Printf("   ⚠️  Degraded: %d\n", summary["degraded"])
-			fmt.Printf("   ❌ Unhealthy: %d\n", summary["unhealthy"])
-			fmt.Printf("   ❓ Unknown: %d\n", summary["unknown"])
+			fmt.Printf("\n%s\n", i18n.T("cmd.bucket.health.summaryTitle"))
+			fmt.Printf(i18n.T("cmd.bucket.health.summaryHealthy")+"\n", summary["healthy"])
+			fmt.Printf(i18n.T("cmd.bucket.health.summaryDegraded")+"\n", summary["degraded"])
+			fmt.Printf(i18n.T("cmd.bucket.health.summaryUnhealthy")+"\n", summary["unhealthy"])
+			fmt.Printf(i18n.T("cmd.bucket.health.summaryUnknown")+"\n", summary["unknown"])
 		}
 
 		return nil
@@ -259,37 +281,37 @@ var bucketHealthCmd = &cobra.Command{
 
 var bucketStatusCmd = &cobra.Command{
 	Use:   "status",
-	Short: "Show detailed bucket status and statistics",
+	Short: i18n.T("cmd.bucket.status.short"),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Load client config
 		config, err := client.Load()
 		if err != nil {
-			return fmt.Errorf("failed to load config: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.bucket.errLoadConfig"), err)
 		}
 
 		bucketMgr := client.NewBucketManager(config)
 
-		fmt.Println("📊 Bucket Status Report")
+		fmt.Println(i18n.T("cmd.bucket.status.title"))
 		fmt.Println("======================")
 
 		// Show configuration summary
 		totalBuckets := len(config.Buckets)
 		enabledBuckets := len(config.GetEnabledBuckets())
 
-		fmt.Printf("\n📋 Configuration:\n")
-		fmt.Printf("   Total buckets: %d\n", totalBuckets)
-		fmt.Printf("   Enabled buckets: %d\n", enabledBuckets)
-		fmt.Printf("   Default bucket: %s\n", config.DefaultBucket)
-		fmt.Printf("   Cache directory: %s\n", config.Client.CacheDir)
-		fmt.Printf("   Cache TTL: %d seconds\n", config.Client.CacheTTL)
+		fmt.Printf("\n%s\n", i18n.T("cmd.bucket.status.configTitle"))
+		fmt.Printf(i18n.T("cmd.bucket.status.total")+"\n", totalBuckets)
+		fmt.Printf(i18n.T("cmd.bucket.status.enabled")+"\n", enabledBuckets)
+		fmt.Printf(i18n.T("cmd.bucket.status.default")+"\n", config.DefaultBucket)
+		fmt.Printf(i18n.T("cmd.bucket.status.cacheDir")+"\n", config.Client.CacheDir)
+		fmt.Printf(i18n.T("cmd.bucket.status.cacheTTL")+"\n", config.Client.CacheTTL)
 
 		// Check health of all buckets
-		fmt.Printf("\n🏥 Performing health checks...\n")
+		fmt.Printf("\n%s\n", i18n.T("cmd.bucket.status.healthChecks"))
 		bucketMgr.CheckAllHealth()
 		bucketMgr.PrintHealthStatus()
 
 		// Show cache status
-		fmt.Printf("\n💾 Cache Status:\n")
+		fmt.Printf("\n%s\n", i18n.T("cmd.bucket.status.cacheTitle"))
 		showCacheStatus(config)
 
 		return nil
@@ -300,12 +322,14 @@ func setBucketEnabled(name string, enabled bool) error {
 	// Load client config
 	config, err := client.Load()
 	if err != nil {
-		return fmt.Errorf("failed to load config: %w", err)
+		return fmt.Errorf("%s: %w", i18n.T("cmd.bucket.errLoadConfig"), err)
 	}
 
 	bucket, exists := config.Buckets[name]
 	if !exists {
-		return fmt.Errorf("bucket '%s' not found", name)
+		return fmt.Errorf(i18n.T("cmd.bucket.errNotFound", map[string]interface{}{
+			"name": name,
+		}))
 	}
 
 	bucket.Enabled = enabled
@@ -314,18 +338,24 @@ func setBucketEnabled(name string, enabled bool) error {
 	}
 
 	status := "enabled"
+	status = i18n.T("cmd.bucket.setStatus.enabled")
 	if !enabled {
-		status = "disabled"
+		status = i18n.T("cmd.bucket.setStatus.disabled")
 	}
-	fmt.Printf("✓ Bucket '%s' %s\n", name, status)
+	fmt.Printf("%s\n", i18n.T("cmd.bucket.setStatus.success", map[string]interface{}{
+		"name":   name,
+		"status": status,
+	}))
 
 	return nil
 }
 
 // printSingleBucketHealth prints detailed health info for a single bucket
 func printSingleBucketHealth(health *client.BucketHealth) {
-	fmt.Printf("\n🏥 Health Report for '%s':\n", health.Name)
-	fmt.Printf("   URL: %s\n", health.URL)
+	fmt.Printf("\n%s\n", i18n.T("cmd.bucket.health.reportTitle", map[string]interface{}{
+		"name": health.Name,
+	}))
+	fmt.Printf(i18n.T("cmd.bucket.health.url")+"\n", health.URL)
 
 	statusIcon := "❓"
 	switch health.Status {
@@ -337,24 +367,24 @@ func printSingleBucketHealth(health *client.BucketHealth) {
 		statusIcon = "❌"
 	}
 
-	fmt.Printf("   Status: %s %s\n", statusIcon, health.Status)
-	fmt.Printf("   Last Check: %s\n", health.LastCheck.Format("2006-01-02 15:04:05"))
+	fmt.Printf(i18n.T("cmd.bucket.health.status")+"\n", statusIcon, health.Status)
+	fmt.Printf(i18n.T("cmd.bucket.health.lastCheck")+"\n", health.LastCheck.Format("2006-01-02 15:04:05"))
 
 	if !health.LastSuccess.IsZero() {
-		fmt.Printf("   Last Success: %s\n", health.LastSuccess.Format("2006-01-02 15:04:05"))
+		fmt.Printf(i18n.T("cmd.bucket.health.lastSuccess")+"\n", health.LastSuccess.Format("2006-01-02 15:04:05"))
 	} else {
-		fmt.Printf("   Last Success: Never\n")
+		fmt.Printf("%s\n", i18n.T("cmd.bucket.health.never"))
 	}
 
 	if health.ResponseTime > 0 {
-		fmt.Printf("   Response Time: %dms\n", health.ResponseTime)
+		fmt.Printf(i18n.T("cmd.bucket.health.responseTime")+"\n", health.ResponseTime)
 	}
 
-	fmt.Printf("   Error Count: %d\n", health.ErrorCount)
-	fmt.Printf("   Consecutive Fails: %d\n", health.ConsecutiveFails)
+	fmt.Printf(i18n.T("cmd.bucket.health.errorCount")+"\n", health.ErrorCount)
+	fmt.Printf(i18n.T("cmd.bucket.health.consecutiveFails")+"\n", health.ConsecutiveFails)
 
 	if health.LastError != "" {
-		fmt.Printf("   Last Error: %s\n", health.LastError)
+		fmt.Printf(i18n.T("cmd.bucket.health.lastError")+"\n", health.LastError)
 	}
 }
 
@@ -363,13 +393,13 @@ func showCacheStatus(config *client.Config) {
 	cacheDir := config.Client.CacheDir
 
 	if _, err := os.Stat(cacheDir); os.IsNotExist(err) {
-		fmt.Printf("   Cache directory does not exist: %s\n", cacheDir)
+		fmt.Printf(i18n.T("cmd.bucket.cache.missing")+"\n", cacheDir)
 		return
 	}
 
 	entries, err := os.ReadDir(cacheDir)
 	if err != nil {
-		fmt.Printf("   Error reading cache directory: %v\n", err)
+		fmt.Printf(i18n.T("cmd.bucket.cache.readErr")+"\n", err)
 		return
 	}
 
@@ -390,11 +420,11 @@ func showCacheStatus(config *client.Config) {
 		}
 	}
 
-	fmt.Printf("   Cache files: %d\n", len(cacheFiles))
-	fmt.Printf("   Total cache size: %s\n", formatBytes(totalSize))
+	fmt.Printf(i18n.T("cmd.bucket.cache.fileCount")+"\n", len(cacheFiles))
+	fmt.Printf(i18n.T("cmd.bucket.cache.totalSize")+"\n", formatBytes(totalSize))
 
 	if len(cacheFiles) > 0 {
-		fmt.Printf("   Files: %s\n", strings.Join(cacheFiles, ", "))
+		fmt.Printf(i18n.T("cmd.bucket.cache.files")+"\n", strings.Join(cacheFiles, ", "))
 	}
 }
 

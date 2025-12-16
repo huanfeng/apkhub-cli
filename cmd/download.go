@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/huanfeng/apkhub-cli/internal/i18n"
 	"github.com/huanfeng/apkhub-cli/pkg/client"
 	"github.com/spf13/cobra"
 )
@@ -29,12 +30,12 @@ var downloadCmd = &cobra.Command{
 		// Load client config
 		config, err := client.Load()
 		if err != nil {
-			return fmt.Errorf("failed to load config: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.download.errLoadConfig"), err)
 		}
 
 		// Ensure directories exist
 		if err := config.EnsureDirectories(); err != nil {
-			return fmt.Errorf("failed to create directories: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.download.errCreateDirs"), err)
 		}
 
 		// Create managers
@@ -55,13 +56,16 @@ var downloadCmd = &cobra.Command{
 		// Download APK
 		apkPath, err := downloadMgr.Download(packageID, options)
 		if err != nil {
-			return fmt.Errorf("download failed: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.download.errDownload"), err)
 		}
 
 		// Install if requested (default behavior)
 		if !downloadNoInstall {
-			fmt.Println("\nReady to install. Use 'apkhub install' to install the downloaded APK.")
-			fmt.Printf("APK path: %s\n", apkPath)
+			fmt.Println()
+			fmt.Println(i18n.T("cmd.download.nextInstall"))
+			fmt.Printf("%s\n", i18n.T("cmd.download.apkPath", map[string]interface{}{
+				"path": apkPath,
+			}))
 		}
 
 		return nil
@@ -72,12 +76,12 @@ func init() {
 	rootCmd.AddCommand(downloadCmd)
 
 	// Add flags
-	downloadCmd.Flags().StringVarP(&downloadVersion, "version", "v", "", "Download specific version")
-	downloadCmd.Flags().BoolVarP(&downloadForce, "force", "f", false, "Force re-download even if exists")
-	downloadCmd.Flags().BoolVar(&downloadNoVerify, "no-verify", false, "Skip checksum verification")
-	downloadCmd.Flags().BoolVar(&downloadNoInstall, "no-install", false, "Download without prompting to install")
-	downloadCmd.Flags().StringVarP(&downloadOutput, "output", "o", "", "Output file path (default: auto-generated)")
-	downloadCmd.Flags().IntVar(&downloadRetries, "retries", 3, "Number of retry attempts")
-	downloadCmd.Flags().IntVar(&downloadTimeout, "timeout", 1800, "Download timeout in seconds")
-	downloadCmd.Flags().BoolVar(&downloadProgress, "progress", true, "Show download progress")
+	downloadCmd.Flags().StringVarP(&downloadVersion, "version", "v", "", i18n.T("cmd.download.flag.version"))
+	downloadCmd.Flags().BoolVarP(&downloadForce, "force", "f", false, i18n.T("cmd.download.flag.force"))
+	downloadCmd.Flags().BoolVar(&downloadNoVerify, "no-verify", false, i18n.T("cmd.download.flag.noVerify"))
+	downloadCmd.Flags().BoolVar(&downloadNoInstall, "no-install", false, i18n.T("cmd.download.flag.noInstall"))
+	downloadCmd.Flags().StringVarP(&downloadOutput, "output", "o", "", i18n.T("cmd.download.flag.output"))
+	downloadCmd.Flags().IntVar(&downloadRetries, "retries", 3, i18n.T("cmd.download.flag.retries"))
+	downloadCmd.Flags().IntVar(&downloadTimeout, "timeout", 1800, i18n.T("cmd.download.flag.timeout"))
+	downloadCmd.Flags().BoolVar(&downloadProgress, "progress", true, i18n.T("cmd.download.flag.progress"))
 }

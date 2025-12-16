@@ -344,6 +344,7 @@ func (p *XAPKParser) calculateHashes(filePath string) (map[string]string, error)
 		"sha256": hex.EncodeToString(hash.Sum(nil)),
 	}, nil
 }
+
 // ParseXAPKQuiet parses an XAPK/APKM file with minimal output
 func (p *XAPKParser) ParseXAPKQuiet(xapkPath string) (*XAPKInfo, error) {
 	// Verify file exists and is readable

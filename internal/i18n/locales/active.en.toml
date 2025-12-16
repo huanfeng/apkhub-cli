@@ -1,0 +1,1071 @@
+# Root and common
+[cmd.root.short]
+other = "ApkHub CLI - A tool for managing APK repositories"
+
+[cmd.root.long]
+other = "ApkHub CLI is a command-line tool for managing distributed APK repositories. It supports parsing APK files, generating repository indexes, and maintaining APK collections."
+
+[errors.generic]
+other = "Error: {{.error}}"
+
+[flags.config]
+other = "Config file (optional, for self-hosted repos)"
+
+[flags.workDir]
+other = "Working directory for relative paths"
+
+[flags.verbose]
+other = "Enable verbose output"
+
+[flags.debug]
+other = "Enable debug output"
+
+[flags.logFile]
+other = "Write logs to file"
+
+[flags.noColor]
+other = "Disable colored output"
+
+[flags.lang]
+other = "Language for output (auto-detect by default)"
+
+# Command descriptions
+[cmd.repo.short]
+other = "Manage APK repository"
+
+[cmd.repo.long]
+other = "Repository management commands for ApkHub, including initializing, scanning, maintaining, and exporting repository data."
+
+[cmd.scan.short]
+other = "Scan directory for APK files and update repository"
+
+[cmd.scan.long]
+other = "Scan the specified directory for APK/XAPK/APKM files and update the repository index. By default performs incremental scan."
+
+[cmd.init.short]
+other = "Initialize a new ApkHub repository configuration"
+
+[cmd.init.long]
+other = "Initialize a new ApkHub repository by creating a configuration file. Supports interactive configuration, templates, and updating existing configurations."
+
+[cmd.list.short]
+other = "List packages in the repository"
+
+[cmd.list.long]
+other = "List all packages in the repository with optional filtering and sorting."
+
+[cmd.search.short]
+other = "Search for applications"
+
+[cmd.search.long]
+other = "Search for applications across all enabled buckets."
+
+[cmd.download.short]
+other = "Download an application"
+
+[cmd.download.long]
+other = "Download an application APK from configured buckets."
+
+[cmd.install.short]
+other = "Install an application using adb"
+
+[cmd.install.long]
+other = "Install an application to a connected Android device using adb. You can specify either a package ID to download and install, or a local APK path."
+
+[cmd.doctor.short]
+other = "Diagnose and fix system issues"
+
+[cmd.doctor.long]
+other = "Perform system diagnostics to identify and optionally fix issues that might prevent ApkHub CLI from working properly."
+
+[cmd.doctor.log.start]
+other = "Starting system diagnostics..."
+
+[cmd.doctor.title]
+other = "🏥 ApkHub CLI System Doctor"
+
+[cmd.doctor.check.dependencies]
+other = "🔍 Checking Dependencies..."
+
+[cmd.doctor.check.fs]
+other = "📁 Checking File System Access..."
+
+[cmd.doctor.check.network]
+other = "🌐 Checking Network Connectivity..."
+
+[cmd.doctor.log.depFailed]
+other = "Dependency check failed"
+
+[cmd.doctor.log.fsFailed]
+other = "File system check failed"
+
+[cmd.doctor.log.netFailed]
+other = "Network check failed"
+
+[cmd.doctor.results.title]
+other = "📊 DIAGNOSTIC RESULTS"
+
+[cmd.doctor.results.allPassed]
+other = "✅ All checks passed! Your system is ready to use ApkHub CLI."
+
+[cmd.doctor.results.issueCount]
+other = "❌ Found %d issues that need attention:"
+
+[cmd.doctor.results.issueItem]
+other = "%d. %s"
+
+[cmd.doctor.results.suggestionTitle]
+other = "💡 Suggestions to fix these issues:"
+
+[cmd.doctor.results.suggestionItem]
+other = "%d. %s"
+
+[cmd.doctor.autofix.start]
+other = "🔧 Attempting to fix issues automatically..."
+
+[cmd.doctor.log.autofixFailed]
+other = "Auto-fix failed"
+
+[cmd.doctor.autofix.errWrap]
+other = "Failed to automatically fix issues"
+
+[cmd.doctor.autofix.suggestion]
+other = "Try fixing the issues manually using the suggestions above"
+
+[cmd.doctor.autofix.hint]
+other = "💡 Run 'apkhub doctor --fix' to attempt automatic fixes"
+
+[cmd.doctor.errFound]
+other = "System diagnostics found issues"
+
+[cmd.doctor.dep.available]
+other = "   ✅ %s: %s"
+
+[cmd.doctor.dep.missingRequired]
+other = "   ❌ %s: Not found (required)"
+
+[cmd.doctor.dep.missingOptional]
+other = "   ⚠️  %s: Not found (optional)"
+
+[cmd.doctor.dep.issueRequired]
+other = "Missing required dependencies: %s"
+
+[cmd.doctor.dep.suggestionInstall]
+other = "Install missing dependencies using your package manager"
+
+[cmd.doctor.dep.suggestionFix]
+other = "Run 'apkhub doctor --fix' to attempt automatic installation"
+
+[cmd.doctor.dep.suggestionOptional]
+other = "Consider installing optional dependencies for better functionality: %s"
+
+[cmd.doctor.config.valid]
+other = "   ✅ Configuration file: Valid (%s)"
+
+[cmd.doctor.config.sections]
+other = "   ℹ️  Configuration sections: %v"
+
+[cmd.doctor.config.repositories]
+other = "   ℹ️  Configured repositories: %v"
+
+[cmd.doctor.config.invalid]
+other = "   ❌ Configuration file: Invalid (%s)"
+
+[cmd.doctor.config.warning]
+other = "   ⚠️  %s"
+
+[cmd.doctor.fs.ok]
+other = "   ✅ File system access: OK"
+
+[cmd.doctor.fs.issue]
+other = "   ❌ %s"
+
+[cmd.doctor.fs.suggestionPerm]
+other = "Fix file/directory permissions"
+
+[cmd.doctor.fs.suggestionAccess]
+other = "Ensure you have read/write access to working directory"
+
+[cmd.doctor.net.basic]
+other = "   ✅ Basic connectivity: OK (%.2fms)"
+
+[cmd.doctor.net.dns]
+other = "   ✅ DNS resolution: %v"
+
+[cmd.doctor.net.https]
+other = "   ✅ HTTPS connectivity: %v"
+
+[cmd.doctor.net.basicFail]
+other = "   ❌ Basic connectivity: Failed - %s"
+
+[cmd.doctor.net.issue]
+other = "Network connectivity failed: %s"
+
+[cmd.doctor.net.testOK]
+other = "   ✅ %s: OK (%.2fms)"
+
+[cmd.doctor.net.testFail]
+other = "   %s %s: Failed - %s"
+
+[cmd.doctor.net.unreachable]
+other = "Some network services unreachable: %s"
+
+[cmd.doctor.autofix.todo]
+other = "🔧 Auto-fix is not fully implemented yet"
+
+[cmd.doctor.autofix.manual]
+other = "   Please follow the manual suggestions provided above"
+
+[cmd.doctor.flag.fix]
+other = "Attempt to automatically fix detected issues"
+
+[cmd.doctor.flag.verbose]
+other = "Show detailed diagnostic information"
+
+[cmd.doctor.flag.check]
+other = "Type of check to perform: basic, all, network"
+
+[cmd.version.short]
+other = "Print version information"
+
+[cmd.version.long]
+other = "Display detailed version information about ApkHub CLI."
+
+# Additional command descriptions (metadata only)
+[cmd.add.short]
+other = "Add a new bucket or package source"
+
+[cmd.add.long]
+other = "Add a new bucket or package source to ApkHub."
+
+[cmd.bucket.short]
+other = "Manage buckets"
+
+[cmd.bucket.long]
+other = "Commands to list, add, remove, enable/disable, and update buckets."
+
+[cmd.bucket.list.short]
+other = "List all configured buckets"
+
+[cmd.bucket.list.empty]
+other = "No buckets configured. Use 'apkhub bucket add' to add one."
+
+[cmd.bucket.list.header]
+other = "NAME\tDISPLAY NAME\tURL\tENABLED\tLAST UPDATED"
+
+[cmd.bucket.list.default]
+other = "* Default bucket: {{.name}}"
+
+[cmd.bucket.add.short]
+other = "Add a new bucket"
+
+[cmd.bucket.add.long]
+other = "Add a new bucket source. The source can be HTTP/HTTPS URL or a local directory path."
+
+[cmd.bucket.add.start]
+other = "📦 Adding {{.type}} bucket '{{.name}}'..."
+
+[cmd.bucket.add.source]
+other = "   Source: {{.source}}"
+
+[cmd.bucket.add.fetch]
+other = "Fetching bucket manifest..."
+
+[cmd.bucket.add.fetchFail]
+other = "Warning: Failed to fetch manifest: {{.error}}"
+
+[cmd.bucket.add.fetchRetry]
+other = "You can try updating later with 'apkhub bucket update'"
+
+[cmd.bucket.add.fetchSuccess]
+other = "✓ Bucket manifest fetched successfully"
+
+[cmd.bucket.add.success]
+other = "✓ Added bucket '{{.name}}' ({{.source}})"
+
+[cmd.bucket.remove.short]
+other = "Remove a bucket"
+
+[cmd.bucket.remove.confirm]
+other = "Remove bucket '{{.name}}'? [y/N]: "
+
+[cmd.bucket.remove.cancel]
+other = "Cancelled."
+
+[cmd.bucket.remove.success]
+other = "✓ Removed bucket '{{.name}}'"
+
+[cmd.bucket.update.short]
+other = "Update bucket manifests"
+
+[cmd.bucket.update.single]
+other = "Updating bucket '{{.name}}'..."
+
+[cmd.bucket.update.singleSuccess]
+other = "✓ Updated bucket '{{.name}}'"
+
+[cmd.bucket.update.allSuccess]
+other = "✓ All buckets updated"
+
+[cmd.bucket.enable.short]
+other = "Enable a bucket"
+
+[cmd.bucket.disable.short]
+other = "Disable a bucket"
+
+[cmd.bucket.health.short]
+other = "Check bucket health status"
+
+[cmd.bucket.health.long]
+other = "Check the health status of buckets. If no name is provided, checks all enabled buckets."
+
+[cmd.bucket.health.checking]
+other = "🔍 Checking health of bucket '{{.name}}'..."
+
+[cmd.bucket.health.checkFail]
+other = "❌ Health check failed: {{.error}}"
+
+[cmd.bucket.health.checkAll]
+other = "🔍 Checking health of all enabled buckets..."
+
+[cmd.bucket.health.summaryTitle]
+other = "📊 Health Summary:"
+
+[cmd.bucket.health.summaryHealthy]
+other = "   ✅ Healthy: %d"
+
+[cmd.bucket.health.summaryDegraded]
+other = "   ⚠️  Degraded: %d"
+
+[cmd.bucket.health.summaryUnhealthy]
+other = "   ❌ Unhealthy: %d"
+
+[cmd.bucket.health.summaryUnknown]
+other = "   ❓ Unknown: %d"
+
+[cmd.bucket.status.short]
+other = "Show detailed bucket status and statistics"
+
+[cmd.bucket.status.title]
+other = "📊 Bucket Status Report"
+
+[cmd.bucket.status.configTitle]
+other = "📋 Configuration:"
+
+[cmd.bucket.status.total]
+other = "   Total buckets: %d"
+
+[cmd.bucket.status.enabled]
+other = "   Enabled buckets: %d"
+
+[cmd.bucket.status.default]
+other = "   Default bucket: %s"
+
+[cmd.bucket.status.cacheDir]
+other = "   Cache directory: %s"
+
+[cmd.bucket.status.cacheTTL]
+other = "   Cache TTL: %d seconds"
+
+[cmd.bucket.status.healthChecks]
+other = "🏥 Performing health checks..."
+
+[cmd.bucket.status.cacheTitle]
+other = "💾 Cache Status:"
+
+[cmd.bucket.errLoadConfig]
+other = "Failed to load config"
+
+[cmd.bucket.errInvalidSource]
+other = "Invalid bucket source"
+
+[cmd.bucket.errAdd]
+other = "Failed to add bucket"
+
+[cmd.bucket.errRemove]
+other = "Failed to remove bucket"
+
+[cmd.bucket.errUpdate]
+other = "Failed to update bucket"
+
+[cmd.bucket.errNotFound]
+other = "Bucket '{{.name}}' not found"
+
+[cmd.bucket.setStatus.enabled]
+other = "enabled"
+
+[cmd.bucket.setStatus.disabled]
+other = "disabled"
+
+[cmd.bucket.setStatus.success]
+other = "✓ Bucket '{{.name}}' {{.status}}"
+
+[cmd.bucket.health.reportTitle]
+other = "🏥 Health Report for '{{.name}}':"
+
+[cmd.bucket.health.url]
+other = "   URL: %s"
+
+[cmd.bucket.health.status]
+other = "   Status: %s %s"
+
+[cmd.bucket.health.lastCheck]
+other = "   Last Check: %s"
+
+[cmd.bucket.health.lastSuccess]
+other = "   Last Success: %s"
+
+[cmd.bucket.health.never]
+other = "   Last Success: Never"
+
+[cmd.bucket.health.responseTime]
+other = "   Response Time: %dms"
+
+[cmd.bucket.health.errorCount]
+other = "   Error Count: %d"
+
+[cmd.bucket.health.consecutiveFails]
+other = "   Consecutive Fails: %d"
+
+[cmd.bucket.health.lastError]
+other = "   Last Error: %s"
+
+[cmd.bucket.cache.missing]
+other = "   Cache directory does not exist: %s"
+
+[cmd.bucket.cache.readErr]
+other = "   Error reading cache directory: %v"
+
+[cmd.bucket.cache.fileCount]
+other = "   Cache files: %d"
+
+[cmd.bucket.cache.totalSize]
+other = "   Total cache size: %s"
+
+[cmd.bucket.cache.files]
+other = "   Files: %s"
+
+[cmd.cache.short]
+other = "Manage cache"
+
+[cmd.cache.long]
+other = "View or clean ApkHub cache."
+
+[cmd.clean.short]
+other = "Clean repository artifacts"
+
+[cmd.clean.long]
+other = "Clean generated artifacts or temporary files."
+
+[cmd.deps.short]
+other = "Show dependencies"
+
+[cmd.deps.long]
+other = "Display dependency status for specific commands."
+
+[cmd.devices.short]
+other = "List connected devices"
+
+[cmd.devices.long]
+other = "List connected Android devices and their statuses."
+
+[cmd.export.short]
+other = "Export repository data"
+
+[cmd.export.long]
+other = "Export repository data into distributable formats."
+
+[cmd.import.short]
+other = "Import repository data"
+
+[cmd.import.long]
+other = "Import repository data from files or archives."
+
+[cmd.info.short]
+other = "Show app info"
+
+[cmd.info.long]
+other = "Show detailed information for a specific package."
+
+[cmd.parse.short]
+other = "Parse APK file"
+
+[cmd.parse.long]
+other = "Parse an APK file and display extracted metadata."
+
+[cmd.parserInfo.short]
+other = "Parser information"
+
+[cmd.parserInfo.long]
+other = "Show information about available APK parsers."
+
+[cmd.stats.short]
+other = "Show repository stats"
+
+[cmd.stats.long]
+other = "Display statistics of the repository."
+
+[cmd.update.short]
+other = "Update repositories or buckets"
+
+[cmd.update.long]
+other = "Update repository manifests or bucket data."
+
+[cmd.verify.short]
+other = "Verify repository integrity"
+
+[cmd.verify.long]
+other = "Verify repository files and manifests for consistency."
+
+# Scan command
+[cmd.scan.deps.limited]
+other = "Continuing with limited APK parsing capabilities..."
+
+[cmd.scan.errInvalidDir]
+other = "Invalid directory path"
+
+[cmd.scan.errLoadConfig]
+other = "Failed to load configuration"
+
+[cmd.scan.errCreateRepo]
+other = "Failed to create repository"
+
+[cmd.scan.errInitRepo]
+other = "Failed to initialize repository"
+
+[cmd.scan.scanningDirectory]
+other = "Scanning directory: {{.path}}"
+
+[cmd.scan.repositoryPath]
+other = "Repository: {{.path}}"
+
+["cmd.scan.mode"]
+other = "Mode: {{.mode}}"
+
+["cmd.scan.mode_full"]
+other = "Full scan"
+
+["cmd.scan.mode_incremental"]
+other = "Incremental scan"
+
+["cmd.scan.warnLoadExisting"]
+other = "Warning: failed to load existing infos, performing full scan: {{.error}}"
+
+["cmd.scan.loadedExisting"]
+other = "Loaded {{.count}} existing APK entries"
+
+[cmd.scan.progress.label]
+other = "Scanning APKs"
+
+[cmd.scan.progress.counting]
+other = "🔍 Counting files to process..."
+
+[cmd.scan.progress.found]
+other = "📁 Found {{.count}} APK files to process"
+
+[cmd.scan.errAccess]
+other = "Error accessing {{.path}}"
+
+[cmd.scan.skipNormalized]
+other = "Skip (normalized): {{.name}}"
+
+[cmd.scan.progress.processing]
+other = "Processing {{.name}}"
+
+[cmd.scan.skipUnchanged]
+other = "Skip (unchanged): {{.name}}"
+
+[cmd.scan.skipDuplicate]
+other = "Skip (duplicate hash): {{.name}}"
+
+[cmd.scan.processing]
+other = "Processing: {{.name}}"
+
+[cmd.scan.errParse]
+other = "Failed to parse {{.name}}"
+
+[cmd.scan.copying]
+other = "  Copying to repository as: {{.name}}"
+
+[cmd.scan.errCopy]
+other = "Failed to copy {{.name}}"
+
+[cmd.scan.errSaveInfo]
+other = "Failed to save info for {{.name}}"
+
+[cmd.scan.errWalk]
+other = "Error walking directory"
+
+[cmd.scan.progress.finished]
+other = "Scan completed"
+
+[cmd.scan.updateManifest]
+other = "Updating repository manifest..."
+
+[cmd.scan.errUpdateManifest]
+other = "Failed to update manifest"
+
+[cmd.scan.deps.checking]
+other = "🔍 Checking dependencies for repo scan command..."
+
+[cmd.scan.deps.available]
+other = "   ✅ {{.name}}: {{.version}}"
+
+[cmd.scan.deps.notAvailable]
+other = "{{.name}} not available"
+
+[cmd.scan.deps.none]
+other = "No APK parsing tools available - some APKs may fail to parse"
+
+[cmd.scan.deps.warningList]
+other = "   ⚠️  {{.warnings}}"
+
+[cmd.scan.deps.suggestion]
+other = "   💡 Run 'apkhub doctor --fix' to install missing tools"
+
+[cmd.scan.results.title]
+other = "📊 SCAN RESULTS"
+
+[cmd.scan.results.totalTime]
+other = "⏱️  Total time: {{.duration}}"
+
+[cmd.scan.results.filesScanned]
+other = "📁 Files scanned: {{.count}}"
+
+[cmd.scan.results.newAPKs]
+other = "🆕 New APKs: {{.count}}"
+
+[cmd.scan.results.updatedAPKs]
+other = "🔄 Updated APKs: {{.count}}"
+
+[cmd.scan.results.unchangedAPKs]
+other = "⏭️  Unchanged APKs: {{.count}}"
+
+[cmd.scan.results.errors]
+zero = "✅ Errors: 0"
+one = "❌ Errors: {{.count}}"
+other = "❌ Errors: {{.count}}"
+
+[cmd.scan.results.avgTime]
+other = "📈 Average time per file: {{.duration}}"
+
+[cmd.scan.results.errorListTitle]
+other = "❌ ERRORS ENCOUNTERED ({{.count}}):"
+
+[cmd.scan.results.errorItem]
+other = "   {{.index}}. {{.error}}"
+
+[cmd.scan.results.troubleshootingTitle]
+other = "💡 TROUBLESHOOTING TIPS:"
+
+[cmd.scan.results.tipDoctor]
+other = "   • Run 'apkhub doctor' to check dependencies"
+
+[cmd.scan.results.tipVerbose]
+other = "   • Use --verbose flag for detailed error information"
+
+[cmd.scan.results.tipIntegrity]
+other = "   • Ensure APK files are not corrupted"
+
+[cmd.scan.results.success]
+other = "🎉 Repository updated successfully!"
+
+[cmd.scan.results.partial]
+other = "⚠️  Repository updated with some errors"
+
+[cmd.scan.results.failure]
+other = "❌ Repository update completed with errors"
+
+[cmd.scan.flag.output]
+other = "Legacy option (ignored, manifest is always apkhub_manifest.json)"
+
+[cmd.scan.flag.recursive]
+other = "Scan directories recursively"
+
+[cmd.scan.flag.pretty]
+other = "Pretty print JSON output"
+
+[cmd.scan.flag.full]
+other = "Perform full scan instead of incremental"
+
+[cmd.scan.flag.checkDeps]
+other = "Check dependencies before scanning"
+
+[cmd.scan.flag.progress]
+other = "Show scan progress"
+
+[cmd.scan.flag.outputDeprecated]
+other = "manifest is always saved as apkhub_manifest.json"
+
+# Init command
+[cmd.init.configExists]
+other = "⚠️  Configuration file {{.path}} already exists"
+
+[cmd.init.optionsTitle]
+other = "Options:"
+
+[cmd.init.optionForce]
+other = "  --force      Overwrite existing configuration"
+
+[cmd.init.optionUpdate]
+other = "  --update     Update existing configuration"
+
+[cmd.init.optionInteractive]
+other = "  --interactive Interactive configuration wizard"
+
+[cmd.init.configExistsAdvice]
+other = "Use --force to overwrite or --update to modify existing configuration"
+
+[cmd.init.overwriteConfig]
+other = "🔄 Overwriting existing configuration: {{.path}}"
+
+[cmd.init.createConfig]
+other = "📝 Creating new configuration: {{.path}}"
+
+[cmd.init.errCreateConfig]
+other = "Failed to create configuration file"
+
+[cmd.init.errCreateRepoStructure]
+other = "⚠️  Warning: failed to create repository structure: {{.error}}"
+
+[cmd.init.createdConfig]
+other = "✅ Configuration file created: {{.path}}"
+
+[cmd.init.repoInitialized]
+other = "📁 Repository structure initialized"
+
+["cmd.init.nextSteps"]
+other = "💡 Next steps:"
+
+["cmd.init.nextStepsEdit"]
+other = "   1. Edit the configuration file to customize settings"
+
+["cmd.init.nextStepsScan"]
+other = "   2. Run 'apkhub repo scan <directory>' to add APK files"
+
+["cmd.init.nextStepsStats"]
+other = "   3. Run 'apkhub repo stats' to view repository status"
+
+[cmd.init.updateConfig]
+other = "🔄 Updating existing configuration: {{.path}}"
+
+[cmd.init.errLoadExisting]
+other = "Failed to load existing config"
+
+[cmd.init.errValidateConfig]
+other = "Failed to validate config"
+
+[cmd.init.errCreateBackup]
+other = "⚠️  Warning: failed to create backup: {{.error}}"
+
+[cmd.init.backupCreated]
+other = "💾 Backup created: {{.path}}"
+
+[cmd.init.errSaveUpdated]
+other = "Failed to save updated config"
+
+[cmd.init.updateSuccess]
+other = "✅ Configuration updated successfully"
+
+[cmd.init.wizardTitle]
+other = "🧙 ApkHub Repository Configuration Wizard"
+
+[cmd.init.repoSettings]
+other = "📦 Repository Settings"
+
+[cmd.init.prompt.repoName]
+other = "Repository name"
+
+[cmd.init.prompt.repoDescription]
+other = "Repository description"
+
+[cmd.init.prompt.baseURL]
+other = "Base URL (optional)"
+
+[cmd.init.scanSettings]
+other = "🔧 Scanning Settings"
+
+[cmd.init.prompt.recursive]
+other = "Scan directories recursively"
+
+[cmd.init.prompt.parseInfo]
+other = "Parse detailed APK information"
+
+[cmd.init.errSaveConfig]
+other = "Failed to save configuration"
+
+[cmd.init.wizardCompleted]
+other = "✅ Interactive configuration completed: {{.path}}"
+
+[cmd.init.errCreateDirectory]
+other = "Failed to create directory {{.dir}}"
+
+[cmd.init.flag.force]
+other = "Overwrite existing configuration"
+
+[cmd.init.flag.interactive]
+other = "Interactive configuration wizard"
+
+[cmd.init.flag.update]
+other = "Update existing configuration"
+
+[cmd.init.flag.template]
+other = "Configuration template (default, minimal, advanced, development, local)"
+
+# List command
+[cmd.list.errLoadConfig]
+other = "Failed to load configuration"
+
+[cmd.list.errCreateRepo]
+other = "Failed to create repository"
+
+[cmd.list.errLoadManifest]
+other = "Failed to load manifest"
+
+[cmd.list.noPackages]
+other = "No packages found in repository."
+
+[cmd.list.packageNotFound]
+other = "Package {{.id}} not found"
+
+[cmd.list.packageDetailsTitle]
+other = "=== Package Details ==="
+
+[cmd.list.packageID]
+other = "Package ID: {{.id}}"
+
+[cmd.list.packageName]
+other = "Name: {{.name}}"
+
+[cmd.list.packageVersionCount]
+other = "Versions: {{.count}}"
+
+[cmd.list.packageLatest]
+other = "Latest: {{.version}}"
+
+[cmd.list.versionsTitle]
+other = "=== Versions ==="
+
+[cmd.list.versionHeader]
+other = "{{.version}} (Code: {{.code}}):"
+
+[cmd.list.versionSize]
+other = "  Size: {{.size}}"
+
+[cmd.list.versionSDK]
+other = "  Min SDK: {{.min}}, Target SDK: {{.target}}"
+
+[cmd.list.versionSHA]
+other = "  SHA256: {{.sha}}"
+
+[cmd.list.versionSignature]
+other = "  Signature: {{.sha}}..."
+
+[cmd.list.versionABI]
+other = "  ABIs: {{.abis}}"
+
+[cmd.list.versionDownload]
+other = "  Download: {{.url}}"
+
+[cmd.list.versionAdded]
+other = "  Added: {{.date}}"
+
+[cmd.list.versionSignatureVariant]
+other = "  ⚠️  Alternative signature variant"
+
+[cmd.list.columns.packageID]
+other = "Package ID"
+
+[cmd.list.columns.name]
+other = "Name"
+
+[cmd.list.columns.versions]
+other = "Versions"
+
+[cmd.list.columns.totalSize]
+other = "Total Size"
+
+[cmd.list.columns.lastUpdated]
+other = "Last Updated"
+
+[cmd.list.versionListItem]
+other = "{{.prefix}} {{.version}} (Code: {{.code}}) - {{.size}}"
+
+[cmd.list.summary]
+other = "Total: {{.packages}} packages, {{.apks}} APKs"
+
+[cmd.list.flag.package]
+other = "Show details for specific package ID"
+
+[cmd.list.flag.versions]
+other = "Show all versions for each package"
+
+[cmd.list.flag.sort]
+other = "Sort by: name, size, versions, updated"
+
+# Search command
+[cmd.search.errLoadConfig]
+other = "Failed to load config"
+
+[cmd.search.errCreateDirs]
+other = "Failed to create directories"
+
+[cmd.search.offline]
+other = "🔌 Network unavailable - searching cached data only"
+
+[cmd.search.errOfflineSearch]
+other = "Offline search failed"
+
+[cmd.search.searchingFor]
+other = "🔍 Searching for '{{.query}}'"
+
+[cmd.search.searchBucket]
+other = "in bucket '{{.bucket}}'"
+
+[cmd.search.searchCategory]
+other = "(category: {{.category}})"
+
+[cmd.search.errSearch]
+other = "Search failed"
+
+[cmd.search.noResults]
+other = "❌ No results found."
+
+[cmd.search.suggestionTitle]
+other = "💡 Try:"
+
+[cmd.search.suggestionTerm]
+other = "   • Using a different search term"
+
+[cmd.search.suggestionUpdate]
+other = "   • Updating buckets with 'apkhub bucket update'"
+
+[cmd.search.suggestionAdd]
+other = "   • Adding more buckets with 'apkhub bucket add'"
+
+[cmd.search.suggestionExact]
+other = "   • Using --exact for exact matches"
+
+[cmd.search.foundResults]
+other = "📱 Found {{.count}} result(s):"
+
+[cmd.search.resultHeader]
+other = "{{.index}}. {{.name}} ({{.id}})"
+
+[cmd.search.resultVersion]
+other = "   Version: {{.version}}"
+
+[cmd.search.resultBucket]
+other = "| Bucket: {{.bucket}}"
+
+[cmd.search.resultScore]
+other = "| Score: {{.score}}"
+
+[cmd.search.resultDescription]
+other = "   {{.description}}"
+
+[cmd.search.resultCategory]
+other = "   Category: {{.category}}"
+
+[cmd.search.limitNotice]
+other = "📄 Showing top {{.limit}} results. Use --limit to see more"
+
+[cmd.search.nextStepsTitle]
+other = "💡 Next steps:"
+
+[cmd.search.nextStepsInfo]
+other = "   • Use 'apkhub info <package-id>' for detailed information"
+
+[cmd.search.nextStepsInstall]
+other = "   • Use 'apkhub install <package-id>' to install an app"
+
+[cmd.search.columns.packageID]
+other = "PACKAGE ID"
+
+[cmd.search.columns.name]
+other = "NAME"
+
+[cmd.search.columns.version]
+other = "VERSION"
+
+[cmd.search.columns.bucket]
+other = "BUCKET"
+
+[cmd.search.columns.category]
+other = "CATEGORY"
+
+[cmd.search.columns.score]
+other = "SCORE"
+
+[cmd.search.columns.description]
+other = "DESCRIPTION"
+
+[cmd.search.resultsCount]
+other = "{{.count}} result(s) found."
+
+[cmd.search.flag.bucket]
+other = "Search in specific bucket only"
+
+[cmd.search.flag.minSDK]
+other = "Minimum SDK version"
+
+[cmd.search.flag.category]
+other = "Filter by category"
+
+[cmd.search.flag.limit]
+other = "Maximum number of results (0 = no limit)"
+
+[cmd.search.flag.sort]
+other = "Sort results by: relevance, name, version, size"
+
+[cmd.search.flag.format]
+other = "Output format: default, table, json"
+
+[cmd.search.flag.verbose]
+other = "Show detailed information"
+
+[cmd.search.flag.exact]
+other = "Exact match search"
+
+[cmd.search.flag.installed]
+other = "Show installation status"
+
+# Download command
+[cmd.download.errLoadConfig]
+other = "Failed to load config"
+
+[cmd.download.errCreateDirs]
+other = "Failed to create directories"
+
+[cmd.download.errDownload]
+other = "Download failed"
+
+[cmd.download.nextInstall]
+other = "Ready to install. Use 'apkhub install' to install the downloaded APK."
+
+[cmd.download.apkPath]
+other = "APK path: {{.path}}"
+
+[cmd.download.flag.version]
+other = "Download specific version"
+
+[cmd.download.flag.force]
+other = "Force re-download even if exists"
+
+[cmd.download.flag.noVerify]
+other = "Skip checksum verification"
+
+[cmd.download.flag.noInstall]
+other = "Download without prompting to install"
+
+[cmd.download.flag.output]
+other = "Output file path (default: auto-generated)"
+
+[cmd.download.flag.retries]
+other = "Number of retry attempts"
+
+[cmd.download.flag.timeout]
+other = "Download timeout in seconds"
+
+[cmd.download.flag.progress]
+other = "Show download progress"

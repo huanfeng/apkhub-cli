@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/huanfeng/apkhub-cli/internal/errors"
+	"github.com/huanfeng/apkhub-cli/internal/i18n"
 	"github.com/huanfeng/apkhub-cli/pkg/system"
 	"github.com/huanfeng/apkhub-cli/pkg/utils"
 	"github.com/spf13/cobra"
@@ -19,21 +20,13 @@ var (
 
 var doctorCmd = &cobra.Command{
 	Use:   "doctor",
-	Short: "Diagnose and fix system issues",
-	Long: `The doctor command performs system diagnostics to identify
-and optionally fix issues that might prevent ApkHub CLI from working properly.
-
-It checks:
-- Required dependencies (adb, aapt, aapt2)
-- File system access permissions
-- Network connectivity (optional)
-
-Note: Configuration files (apkhub.yaml) are only needed for self-hosted repositories.`,
+	Short: i18n.T("cmd.doctor.short"),
+	Long:  i18n.T("cmd.doctor.long"),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		logger := utils.GetGlobalLogger()
-		logger.Info("Starting system diagnostics...")
+		logger.Info(i18n.T("cmd.doctor.log.start"))
 
-		fmt.Println("🏥 ApkHub CLI System Doctor")
+		fmt.Println(i18n.T("cmd.doctor.title"))
 		fmt.Println(strings.Repeat("=", 50))
 
 		// Initialize checkers
@@ -45,9 +38,10 @@ Note: Configuration files (apkhub.yaml) are only needed for self-hosted reposito
 		var suggestions []string
 
 		// 1. Check dependencies
-		fmt.Println("\n🔍 Checking Dependencies...")
+		fmt.Println()
+		fmt.Println(i18n.T("cmd.doctor.check.dependencies"))
 		if err := checkDependencies(depManager, &allPassed, &issues, &suggestions); err != nil {
-			logger.Error("Dependency check failed: %v", err)
+			logger.Error(i18n.T("cmd.doctor.log.depFailed"), err)
 		}
 
 		// 2. Skip system resource checks - avoid accessing sensitive system data
@@ -57,56 +51,62 @@ Note: Configuration files (apkhub.yaml) are only needed for self-hosted reposito
 		// Configuration is optional and not required for basic CLI functionality
 
 		// 3. Check file system access
-		fmt.Println("\n📁 Checking File System Access...")
+		fmt.Println()
+		fmt.Println(i18n.T("cmd.doctor.check.fs"))
 		if err := checkFileSystemAccess(resourceChecker, &allPassed, &issues, &suggestions); err != nil {
-			logger.Error("File system check failed: %v", err)
+			logger.Error(i18n.T("cmd.doctor.log.fsFailed"), err)
 		}
 
 		// 4. Check network connectivity (if needed)
 		if doctorCheck == "all" || doctorCheck == "network" {
-			fmt.Println("\n🌐 Checking Network Connectivity...")
+			fmt.Println()
+			fmt.Println(i18n.T("cmd.doctor.check.network"))
 			networkChecker := system.NewNetworkChecker(logger)
 			if err := checkNetworkConnectivity(networkChecker, &allPassed, &issues, &suggestions); err != nil {
-				logger.Error("Network check failed: %v", err)
+				logger.Error(i18n.T("cmd.doctor.log.netFailed"), err)
 			}
 		}
 
 		// Display results
-		fmt.Println("\n" + strings.Repeat("=", 50))
-		fmt.Println("📊 DIAGNOSTIC RESULTS")
+		fmt.Println()
+		fmt.Println(strings.Repeat("=", 50))
+		fmt.Println(i18n.T("cmd.doctor.results.title"))
 		fmt.Println(strings.Repeat("=", 50))
 
 		if allPassed {
-			fmt.Println("✅ All checks passed! Your system is ready to use ApkHub CLI.")
+			fmt.Println(i18n.T("cmd.doctor.results.allPassed"))
 		} else {
-			fmt.Printf("❌ Found %d issues that need attention:\n\n", len(issues))
+			fmt.Printf(i18n.T("cmd.doctor.results.issueCount")+"\n\n", len(issues))
 
 			for i, issue := range issues {
-				fmt.Printf("%d. %s\n", i+1, issue)
+				fmt.Printf(i18n.T("cmd.doctor.results.issueItem")+"\n", i+1, issue)
 			}
 
 			if len(suggestions) > 0 {
-				fmt.Println("\n💡 Suggestions to fix these issues:")
+				fmt.Println()
+				fmt.Println(i18n.T("cmd.doctor.results.suggestionTitle"))
 				for i, suggestion := range suggestions {
-					fmt.Printf("%d. %s\n", i+1, suggestion)
+					fmt.Printf(i18n.T("cmd.doctor.results.suggestionItem")+"\n", i+1, suggestion)
 				}
 			}
 
 			if doctorFix {
-				fmt.Println("\n🔧 Attempting to fix issues automatically...")
+				fmt.Println()
+				fmt.Println(i18n.T("cmd.doctor.autofix.start"))
 				if err := attemptDoctorAutoFix(depManager, issues, suggestions); err != nil {
-					logger.Error("Auto-fix failed: %v", err)
+					logger.Error(i18n.T("cmd.doctor.log.autofixFailed"), err)
 					return errors.WrapError(err, errors.ErrorTypeConfiguration, "AUTO_FIX_FAILED",
-						"Failed to automatically fix issues").
-						WithSuggestion("Try fixing the issues manually using the suggestions above")
+						i18n.T("cmd.doctor.autofix.errWrap")).
+						WithSuggestion(i18n.T("cmd.doctor.autofix.suggestion"))
 				}
 			} else {
-				fmt.Println("\n💡 Run 'apkhub doctor --fix' to attempt automatic fixes")
+				fmt.Println()
+				fmt.Println(i18n.T("cmd.doctor.autofix.hint"))
 			}
 		}
 
 		if !allPassed {
-			return fmt.Errorf("system diagnostics found issues")
+			return fmt.Errorf(i18n.T("cmd.doctor.errFound"))
 		}
 
 		return nil
@@ -128,27 +128,27 @@ func checkDependencies(depManager system.DependencyManager, allPassed *bool, iss
 
 	for _, dep := range deps {
 		if dep.Available {
-			fmt.Printf("   ✅ %s: %s\n", dep.Name, dep.Version)
+			fmt.Printf(i18n.T("cmd.doctor.dep.available")+"\n", dep.Name, dep.Version)
 		} else {
 			if dep.Required {
-				fmt.Printf("   ❌ %s: Not found (required)\n", dep.Name)
+				fmt.Printf(i18n.T("cmd.doctor.dep.missingRequired")+"\n", dep.Name)
 				missingRequired = append(missingRequired, dep.Name)
 				*allPassed = false
 			} else {
-				fmt.Printf("   ⚠️  %s: Not found (optional)\n", dep.Name)
+				fmt.Printf(i18n.T("cmd.doctor.dep.missingOptional")+"\n", dep.Name)
 				missingOptional = append(missingOptional, dep.Name)
 			}
 		}
 	}
 
 	if len(missingRequired) > 0 {
-		*issues = append(*issues, fmt.Sprintf("Missing required dependencies: %s", strings.Join(missingRequired, ", ")))
-		*suggestions = append(*suggestions, "Install missing dependencies using your package manager")
-		*suggestions = append(*suggestions, "Run 'apkhub doctor --fix' to attempt automatic installation")
+		*issues = append(*issues, fmt.Sprintf(i18n.T("cmd.doctor.dep.issueRequired"), strings.Join(missingRequired, ", ")))
+		*suggestions = append(*suggestions, i18n.T("cmd.doctor.dep.suggestionInstall"))
+		*suggestions = append(*suggestions, i18n.T("cmd.doctor.dep.suggestionFix"))
 	}
 
 	if len(missingOptional) > 0 {
-		*suggestions = append(*suggestions, fmt.Sprintf("Consider installing optional dependencies for better functionality: %s", strings.Join(missingOptional, ", ")))
+		*suggestions = append(*suggestions, fmt.Sprintf(i18n.T("cmd.doctor.dep.suggestionOptional"), strings.Join(missingOptional, ", ")))
 	}
 
 	return nil
@@ -209,17 +209,17 @@ func checkConfiguration(allPassed *bool, issues *[]string, suggestions *[]string
 	result := configManager.ValidateConfig(configPath)
 
 	if result.Valid {
-		fmt.Printf("   ✅ Configuration file: Valid (%s)\n", configPath)
+		fmt.Printf(i18n.T("cmd.doctor.config.valid")+"\n", configPath)
 
 		// Show details if available
 		if count, exists := result.Details["config_keys"]; exists {
-			fmt.Printf("   ℹ️  Configuration sections: %v\n", count)
+			fmt.Printf(i18n.T("cmd.doctor.config.sections")+"\n", count)
 		}
 		if repoCount, exists := result.Details["repository_count"]; exists {
-			fmt.Printf("   ℹ️  Configured repositories: %v\n", repoCount)
+			fmt.Printf(i18n.T("cmd.doctor.config.repositories")+"\n", repoCount)
 		}
 	} else {
-		fmt.Printf("   ❌ Configuration file: Invalid (%s)\n", configPath)
+		fmt.Printf(i18n.T("cmd.doctor.config.invalid")+"\n", configPath)
 		*allPassed = false
 
 		// Add errors to issues
@@ -233,7 +233,7 @@ func checkConfiguration(allPassed *bool, issues *[]string, suggestions *[]string
 
 	// Show warnings
 	for _, warning := range result.Warnings {
-		fmt.Printf("   ⚠️  %s\n", warning)
+		fmt.Printf(i18n.T("cmd.doctor.config.warning")+"\n", warning)
 	}
 
 	// Add warnings as suggestions if not already failing
@@ -262,15 +262,15 @@ func checkFileSystemAccess(resourceChecker *system.ResourceChecker, allPassed *b
 	permIssues := resourceChecker.CheckPermissions(checks)
 
 	if len(permIssues) == 0 {
-		fmt.Printf("   ✅ File system access: OK\n")
+		fmt.Println(i18n.T("cmd.doctor.fs.ok"))
 	} else {
 		*allPassed = false
 		for _, issue := range permIssues {
-			fmt.Printf("   ❌ %s\n", issue)
+			fmt.Printf(i18n.T("cmd.doctor.fs.issue")+"\n", issue)
 			*issues = append(*issues, issue)
 		}
-		*suggestions = append(*suggestions, "Fix file/directory permissions")
-		*suggestions = append(*suggestions, "Ensure you have read/write access to working directory")
+		*suggestions = append(*suggestions, i18n.T("cmd.doctor.fs.suggestionPerm"))
+		*suggestions = append(*suggestions, i18n.T("cmd.doctor.fs.suggestionAccess"))
 	}
 
 	return nil
@@ -282,14 +282,14 @@ func checkNetworkConnectivity(networkChecker *system.NetworkChecker, allPassed *
 	basicStatus := networkChecker.CheckBasicConnectivity()
 
 	if basicStatus.Connected {
-		fmt.Printf("   ✅ Basic connectivity: OK (%.2fms)\n",
+		fmt.Printf(i18n.T("cmd.doctor.net.basic")+"\n",
 			float64(basicStatus.Latency.Nanoseconds())/1000000)
-		fmt.Printf("   ✅ DNS resolution: %v\n", basicStatus.DNSWorking)
-		fmt.Printf("   ✅ HTTPS connectivity: %v\n", basicStatus.HTTPSWorking)
+		fmt.Printf(i18n.T("cmd.doctor.net.dns")+"\n", basicStatus.DNSWorking)
+		fmt.Printf(i18n.T("cmd.doctor.net.https")+"\n", basicStatus.HTTPSWorking)
 	} else {
-		fmt.Printf("   ❌ Basic connectivity: Failed - %s\n", basicStatus.Error)
+		fmt.Printf(i18n.T("cmd.doctor.net.basicFail")+"\n", basicStatus.Error)
 		*allPassed = false
-		*issues = append(*issues, fmt.Sprintf("Network connectivity failed: %s", basicStatus.Error))
+		*issues = append(*issues, fmt.Sprintf(i18n.T("cmd.doctor.net.issue"), basicStatus.Error))
 
 		// Add specific suggestions based on error type
 		networkSuggestions := networkChecker.DiagnoseNetworkIssue(fmt.Errorf(basicStatus.Error))
@@ -306,7 +306,7 @@ func checkNetworkConnectivity(networkChecker *system.NetworkChecker, allPassed *
 	for name, result := range diagnostic.Results {
 		test := diagnostic.Tests[name]
 		if result.Connected {
-			fmt.Printf("   ✅ %s: OK (%.2fms)\n", name,
+			fmt.Printf(i18n.T("cmd.doctor.net.testOK")+"\n", name,
 				float64(result.Latency.Nanoseconds())/1000000)
 		} else {
 			status := "⚠️"
@@ -314,14 +314,13 @@ func checkNetworkConnectivity(networkChecker *system.NetworkChecker, allPassed *
 				status = "❌"
 				*allPassed = false
 			}
-			fmt.Printf("   %s %s: Failed - %s\n", status, name, result.Error)
+			fmt.Printf(i18n.T("cmd.doctor.net.testFail")+"\n", status, name, result.Error)
 			failedTests = append(failedTests, name)
 		}
 	}
 
 	if len(failedTests) > 0 {
-		*issues = append(*issues, fmt.Sprintf("Some network services unreachable: %s",
-			strings.Join(failedTests, ", ")))
+		*issues = append(*issues, fmt.Sprintf(i18n.T("cmd.doctor.net.unreachable"), strings.Join(failedTests, ", ")))
 		*suggestions = append(*suggestions, diagnostic.Suggestions...)
 	}
 
@@ -330,8 +329,8 @@ func checkNetworkConnectivity(networkChecker *system.NetworkChecker, allPassed *
 
 // attemptDoctorAutoFix attempts to automatically fix detected issues
 func attemptDoctorAutoFix(depManager system.DependencyManager, issues []string, suggestions []string) error {
-	fmt.Println("🔧 Auto-fix is not fully implemented yet")
-	fmt.Println("   Please follow the manual suggestions provided above")
+	fmt.Println(i18n.T("cmd.doctor.autofix.todo"))
+	fmt.Println(i18n.T("cmd.doctor.autofix.manual"))
 
 	// In a full implementation, this would:
 	// 1. Try to install missing dependencies
@@ -345,7 +344,7 @@ func attemptDoctorAutoFix(depManager system.DependencyManager, issues []string, 
 func init() {
 	rootCmd.AddCommand(doctorCmd)
 
-	doctorCmd.Flags().BoolVar(&doctorFix, "fix", false, "Attempt to automatically fix detected issues")
-	doctorCmd.Flags().BoolVar(&doctorVerbose, "verbose", false, "Show detailed diagnostic information")
-	doctorCmd.Flags().StringVar(&doctorCheck, "check", "basic", "Type of check to perform: basic, all, network")
+	doctorCmd.Flags().BoolVar(&doctorFix, "fix", false, i18n.T("cmd.doctor.flag.fix"))
+	doctorCmd.Flags().BoolVar(&doctorVerbose, "verbose", false, i18n.T("cmd.doctor.flag.verbose"))
+	doctorCmd.Flags().StringVar(&doctorCheck, "check", "basic", i18n.T("cmd.doctor.flag.check"))
 }

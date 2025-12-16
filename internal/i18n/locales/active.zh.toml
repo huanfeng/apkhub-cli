@@ -1,0 +1,1071 @@
+# 根命令与通用
+[cmd.root.short]
+other = "ApkHub CLI - APK 仓库管理工具"
+
+[cmd.root.long]
+other = "ApkHub CLI 是一个用于管理分布式 APK 仓库的命令行工具，支持解析 APK、生成仓库索引和维护 APK 集合。"
+
+[errors.generic]
+other = "错误：{{.error}}"
+
+[flags.config]
+other = "配置文件（可选，自建仓库时使用）"
+
+[flags.workDir]
+other = "处理相对路径的工作目录"
+
+[flags.verbose]
+other = "开启详细日志"
+
+[flags.debug]
+other = "开启调试日志"
+
+[flags.logFile]
+other = "将日志写入文件"
+
+[flags.noColor]
+other = "禁用彩色输出"
+
+[flags.lang]
+other = "输出语言（默认自动检测）"
+
+# 命令描述
+[cmd.repo.short]
+other = "管理 APK 仓库"
+
+[cmd.repo.long]
+other = "ApkHub 的仓库管理命令，包含初始化、扫描、维护和导出等操作。"
+
+[cmd.scan.short]
+other = "扫描目录并更新仓库"
+
+[cmd.scan.long]
+other = "扫描目录中的 APK/XAPK/APKM 文件并更新仓库索引，默认增量扫描。"
+
+[cmd.init.short]
+other = "初始化新的 ApkHub 仓库配置"
+
+[cmd.init.long]
+other = "创建 ApkHub 仓库配置文件，支持交互式配置、模板和更新现有配置。"
+
+[cmd.list.short]
+other = "列出仓库中的包"
+
+[cmd.list.long]
+other = "列出仓库中所有包，可过滤和排序。"
+
+[cmd.search.short]
+other = "搜索应用"
+
+[cmd.search.long]
+other = "在所有已启用的仓库中搜索应用。"
+
+[cmd.download.short]
+other = "下载应用"
+
+[cmd.download.long]
+other = "从已配置的仓库下载应用 APK。"
+
+[cmd.install.short]
+other = "使用 adb 安装应用"
+
+[cmd.install.long]
+other = "通过 adb 将应用安装到已连接设备。可指定包名下载安装，也可直接安装本地 APK。"
+
+[cmd.doctor.short]
+other = "诊断并修复系统问题"
+
+[cmd.doctor.long]
+other = "执行系统诊断，找出并可选地修复阻碍 ApkHub CLI 正常运行的问题。"
+
+[cmd.doctor.log.start]
+other = "正在开始系统诊断..."
+
+[cmd.doctor.title]
+other = "🏥 ApkHub CLI 系统诊断"
+
+[cmd.doctor.check.dependencies]
+other = "🔍 正在检查依赖..."
+
+[cmd.doctor.check.fs]
+other = "📁 正在检查文件系统访问..."
+
+[cmd.doctor.check.network]
+other = "🌐 正在检查网络连通性..."
+
+[cmd.doctor.log.depFailed]
+other = "依赖检查失败"
+
+[cmd.doctor.log.fsFailed]
+other = "文件系统检查失败"
+
+[cmd.doctor.log.netFailed]
+other = "网络检查失败"
+
+[cmd.doctor.results.title]
+other = "📊 诊断结果"
+
+[cmd.doctor.results.allPassed]
+other = "✅ 所有检查通过，系统已准备就绪。"
+
+[cmd.doctor.results.issueCount]
+other = "❌ 发现 %d 个需要关注的问题："
+
+[cmd.doctor.results.issueItem]
+other = "%d. %s"
+
+[cmd.doctor.results.suggestionTitle]
+other = "💡 解决建议："
+
+[cmd.doctor.results.suggestionItem]
+other = "%d. %s"
+
+[cmd.doctor.autofix.start]
+other = "🔧 正在尝试自动修复..."
+
+[cmd.doctor.log.autofixFailed]
+other = "自动修复失败"
+
+[cmd.doctor.autofix.errWrap]
+other = "自动修复问题失败"
+
+[cmd.doctor.autofix.suggestion]
+other = "请根据上面的建议手动修复"
+
+[cmd.doctor.autofix.hint]
+other = "💡 运行 'apkhub doctor --fix' 尝试自动修复"
+
+[cmd.doctor.errFound]
+other = "系统诊断发现问题"
+
+[cmd.doctor.dep.available]
+other = "   ✅ %s：%s"
+
+[cmd.doctor.dep.missingRequired]
+other = "   ❌ %s：未找到（必需）"
+
+[cmd.doctor.dep.missingOptional]
+other = "   ⚠️  %s：未找到（可选）"
+
+[cmd.doctor.dep.issueRequired]
+other = "缺少必需依赖：%s"
+
+[cmd.doctor.dep.suggestionInstall]
+other = "使用包管理器安装缺失的依赖"
+
+[cmd.doctor.dep.suggestionFix]
+other = "运行 'apkhub doctor --fix' 尝试自动安装"
+
+[cmd.doctor.dep.suggestionOptional]
+other = "建议安装可选依赖以获得更好功能：%s"
+
+[cmd.doctor.config.valid]
+other = "   ✅ 配置文件有效（%s）"
+
+[cmd.doctor.config.sections]
+other = "   ℹ️  配置段数量：%v"
+
+[cmd.doctor.config.repositories]
+other = "   ℹ️  已配置仓库数：%v"
+
+[cmd.doctor.config.invalid]
+other = "   ❌ 配置文件无效（%s）"
+
+[cmd.doctor.config.warning]
+other = "   ⚠️  %s"
+
+[cmd.doctor.fs.ok]
+other = "   ✅ 文件系统访问正常"
+
+[cmd.doctor.fs.issue]
+other = "   ❌ %s"
+
+[cmd.doctor.fs.suggestionPerm]
+other = "修复文件/目录权限"
+
+[cmd.doctor.fs.suggestionAccess]
+other = "确保对工作目录有读写权限"
+
+[cmd.doctor.net.basic]
+other = "   ✅ 基础连通性正常（%.2fms）"
+
+[cmd.doctor.net.dns]
+other = "   ✅ DNS 解析：%v"
+
+[cmd.doctor.net.https]
+other = "   ✅ HTTPS 连通性：%v"
+
+[cmd.doctor.net.basicFail]
+other = "   ❌ 基础连通性失败：%s"
+
+[cmd.doctor.net.issue]
+other = "网络连通性失败：%s"
+
+[cmd.doctor.net.testOK]
+other = "   ✅ %s：正常（%.2fms）"
+
+[cmd.doctor.net.testFail]
+other = "   %s %s：失败 - %s"
+
+[cmd.doctor.net.unreachable]
+other = "部分网络服务不可达：%s"
+
+[cmd.doctor.autofix.todo]
+other = "🔧 自动修复尚未完全实现"
+
+[cmd.doctor.autofix.manual]
+other = "   请按照上面的手动建议进行修复"
+
+[cmd.doctor.flag.fix]
+other = "尝试自动修复发现的问题"
+
+[cmd.doctor.flag.verbose]
+other = "显示详细诊断信息"
+
+[cmd.doctor.flag.check]
+other = "检查类型：basic、all、network"
+
+[cmd.version.short]
+other = "显示版本信息"
+
+[cmd.version.long]
+other = "展示 ApkHub CLI 的详细版本信息。"
+
+# 其他命令描述（仅元信息）
+[cmd.add.short]
+other = "添加新的仓库源"
+
+[cmd.add.long]
+other = "向 ApkHub 添加新的仓库或包源。"
+
+[cmd.bucket.short]
+other = "管理仓库"
+
+[cmd.bucket.long]
+other = "列出、添加、删除、启用/禁用和更新仓库的命令。"
+
+[cmd.bucket.list.short]
+other = "列出所有已配置的仓库"
+
+[cmd.bucket.list.empty]
+other = "尚未配置仓库，可使用 'apkhub bucket add' 添加。"
+
+[cmd.bucket.list.header]
+other = "NAME\tDISPLAY NAME\tURL\tENABLED\tLAST UPDATED"
+
+[cmd.bucket.list.default]
+other = "* 默认仓库：{{.name}}"
+
+[cmd.bucket.add.short]
+other = "添加仓库"
+
+[cmd.bucket.add.long]
+other = "添加一个新的仓库源，可为 HTTP/HTTPS 地址或本地目录路径。"
+
+[cmd.bucket.add.start]
+other = "📦 正在添加 {{.type}} 仓库 '{{.name}}'..."
+
+[cmd.bucket.add.source]
+other = "   来源：{{.source}}"
+
+[cmd.bucket.add.fetch]
+other = "正在获取仓库清单..."
+
+[cmd.bucket.add.fetchFail]
+other = "警告：获取清单失败：{{.error}}"
+
+[cmd.bucket.add.fetchRetry]
+other = "稍后可用 'apkhub bucket update' 重试更新"
+
+[cmd.bucket.add.fetchSuccess]
+other = "✓ 仓库清单获取成功"
+
+[cmd.bucket.add.success]
+other = "✓ 已添加仓库 '{{.name}}' ({{.source}})"
+
+[cmd.bucket.remove.short]
+other = "删除仓库"
+
+[cmd.bucket.remove.confirm]
+other = "删除仓库 '{{.name}}'? [y/N]: "
+
+[cmd.bucket.remove.cancel]
+other = "已取消。"
+
+[cmd.bucket.remove.success]
+other = "✓ 已删除仓库 '{{.name}}'"
+
+[cmd.bucket.update.short]
+other = "更新仓库清单"
+
+[cmd.bucket.update.single]
+other = "正在更新仓库 '{{.name}}'..."
+
+[cmd.bucket.update.singleSuccess]
+other = "✓ 仓库 '{{.name}}' 更新完成"
+
+[cmd.bucket.update.allSuccess]
+other = "✓ 所有仓库均已更新"
+
+[cmd.bucket.enable.short]
+other = "启用仓库"
+
+[cmd.bucket.disable.short]
+other = "禁用仓库"
+
+[cmd.bucket.health.short]
+other = "检查仓库健康状态"
+
+[cmd.bucket.health.long]
+other = "检查仓库健康状态；未指定名称时检查所有已启用的仓库。"
+
+[cmd.bucket.health.checking]
+other = "🔍 正在检查仓库 '{{.name}}' 的健康状态..."
+
+[cmd.bucket.health.checkFail]
+other = "❌ 健康检查失败：{{.error}}"
+
+[cmd.bucket.health.checkAll]
+other = "🔍 正在检查所有已启用仓库的健康状态..."
+
+[cmd.bucket.health.summaryTitle]
+other = "📊 健康摘要："
+
+[cmd.bucket.health.summaryHealthy]
+other = "   ✅ 健康：%d"
+
+[cmd.bucket.health.summaryDegraded]
+other = "   ⚠️  降级：%d"
+
+[cmd.bucket.health.summaryUnhealthy]
+other = "   ❌ 不健康：%d"
+
+[cmd.bucket.health.summaryUnknown]
+other = "   ❓ 未知：%d"
+
+[cmd.bucket.status.short]
+other = "显示仓库状态与统计"
+
+[cmd.bucket.status.title]
+other = "📊 仓库状态报告"
+
+[cmd.bucket.status.configTitle]
+other = "📋 配置："
+
+[cmd.bucket.status.total]
+other = "   仓库总数：%d"
+
+[cmd.bucket.status.enabled]
+other = "   已启用仓库：%d"
+
+[cmd.bucket.status.default]
+other = "   默认仓库：%s"
+
+[cmd.bucket.status.cacheDir]
+other = "   缓存目录：%s"
+
+[cmd.bucket.status.cacheTTL]
+other = "   缓存 TTL：%d 秒"
+
+[cmd.bucket.status.healthChecks]
+other = "🏥 正在执行健康检查..."
+
+[cmd.bucket.status.cacheTitle]
+other = "💾 缓存状态："
+
+[cmd.bucket.errLoadConfig]
+other = "加载配置失败"
+
+[cmd.bucket.errInvalidSource]
+other = "无效的仓库源"
+
+[cmd.bucket.errAdd]
+other = "添加仓库失败"
+
+[cmd.bucket.errRemove]
+other = "删除仓库失败"
+
+[cmd.bucket.errUpdate]
+other = "更新仓库失败"
+
+[cmd.bucket.errNotFound]
+other = "未找到仓库 '{{.name}}'"
+
+[cmd.bucket.setStatus.enabled]
+other = "已启用"
+
+[cmd.bucket.setStatus.disabled]
+other = "已禁用"
+
+[cmd.bucket.setStatus.success]
+other = "✓ 仓库 '{{.name}}' {{.status}}"
+
+[cmd.bucket.health.reportTitle]
+other = "🏥 仓库 '{{.name}}' 的健康报告："
+
+[cmd.bucket.health.url]
+other = "   URL：%s"
+
+[cmd.bucket.health.status]
+other = "   状态：%s %s"
+
+[cmd.bucket.health.lastCheck]
+other = "   上次检查：%s"
+
+[cmd.bucket.health.lastSuccess]
+other = "   上次成功：%s"
+
+[cmd.bucket.health.never]
+other = "   上次成功：从未"
+
+[cmd.bucket.health.responseTime]
+other = "   响应时间：%dms"
+
+[cmd.bucket.health.errorCount]
+other = "   错误次数：%d"
+
+[cmd.bucket.health.consecutiveFails]
+other = "   连续失败：%d"
+
+[cmd.bucket.health.lastError]
+other = "   最新错误：%s"
+
+[cmd.bucket.cache.missing]
+other = "   缓存目录不存在：%s"
+
+[cmd.bucket.cache.readErr]
+other = "   读取缓存目录出错：%v"
+
+[cmd.bucket.cache.fileCount]
+other = "   缓存文件数：%d"
+
+[cmd.bucket.cache.totalSize]
+other = "   缓存总大小：%s"
+
+[cmd.bucket.cache.files]
+other = "   文件：%s"
+
+[cmd.cache.short]
+other = "管理缓存"
+
+[cmd.cache.long]
+other = "查看或清理 ApkHub 缓存。"
+
+[cmd.clean.short]
+other = "清理仓库产物"
+
+[cmd.clean.long]
+other = "清理生成的产物或临时文件。"
+
+[cmd.deps.short]
+other = "显示依赖"
+
+[cmd.deps.long]
+other = "展示指定命令的依赖状态。"
+
+[cmd.devices.short]
+other = "列出设备"
+
+[cmd.devices.long]
+other = "列出已连接的 Android 设备及其状态。"
+
+[cmd.export.short]
+other = "导出仓库数据"
+
+[cmd.export.long]
+other = "将仓库数据导出为可分发格式。"
+
+[cmd.import.short]
+other = "导入仓库数据"
+
+[cmd.import.long]
+other = "从文件或归档中导入仓库数据。"
+
+[cmd.info.short]
+other = "显示应用信息"
+
+[cmd.info.long]
+other = "显示指定包的详细信息。"
+
+[cmd.parse.short]
+other = "解析 APK 文件"
+
+[cmd.parse.long]
+other = "解析 APK 文件并展示提取的元数据。"
+
+[cmd.parserInfo.short]
+other = "解析器信息"
+
+[cmd.parserInfo.long]
+other = "显示可用 APK 解析器的相关信息。"
+
+[cmd.stats.short]
+other = "显示仓库统计"
+
+[cmd.stats.long]
+other = "展示仓库的统计信息。"
+
+[cmd.update.short]
+other = "更新仓库或桶"
+
+[cmd.update.long]
+other = "更新仓库清单或桶数据。"
+
+[cmd.verify.short]
+other = "校验仓库完整性"
+
+[cmd.verify.long]
+other = "校验仓库文件与清单的一致性。"
+
+# 扫描命令
+[cmd.scan.deps.limited]
+other = "在有限的 APK 解析能力下继续执行..."
+
+[cmd.scan.errInvalidDir]
+other = "无效的目录路径"
+
+[cmd.scan.errLoadConfig]
+other = "加载配置失败"
+
+[cmd.scan.errCreateRepo]
+other = "创建仓库失败"
+
+[cmd.scan.errInitRepo]
+other = "初始化仓库失败"
+
+[cmd.scan.scanningDirectory]
+other = "扫描目录：{{.path}}"
+
+[cmd.scan.repositoryPath]
+other = "仓库路径：{{.path}}"
+
+["cmd.scan.mode"]
+other = "模式：{{.mode}}"
+
+["cmd.scan.mode_full"]
+other = "全量扫描"
+
+["cmd.scan.mode_incremental"]
+other = "增量扫描"
+
+["cmd.scan.warnLoadExisting"]
+other = "警告：加载现有信息失败，将执行全量扫描：{{.error}}"
+
+["cmd.scan.loadedExisting"]
+other = "已加载 {{.count}} 条已存在的 APK 信息"
+
+[cmd.scan.progress.label]
+other = "扫描 APK"
+
+[cmd.scan.progress.counting]
+other = "🔍 正在统计待处理文件..."
+
+[cmd.scan.progress.found]
+other = "📁 找到 {{.count}} 个待处理的 APK 文件"
+
+[cmd.scan.errAccess]
+other = "访问 {{.path}} 出错"
+
+[cmd.scan.skipNormalized]
+other = "跳过（已规范化）：{{.name}}"
+
+[cmd.scan.progress.processing]
+other = "处理 {{.name}}"
+
+[cmd.scan.skipUnchanged]
+other = "跳过（未变更）：{{.name}}"
+
+[cmd.scan.skipDuplicate]
+other = "跳过（重复哈希）：{{.name}}"
+
+[cmd.scan.processing]
+other = "处理：{{.name}}"
+
+[cmd.scan.errParse]
+other = "解析 {{.name}} 失败"
+
+[cmd.scan.copying]
+other = "  复制到仓库：{{.name}}"
+
+[cmd.scan.errCopy]
+other = "复制 {{.name}} 失败"
+
+[cmd.scan.errSaveInfo]
+other = "保存 {{.name}} 信息失败"
+
+[cmd.scan.errWalk]
+other = "遍历目录失败"
+
+[cmd.scan.progress.finished]
+other = "扫描完成"
+
+[cmd.scan.updateManifest]
+other = "正在更新仓库清单..."
+
+[cmd.scan.errUpdateManifest]
+other = "更新清单失败"
+
+[cmd.scan.deps.checking]
+other = "🔍 正在检查 repo scan 所需依赖..."
+
+[cmd.scan.deps.available]
+other = "   ✅ {{.name}}：{{.version}}"
+
+[cmd.scan.deps.notAvailable]
+other = "{{.name}} 不可用"
+
+[cmd.scan.deps.none]
+other = "没有可用的 APK 解析工具，部分 APK 可能无法解析"
+
+[cmd.scan.deps.warningList]
+other = "   ⚠️  {{.warnings}}"
+
+[cmd.scan.deps.suggestion]
+other = "   💡 运行 'apkhub doctor --fix' 以安装缺失的工具"
+
+[cmd.scan.results.title]
+other = "📊 扫描结果"
+
+[cmd.scan.results.totalTime]
+other = "⏱️  总耗时：{{.duration}}"
+
+[cmd.scan.results.filesScanned]
+other = "📁 扫描文件：{{.count}}"
+
+[cmd.scan.results.newAPKs]
+other = "🆕 新增 APK：{{.count}}"
+
+[cmd.scan.results.updatedAPKs]
+other = "🔄 更新 APK：{{.count}}"
+
+[cmd.scan.results.unchangedAPKs]
+other = "⏭️  未变更 APK：{{.count}}"
+
+[cmd.scan.results.errors]
+zero = "✅ 错误：0"
+one = "❌ 错误：{{.count}}"
+other = "❌ 错误：{{.count}}"
+
+[cmd.scan.results.avgTime]
+other = "📈 单文件平均时间：{{.duration}}"
+
+[cmd.scan.results.errorListTitle]
+other = "❌ 发生的错误（{{.count}}）："
+
+[cmd.scan.results.errorItem]
+other = "   {{.index}}. {{.error}}"
+
+[cmd.scan.results.troubleshootingTitle]
+other = "💡 排查建议："
+
+[cmd.scan.results.tipDoctor]
+other = "   • 运行 'apkhub doctor' 检查依赖"
+
+[cmd.scan.results.tipVerbose]
+other = "   • 使用 --verbose 查看详细错误信息"
+
+[cmd.scan.results.tipIntegrity]
+other = "   • 确认 APK 文件未损坏"
+
+[cmd.scan.results.success]
+other = "🎉 仓库更新成功！"
+
+[cmd.scan.results.partial]
+other = "⚠️  仓库更新完成但存在错误"
+
+[cmd.scan.results.failure]
+other = "❌ 仓库更新失败"
+
+[cmd.scan.flag.output]
+other = "遗留选项（忽略，清单始终为 apkhub_manifest.json）"
+
+[cmd.scan.flag.recursive]
+other = "递归扫描子目录"
+
+[cmd.scan.flag.pretty]
+other = "美化 JSON 输出"
+
+[cmd.scan.flag.full]
+other = "执行全量扫描（默认增量）"
+
+[cmd.scan.flag.checkDeps]
+other = "扫描前检查依赖"
+
+[cmd.scan.flag.progress]
+other = "显示扫描进度"
+
+[cmd.scan.flag.outputDeprecated]
+other = "清单始终保存为 apkhub_manifest.json"
+
+# 初始化命令
+[cmd.init.configExists]
+other = "⚠️  配置文件 {{.path}} 已存在"
+
+[cmd.init.optionsTitle]
+other = "选项："
+
+[cmd.init.optionForce]
+other = "  --force      覆盖现有配置"
+
+[cmd.init.optionUpdate]
+other = "  --update     更新现有配置"
+
+[cmd.init.optionInteractive]
+other = "  --interactive 交互式配置向导"
+
+[cmd.init.configExistsAdvice]
+other = "使用 --force 覆盖或 --update 修改现有配置"
+
+[cmd.init.overwriteConfig]
+other = "🔄 正在覆盖配置：{{.path}}"
+
+[cmd.init.createConfig]
+other = "📝 正在创建配置：{{.path}}"
+
+[cmd.init.errCreateConfig]
+other = "创建配置文件失败"
+
+[cmd.init.errCreateRepoStructure]
+other = "⚠️  警告：创建仓库目录结构失败：{{.error}}"
+
+[cmd.init.createdConfig]
+other = "✅ 配置文件已创建：{{.path}}"
+
+[cmd.init.repoInitialized]
+other = "📁 仓库目录结构已初始化"
+
+["cmd.init.nextSteps"]
+other = "💡 后续步骤："
+
+["cmd.init.nextStepsEdit"]
+other = "   1. 编辑配置文件以自定义设置"
+
+["cmd.init.nextStepsScan"]
+other = "   2. 运行 'apkhub repo scan <directory>' 添加 APK"
+
+["cmd.init.nextStepsStats"]
+other = "   3. 运行 'apkhub repo stats' 查看仓库状态"
+
+[cmd.init.updateConfig]
+other = "🔄 正在更新现有配置：{{.path}}"
+
+[cmd.init.errLoadExisting]
+other = "加载现有配置失败"
+
+[cmd.init.errValidateConfig]
+other = "校验配置失败"
+
+[cmd.init.errCreateBackup]
+other = "⚠️  警告：创建备份失败：{{.error}}"
+
+[cmd.init.backupCreated]
+other = "💾 备份已创建：{{.path}}"
+
+[cmd.init.errSaveUpdated]
+other = "保存更新配置失败"
+
+[cmd.init.updateSuccess]
+other = "✅ 配置更新成功"
+
+[cmd.init.wizardTitle]
+other = "🧙 ApkHub 仓库配置向导"
+
+[cmd.init.repoSettings]
+other = "📦 仓库设置"
+
+[cmd.init.prompt.repoName]
+other = "仓库名称"
+
+[cmd.init.prompt.repoDescription]
+other = "仓库描述"
+
+[cmd.init.prompt.baseURL]
+other = "基础下载地址（可选）"
+
+[cmd.init.scanSettings]
+other = "🔧 扫描设置"
+
+[cmd.init.prompt.recursive]
+other = "是否递归扫描子目录"
+
+[cmd.init.prompt.parseInfo]
+other = "是否解析 APK 详细信息"
+
+[cmd.init.errSaveConfig]
+other = "保存配置失败"
+
+[cmd.init.wizardCompleted]
+other = "✅ 交互式配置完成：{{.path}}"
+
+[cmd.init.errCreateDirectory]
+other = "创建目录 {{.dir}} 失败"
+
+[cmd.init.flag.force]
+other = "覆盖现有配置"
+
+[cmd.init.flag.interactive]
+other = "开启交互式配置向导"
+
+[cmd.init.flag.update]
+other = "更新现有配置"
+
+[cmd.init.flag.template]
+other = "配置模板（default、minimal、advanced、development、local）"
+
+# 列表命令
+[cmd.list.errLoadConfig]
+other = "加载配置失败"
+
+[cmd.list.errCreateRepo]
+other = "创建仓库失败"
+
+[cmd.list.errLoadManifest]
+other = "加载清单失败"
+
+[cmd.list.noPackages]
+other = "仓库中没有包。"
+
+[cmd.list.packageNotFound]
+other = "未找到包 {{.id}}"
+
+[cmd.list.packageDetailsTitle]
+other = "=== 包详情 ==="
+
+[cmd.list.packageID]
+other = "包名：{{.id}}"
+
+[cmd.list.packageName]
+other = "名称：{{.name}}"
+
+[cmd.list.packageVersionCount]
+other = "版本数：{{.count}}"
+
+[cmd.list.packageLatest]
+other = "最新版本：{{.version}}"
+
+[cmd.list.versionsTitle]
+other = "=== 版本列表 ==="
+
+[cmd.list.versionHeader]
+other = "{{.version}}（版本号：{{.code}}）："
+
+[cmd.list.versionSize]
+other = "  大小：{{.size}}"
+
+[cmd.list.versionSDK]
+other = "  最低 SDK：{{.min}}，目标 SDK：{{.target}}"
+
+[cmd.list.versionSHA]
+other = "  SHA256：{{.sha}}"
+
+[cmd.list.versionSignature]
+other = "  签名：{{.sha}}..."
+
+[cmd.list.versionABI]
+other = "  ABI：{{.abis}}"
+
+[cmd.list.versionDownload]
+other = "  下载：{{.url}}"
+
+[cmd.list.versionAdded]
+other = "  添加时间：{{.date}}"
+
+[cmd.list.versionSignatureVariant]
+other = "  ⚠️  签名变体"
+
+[cmd.list.columns.packageID]
+other = "包名"
+
+[cmd.list.columns.name]
+other = "名称"
+
+[cmd.list.columns.versions]
+other = "版本数"
+
+[cmd.list.columns.totalSize]
+other = "总大小"
+
+[cmd.list.columns.lastUpdated]
+other = "最近更新"
+
+[cmd.list.versionListItem]
+other = "{{.prefix}} {{.version}}（版本号：{{.code}}）- {{.size}}"
+
+[cmd.list.summary]
+other = "共 {{.packages}} 个包，{{.apks}} 个 APK"
+
+[cmd.list.flag.package]
+other = "显示指定包名的详情"
+
+[cmd.list.flag.versions]
+other = "显示每个包的所有版本"
+
+[cmd.list.flag.sort]
+other = "排序字段：name、size、versions、updated"
+
+# 搜索命令
+[cmd.search.errLoadConfig]
+other = "加载配置失败"
+
+[cmd.search.errCreateDirs]
+other = "创建目录失败"
+
+[cmd.search.offline]
+other = "🔌 网络不可用，仅搜索本地缓存"
+
+[cmd.search.errOfflineSearch]
+other = "离线搜索失败"
+
+[cmd.search.searchingFor]
+other = "🔍 正在搜索“{{.query}}”"
+
+[cmd.search.searchBucket]
+other = "于仓库“{{.bucket}}”"
+
+[cmd.search.searchCategory]
+other = "(分类：{{.category}})"
+
+[cmd.search.errSearch]
+other = "搜索失败"
+
+[cmd.search.noResults]
+other = "❌ 未找到结果。"
+
+[cmd.search.suggestionTitle]
+other = "💡 试试："
+
+[cmd.search.suggestionTerm]
+other = "   • 使用不同的关键词"
+
+[cmd.search.suggestionUpdate]
+other = "   • 运行 'apkhub bucket update' 更新仓库"
+
+[cmd.search.suggestionAdd]
+other = "   • 运行 'apkhub bucket add' 添加更多仓库"
+
+[cmd.search.suggestionExact]
+other = "   • 使用 --exact 精确匹配"
+
+[cmd.search.foundResults]
+other = "📱 找到 {{.count}} 条结果："
+
+[cmd.search.resultHeader]
+other = "{{.index}}. {{.name}}（{{.id}}）"
+
+[cmd.search.resultVersion]
+other = "   版本：{{.version}}"
+
+[cmd.search.resultBucket]
+other = "| 仓库：{{.bucket}}"
+
+[cmd.search.resultScore]
+other = "| 评分：{{.score}}"
+
+[cmd.search.resultDescription]
+other = "   {{.description}}"
+
+[cmd.search.resultCategory]
+other = "   分类：{{.category}}"
+
+[cmd.search.limitNotice]
+other = "📄 正在显示前 {{.limit}} 条结果，可用 --limit 查看更多"
+
+[cmd.search.nextStepsTitle]
+other = "💡 后续操作："
+
+[cmd.search.nextStepsInfo]
+other = "   • 使用 'apkhub info <package-id>' 查看详情"
+
+[cmd.search.nextStepsInstall]
+other = "   • 使用 'apkhub install <package-id>' 安装应用"
+
+[cmd.search.columns.packageID]
+other = "包名"
+
+[cmd.search.columns.name]
+other = "名称"
+
+[cmd.search.columns.version]
+other = "版本"
+
+[cmd.search.columns.bucket]
+other = "仓库"
+
+[cmd.search.columns.category]
+other = "分类"
+
+[cmd.search.columns.score]
+other = "评分"
+
+[cmd.search.columns.description]
+other = "描述"
+
+[cmd.search.resultsCount]
+other = "共找到 {{.count}} 条结果。"
+
+[cmd.search.flag.bucket]
+other = "仅在指定仓库中搜索"
+
+[cmd.search.flag.minSDK]
+other = "最低 SDK 版本"
+
+[cmd.search.flag.category]
+other = "按分类过滤"
+
+[cmd.search.flag.limit]
+other = "最大结果数（0 表示不限）"
+
+[cmd.search.flag.sort]
+other = "排序方式：relevance、name、version、size"
+
+[cmd.search.flag.format]
+other = "输出格式：default、table、json"
+
+[cmd.search.flag.verbose]
+other = "显示详细信息"
+
+[cmd.search.flag.exact]
+other = "精确匹配搜索"
+
+[cmd.search.flag.installed]
+other = "显示安装状态"
+
+# 下载命令
+[cmd.download.errLoadConfig]
+other = "加载配置失败"
+
+[cmd.download.errCreateDirs]
+other = "创建目录失败"
+
+[cmd.download.errDownload]
+other = "下载失败"
+
+[cmd.download.nextInstall]
+other = "准备安装。可使用 'apkhub install' 安装已下载的 APK。"
+
+[cmd.download.apkPath]
+other = "APK 路径：{{.path}}"
+
+[cmd.download.flag.version]
+other = "下载指定版本"
+
+[cmd.download.flag.force]
+other = "即使已存在也重新下载"
+
+[cmd.download.flag.noVerify]
+other = "跳过校验"
+
+[cmd.download.flag.noInstall]
+other = "仅下载，不提示安装"
+
+[cmd.download.flag.output]
+other = "输出文件路径（默认自动生成）"
+
+[cmd.download.flag.retries]
+other = "重试次数"
+
+[cmd.download.flag.timeout]
+other = "下载超时时间（秒）"
+
+[cmd.download.flag.progress]
+other = "显示下载进度"

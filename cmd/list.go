@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/huanfeng/apkhub-cli/internal/config"
+	"github.com/huanfeng/apkhub-cli/internal/i18n"
 	"github.com/huanfeng/apkhub-cli/pkg/models"
 	"github.com/huanfeng/apkhub-cli/pkg/repo"
 	"github.com/spf13/cobra"
@@ -25,23 +26,23 @@ var listCmd = &cobra.Command{
 		// Load configuration
 		cfg, err := config.Load(cfgFile)
 		if err != nil {
-			return fmt.Errorf("failed to load configuration: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.list.errLoadConfig"), err)
 		}
 
 		// Create repository instance
 		repository, err := repo.NewRepository(workDir, cfg)
 		if err != nil {
-			return fmt.Errorf("failed to create repository: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.list.errCreateRepo"), err)
 		}
 
 		// Load manifest
 		manifest, err := repository.BuildManifestFromInfos()
 		if err != nil {
-			return fmt.Errorf("failed to load manifest: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.list.errLoadManifest"), err)
 		}
 
 		if len(manifest.Packages) == 0 {
-			fmt.Println("No packages found in repository.")
+			fmt.Println(i18n.T("cmd.list.noPackages"))
 			return nil
 		}
 
@@ -58,22 +59,24 @@ var listCmd = &cobra.Command{
 func init() {
 	repoCmd.AddCommand(listCmd)
 
-	listCmd.Flags().StringVarP(&listPackageID, "package", "p", "", "Show details for specific package ID")
-	listCmd.Flags().BoolVarP(&showVersions, "versions", "v", false, "Show all versions for each package")
-	listCmd.Flags().StringVarP(&sortBy, "sort", "s", "name", "Sort by: name, size, versions, updated")
+	listCmd.Flags().StringVarP(&listPackageID, "package", "p", "", i18n.T("cmd.list.flag.package"))
+	listCmd.Flags().BoolVarP(&showVersions, "versions", "v", false, i18n.T("cmd.list.flag.versions"))
+	listCmd.Flags().StringVarP(&sortBy, "sort", "s", "name", i18n.T("cmd.list.flag.sort"))
 }
 
 func listSinglePackage(manifest *models.ManifestIndex, packageID string) error {
 	pkg, exists := manifest.Packages[packageID]
 	if !exists {
-		return fmt.Errorf("package %s not found", packageID)
+		return fmt.Errorf(i18n.T("cmd.list.packageNotFound", map[string]interface{}{
+			"id": packageID,
+		}))
 	}
 
-	fmt.Printf("=== Package Details ===\n")
-	fmt.Printf("Package ID: %s\n", packageID)
-	fmt.Printf("Name: %s\n", getDefaultName(pkg.Name))
-	fmt.Printf("Versions: %d\n", len(pkg.Versions))
-	fmt.Printf("Latest: %s\n\n", pkg.Latest)
+	fmt.Printf("%s\n", i18n.T("cmd.list.packageDetailsTitle"))
+	fmt.Printf("%s\n", i18n.T("cmd.list.packageID", map[string]interface{}{"id": packageID}))
+	fmt.Printf("%s\n", i18n.T("cmd.list.packageName", map[string]interface{}{"name": getDefaultName(pkg.Name)}))
+	fmt.Printf("%s\n", i18n.T("cmd.list.packageVersionCount", map[string]interface{}{"count": len(pkg.Versions)}))
+	fmt.Printf("%s\n\n", i18n.T("cmd.list.packageLatest", map[string]interface{}{"version": pkg.Latest}))
 
 	// List all versions
 	type versionInfo struct {
@@ -91,22 +94,40 @@ func listSinglePackage(manifest *models.ManifestIndex, packageID string) error {
 		return versions[i].Version.VersionCode > versions[j].Version.VersionCode
 	})
 
-	fmt.Printf("=== Versions ===\n")
+	fmt.Printf("%s\n", i18n.T("cmd.list.versionsTitle"))
 	for _, v := range versions {
-		fmt.Printf("\n%s (Code: %d):\n", v.Version.Version, v.Version.VersionCode)
-		fmt.Printf("  Size: %.2f MB\n", float64(v.Version.Size)/(1024*1024))
-		fmt.Printf("  Min SDK: %d, Target SDK: %d\n", v.Version.MinSDK, v.Version.TargetSDK)
-		fmt.Printf("  SHA256: %s\n", v.Version.SHA256)
+		fmt.Printf("\n%s\n", i18n.T("cmd.list.versionHeader", map[string]interface{}{
+			"version": v.Version.Version,
+			"code":    v.Version.VersionCode,
+		}))
+		fmt.Printf("%s\n", i18n.T("cmd.list.versionSize", map[string]interface{}{
+			"size": fmt.Sprintf("%.2f MB", float64(v.Version.Size)/(1024*1024)),
+		}))
+		fmt.Printf("%s\n", i18n.T("cmd.list.versionSDK", map[string]interface{}{
+			"min":    v.Version.MinSDK,
+			"target": v.Version.TargetSDK,
+		}))
+		fmt.Printf("%s\n", i18n.T("cmd.list.versionSHA", map[string]interface{}{
+			"sha": v.Version.SHA256,
+		}))
 		if v.Version.SignatureInfo != nil && v.Version.SignatureInfo.SHA256 != "" {
-			fmt.Printf("  Signature: %s...\n", v.Version.SignatureInfo.SHA256[:16])
+			fmt.Printf("%s\n", i18n.T("cmd.list.versionSignature", map[string]interface{}{
+				"sha": v.Version.SignatureInfo.SHA256[:16],
+			}))
 		}
 		if len(v.Version.ABIs) > 0 {
-			fmt.Printf("  ABIs: %s\n", strings.Join(v.Version.ABIs, ", "))
+			fmt.Printf("%s\n", i18n.T("cmd.list.versionABI", map[string]interface{}{
+				"abis": strings.Join(v.Version.ABIs, ", "),
+			}))
 		}
-		fmt.Printf("  Download: %s\n", v.Version.DownloadURL)
-		fmt.Printf("  Added: %s\n", v.Version.ReleaseDate.Format("2006-01-02 15:04:05"))
+		fmt.Printf("%s\n", i18n.T("cmd.list.versionDownload", map[string]interface{}{
+			"url": v.Version.DownloadURL,
+		}))
+		fmt.Printf("%s\n", i18n.T("cmd.list.versionAdded", map[string]interface{}{
+			"date": v.Version.ReleaseDate.Format("2006-01-02 15:04:05"),
+		}))
 		if v.Version.SignatureVariant != "" {
-			fmt.Printf("  ⚠️  Alternative signature variant\n")
+			fmt.Printf("%s\n", i18n.T("cmd.list.versionSignatureVariant"))
 		}
 	}
 
@@ -168,7 +189,12 @@ func listAllPackages(manifest *models.ManifestIndex) error {
 	}
 
 	// Display header
-	fmt.Printf("%-40s %-20s %-10s %-12s %s\n", "Package ID", "Name", "Versions", "Total Size", "Last Updated")
+	fmt.Printf("%-40s %-20s %-10s %-12s %s\n",
+		i18n.T("cmd.list.columns.packageID"),
+		i18n.T("cmd.list.columns.name"),
+		i18n.T("cmd.list.columns.versions"),
+		i18n.T("cmd.list.columns.totalSize"),
+		i18n.T("cmd.list.columns.lastUpdated"))
 	fmt.Println(strings.Repeat("-", 100))
 
 	// Display packages
@@ -193,18 +219,21 @@ func listAllPackages(manifest *models.ManifestIndex) error {
 				if version.SignatureVariant != "" {
 					prefix = "  └─ ⚠️"
 				}
-				fmt.Printf("%s %s (Code: %d) - %s\n",
-					prefix,
-					version.Version,
-					version.VersionCode,
-					formatSize(version.Size),
-				)
+				fmt.Printf("%s\n", i18n.T("cmd.list.versionListItem", map[string]interface{}{
+					"prefix":  prefix,
+					"version": version.Version,
+					"code":    version.VersionCode,
+					"size":    formatSize(version.Size),
+				}))
 			}
 		}
 	}
 
 	// Summary
-	fmt.Printf("\nTotal: %d packages, %d APKs\n", len(packages), manifest.TotalAPKs)
+	fmt.Printf("\n%s\n", i18n.T("cmd.list.summary", map[string]interface{}{
+		"packages": len(packages),
+		"apks":     manifest.TotalAPKs,
+	}))
 
 	return nil
 }

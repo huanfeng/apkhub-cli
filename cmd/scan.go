@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/huanfeng/apkhub-cli/internal/config"
+	"github.com/huanfeng/apkhub-cli/internal/i18n"
 	"github.com/huanfeng/apkhub-cli/pkg/apk"
 	"github.com/huanfeng/apkhub-cli/pkg/models"
 	"github.com/huanfeng/apkhub-cli/pkg/repo"
@@ -42,20 +43,20 @@ var scanCmd = &cobra.Command{
 		if err := checkScanDependencies(); err != nil {
 			// Don't fail completely, just warn
 			fmt.Printf("⚠️  %v\n", err)
-			fmt.Println("   Continuing with limited APK parsing capabilities...")
+			fmt.Println(i18n.T("cmd.scan.deps.limited"))
 			fmt.Println()
 		}
 
 		// Convert to absolute paths
 		absDir, err := filepath.Abs(directory)
 		if err != nil {
-			return fmt.Errorf("invalid directory path: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.scan.errInvalidDir"), err)
 		}
 
 		// Load configuration
 		cfg, err := config.Load(cfgFile)
 		if err != nil {
-			return fmt.Errorf("failed to load configuration: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.scan.errLoadConfig"), err)
 		}
 
 		// Override config with command line flags
@@ -67,36 +68,40 @@ var scanCmd = &cobra.Command{
 		// Create repository instance
 		repository, err := repo.NewRepository(workDir, cfg)
 		if err != nil {
-			return fmt.Errorf("failed to create repository: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.scan.errCreateRepo"), err)
 		}
 
 		// Initialize repository structure
 		if err := repository.Initialize(); err != nil {
-			return fmt.Errorf("failed to initialize repository: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.scan.errInitRepo"), err)
 		}
 
-		fmt.Printf("Scanning directory: %s\n", absDir)
-		fmt.Printf("Repository: %s\n", repository.GetRootDir())
-		fmt.Printf("Mode: %s\n\n", getScanMode())
+		fmt.Printf("%s\n", i18n.T("cmd.scan.scanningDirectory", map[string]interface{}{"path": absDir}))
+		fmt.Printf("%s\n", i18n.T("cmd.scan.repositoryPath", map[string]interface{}{"path": repository.GetRootDir()}))
+		fmt.Printf("%s\n\n", i18n.T("cmd.scan.mode", map[string]interface{}{"mode": getScanMode()}))
 
 		// Load existing APK infos for incremental scan
 		existingInfos := make(map[string]*models.APKInfo)
 		if !fullScan {
 			infos, err := repository.LoadAllAPKInfos()
 			if err != nil {
-				fmt.Printf("Warning: failed to load existing infos, performing full scan: %v\n", err)
+				fmt.Printf("%s\n", i18n.T("cmd.scan.warnLoadExisting", map[string]interface{}{
+					"error": err,
+				}))
 				fullScan = true
 			} else {
 				// Build map by file path for quick lookup
 				for _, info := range infos {
 					existingInfos[info.OriginalName] = info
 				}
-				fmt.Printf("Loaded %d existing APK entries\n", len(existingInfos))
+				fmt.Printf("%s\n", i18n.T("cmd.scan.loadedExisting", map[string]interface{}{
+					"count": len(existingInfos),
+				}))
 			}
 		}
 
 		// Initialize progress tracking
-		progress := utils.NewProgressTracker("Scanning APKs", 0, false)
+		progress := utils.NewProgressTracker(i18n.T("cmd.scan.progress.label"), 0, false)
 
 		// Initialize counters
 		var (
@@ -108,10 +113,12 @@ var scanCmd = &cobra.Command{
 
 		// First pass: count total files
 		if showProgress {
-			fmt.Printf("🔍 Counting files to process...\n")
+			fmt.Printf("%s\n", i18n.T("cmd.scan.progress.counting"))
 			totalFiles := countTotalAPKFiles(absDir, cfg.Scanning.Recursive)
-			progress = utils.NewProgressTracker("Scanning APKs", int64(totalFiles), true)
-			fmt.Printf("📁 Found %d APK files to process\n\n", totalFiles)
+			progress = utils.NewProgressTracker(i18n.T("cmd.scan.progress.label"), int64(totalFiles), true)
+			fmt.Printf("%s\n\n", i18n.T("cmd.scan.progress.found", map[string]interface{}{
+				"count": totalFiles,
+			}))
 		}
 
 		// Perform scan
@@ -122,7 +129,9 @@ var scanCmd = &cobra.Command{
 		// Walk through directory
 		err = filepath.Walk(absDir, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
-				errors = append(errors, fmt.Errorf("error accessing %s: %w", path, err))
+				errors = append(errors, fmt.Errorf("%s: %w", i18n.T("cmd.scan.errAccess", map[string]interface{}{
+					"path": path,
+				}), err))
 				return nil // Continue scanning
 			}
 
@@ -149,7 +158,7 @@ var scanCmd = &cobra.Command{
 
 			// Skip files that look like they're already normalized (to avoid processing repository files)
 			if isNormalizedFilename(filename) {
-				fmt.Printf("Skip (normalized): %s\n", filename)
+				fmt.Printf("%s\n", i18n.T("cmd.scan.skipNormalized", map[string]interface{}{"name": filename}))
 				return nil
 			}
 
@@ -157,7 +166,9 @@ var scanCmd = &cobra.Command{
 
 			// Update progress if enabled
 			if showProgress && progress != nil {
-				progress.Update(int64(scannedFiles), fmt.Sprintf("Processing %s", filename))
+				progress.Update(int64(scannedFiles), i18n.T("cmd.scan.progress.processing", map[string]interface{}{
+					"name": filename,
+				}))
 			}
 
 			// Check if APK needs processing (incremental scan)
@@ -167,7 +178,7 @@ var scanCmd = &cobra.Command{
 				// Check if file has been modified
 				if info.ModTime().Equal(existingInfo.UpdatedAt) || info.ModTime().Before(existingInfo.UpdatedAt) {
 					unchangedAPKs++
-					fmt.Printf("Skip (unchanged): %s\n", filename)
+					fmt.Printf("%s\n", i18n.T("cmd.scan.skipUnchanged", map[string]interface{}{"name": filename}))
 					return nil
 				}
 			}
@@ -179,7 +190,7 @@ var scanCmd = &cobra.Command{
 					for _, existing := range existingInfos {
 						if existing.SHA256 == quickHash {
 							unchangedAPKs++
-							fmt.Printf("Skip (duplicate hash): %s\n", filename)
+							fmt.Printf("%s\n", i18n.T("cmd.scan.skipDuplicate", map[string]interface{}{"name": filename}))
 							return nil
 						}
 					}
@@ -187,10 +198,12 @@ var scanCmd = &cobra.Command{
 			}
 
 			// Parse APK
-			fmt.Printf("Processing: %s\n", filename)
+			fmt.Printf("%s\n", i18n.T("cmd.scan.processing", map[string]interface{}{"name": filename}))
 			apkInfo, err := parser.ParseAPK(path)
 			if err != nil {
-				errors = append(errors, fmt.Errorf("failed to parse %s: %w", filename, err))
+				errors = append(errors, fmt.Errorf("%s: %w", i18n.T("cmd.scan.errParse", map[string]interface{}{
+					"name": filename,
+				}), err))
 				return nil
 			}
 
@@ -230,16 +243,22 @@ var scanCmd = &cobra.Command{
 			targetPath := repository.GetAPKPath(normalizedName)
 			if _, err := os.Stat(targetPath); os.IsNotExist(err) {
 				// Copy APK to repository
-				fmt.Printf("  Copying to repository as: %s\n", normalizedName)
+				fmt.Printf("%s\n", i18n.T("cmd.scan.copying", map[string]interface{}{
+					"name": normalizedName,
+				}))
 				if err := copyAPKFile(path, targetPath); err != nil {
-					errors = append(errors, fmt.Errorf("failed to copy %s: %w", filename, err))
+					errors = append(errors, fmt.Errorf("%s: %w", i18n.T("cmd.scan.errCopy", map[string]interface{}{
+						"name": filename,
+					}), err))
 					return nil
 				}
 			}
 
 			// Save APK info with icon
 			if err := repository.SaveAPKInfoWithIcon(apkInfo, modelAPKInfo); err != nil {
-				errors = append(errors, fmt.Errorf("failed to save info for %s: %w", filename, err))
+				errors = append(errors, fmt.Errorf("%s: %w", i18n.T("cmd.scan.errSaveInfo", map[string]interface{}{
+					"name": filename,
+				}), err))
 				return nil
 			}
 
@@ -247,18 +266,18 @@ var scanCmd = &cobra.Command{
 		})
 
 		if err != nil {
-			return fmt.Errorf("error walking directory: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.scan.errWalk"), err)
 		}
 
 		// Finish progress tracking
 		if showProgress && progress != nil {
-			progress.Finish("Scan completed")
+			progress.Finish(i18n.T("cmd.scan.progress.finished"))
 		}
 
 		// Update manifest
-		fmt.Printf("\nUpdating repository manifest...\n")
+		fmt.Printf("\n%s\n", i18n.T("cmd.scan.updateManifest"))
 		if err := repository.UpdateManifest(); err != nil {
-			return fmt.Errorf("failed to update manifest: %w", err)
+			return fmt.Errorf("%s: %w", i18n.T("cmd.scan.errUpdateManifest"), err)
 		}
 
 		// Show detailed scan results
@@ -275,23 +294,23 @@ var scanCmd = &cobra.Command{
 func init() {
 	repoCmd.AddCommand(scanCmd)
 
-	scanCmd.Flags().StringVarP(&outputPath, "output", "o", "", "Legacy option (ignored, manifest is always apkhub_manifest.json)")
-	scanCmd.Flags().BoolP("recursive", "r", true, "Scan directories recursively")
-	scanCmd.Flags().BoolVar(&pretty, "pretty", true, "Pretty print JSON output")
-	scanCmd.Flags().BoolVar(&fullScan, "full", false, "Perform full scan instead of incremental")
-	scanCmd.Flags().BoolVar(&scanCheckDeps, "check-deps", false, "Check dependencies before scanning")
-	scanCmd.Flags().BoolVar(&showProgress, "progress", true, "Show scan progress")
+	scanCmd.Flags().StringVarP(&outputPath, "output", "o", "", i18n.T("cmd.scan.flag.output"))
+	scanCmd.Flags().BoolP("recursive", "r", true, i18n.T("cmd.scan.flag.recursive"))
+	scanCmd.Flags().BoolVar(&pretty, "pretty", true, i18n.T("cmd.scan.flag.pretty"))
+	scanCmd.Flags().BoolVar(&fullScan, "full", false, i18n.T("cmd.scan.flag.full"))
+	scanCmd.Flags().BoolVar(&scanCheckDeps, "check-deps", false, i18n.T("cmd.scan.flag.checkDeps"))
+	scanCmd.Flags().BoolVar(&showProgress, "progress", true, i18n.T("cmd.scan.flag.progress"))
 
 	// Mark output as deprecated
-	scanCmd.Flags().MarkDeprecated("output", "manifest is always saved as apkhub_manifest.json")
+	scanCmd.Flags().MarkDeprecated("output", i18n.T("cmd.scan.flag.outputDeprecated"))
 }
 
 // getScanMode returns the current scan mode as string
 func getScanMode() string {
 	if fullScan {
-		return "Full scan"
+		return i18n.T("cmd.scan.mode_full")
 	}
-	return "Incremental scan"
+	return i18n.T("cmd.scan.mode_incremental")
 }
 
 // isNormalizedFilename checks if a filename looks like it's already been normalized by the repository
@@ -364,7 +383,7 @@ func isNumericString(s string) bool {
 // checkScanDependencies checks dependencies for repo scan command
 func checkScanDependencies() error {
 	if scanCheckDeps {
-		fmt.Println("🔍 Checking dependencies for repo scan command...")
+		fmt.Println(i18n.T("cmd.scan.deps.checking"))
 	}
 
 	depManager := system.NewDependencyManager()
@@ -377,20 +396,27 @@ func checkScanDependencies() error {
 		if dep.Available {
 			availableCount++
 			if scanCheckDeps {
-				fmt.Printf("   ✅ %s: %s\n", dep.Name, dep.Version)
+				fmt.Printf("%s\n", i18n.T("cmd.scan.deps.available", map[string]interface{}{
+					"name":    dep.Name,
+					"version": dep.Version,
+				}))
 			}
 		} else {
-			warnings = append(warnings, fmt.Sprintf("%s not available", dep.Name))
+			warnings = append(warnings, i18n.T("cmd.scan.deps.notAvailable", map[string]interface{}{
+				"name": dep.Name,
+			}))
 		}
 	}
 
 	if availableCount == 0 {
-		return fmt.Errorf("no APK parsing tools available - some APKs may fail to parse")
+		return fmt.Errorf(i18n.T("cmd.scan.deps.none"))
 	}
 
 	if len(warnings) > 0 && scanCheckDeps {
-		fmt.Printf("   ⚠️  %s\n", strings.Join(warnings, ", "))
-		fmt.Println("   💡 Run 'apkhub doctor --fix' to install missing tools")
+		fmt.Printf("%s\n", i18n.T("cmd.scan.deps.warningList", map[string]interface{}{
+			"warnings": strings.Join(warnings, ", "),
+		}))
+		fmt.Println(i18n.T("cmd.scan.deps.suggestion"))
 	}
 
 	if scanCheckDeps {
@@ -429,50 +455,48 @@ func countTotalAPKFiles(dir string, recursive bool) int {
 // showScanResults displays detailed scan results
 func showScanResults(scanned, newAPKs, updated, unchanged, errors int, errorMessages []string, duration time.Duration) {
 	fmt.Println("\n" + strings.Repeat("=", 50))
-	fmt.Println("📊 SCAN RESULTS")
+	fmt.Println(i18n.T("cmd.scan.results.title"))
 	fmt.Println(strings.Repeat("=", 50))
 
 	// Summary statistics
-	fmt.Printf("⏱️  Total time: %v\n", duration)
-	fmt.Printf("📁 Files scanned: %d\n", scanned)
-	fmt.Printf("🆕 New APKs: %d\n", newAPKs)
-	fmt.Printf("🔄 Updated APKs: %d\n", updated)
-	fmt.Printf("⏭️  Unchanged APKs: %d\n", unchanged)
-
-	if errors > 0 {
-		fmt.Printf("❌ Errors: %d\n", errors)
-	} else {
-		fmt.Printf("✅ Errors: 0\n")
-	}
+	fmt.Printf("%s\n", i18n.T("cmd.scan.results.totalTime", map[string]interface{}{"duration": duration}))
+	fmt.Printf("%s\n", i18n.T("cmd.scan.results.filesScanned", map[string]interface{}{"count": scanned}))
+	fmt.Printf("%s\n", i18n.T("cmd.scan.results.newAPKs", map[string]interface{}{"count": newAPKs}))
+	fmt.Printf("%s\n", i18n.T("cmd.scan.results.updatedAPKs", map[string]interface{}{"count": updated}))
+	fmt.Printf("%s\n", i18n.T("cmd.scan.results.unchangedAPKs", map[string]interface{}{"count": unchanged}))
+	fmt.Printf("%s\n", i18n.T("cmd.scan.results.errors", map[string]interface{}{"count": errors}))
 
 	// Performance metrics
 	if scanned > 0 {
 		avgTime := duration / time.Duration(scanned)
-		fmt.Printf("📈 Average time per file: %v\n", avgTime)
+		fmt.Printf("%s\n", i18n.T("cmd.scan.results.avgTime", map[string]interface{}{"duration": avgTime}))
 	}
 
 	// Show errors if any
 	if errors > 0 {
-		fmt.Printf("\n❌ ERRORS ENCOUNTERED (%d):\n", errors)
+		fmt.Printf("\n%s\n", i18n.T("cmd.scan.results.errorListTitle", map[string]interface{}{"count": errors}))
 		fmt.Println(strings.Repeat("-", 40))
 		for i, errMsg := range errorMessages {
-			fmt.Printf("   %d. %s\n", i+1, errMsg)
+			fmt.Printf("%s\n", i18n.T("cmd.scan.results.errorItem", map[string]interface{}{
+				"index": i + 1,
+				"error": errMsg,
+			}))
 		}
 
-		fmt.Println("\n💡 TROUBLESHOOTING TIPS:")
-		fmt.Println("   • Run 'apkhub doctor' to check dependencies")
-		fmt.Println("   • Use --verbose flag for detailed error information")
-		fmt.Println("   • Ensure APK files are not corrupted")
+		fmt.Printf("\n%s\n", i18n.T("cmd.scan.results.troubleshootingTitle"))
+		fmt.Println(i18n.T("cmd.scan.results.tipDoctor"))
+		fmt.Println(i18n.T("cmd.scan.results.tipVerbose"))
+		fmt.Println(i18n.T("cmd.scan.results.tipIntegrity"))
 	}
 
 	fmt.Println(strings.Repeat("=", 50))
 
 	if errors == 0 {
-		fmt.Println("🎉 Repository updated successfully!")
+		fmt.Println(i18n.T("cmd.scan.results.success"))
 	} else if newAPKs > 0 || updated > 0 {
-		fmt.Println("⚠️  Repository updated with some errors")
+		fmt.Println(i18n.T("cmd.scan.results.partial"))
 	} else {
-		fmt.Println("❌ Repository update completed with errors")
+		fmt.Println(i18n.T("cmd.scan.results.failure"))
 	}
 }
 
