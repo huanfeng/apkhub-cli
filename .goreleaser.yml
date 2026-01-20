@@ -106,7 +106,7 @@ brews:
   - name: apkhub
     # GitHub repository to push the formula to
     repository:
-      owner: apkhub
+      owner: huanfeng
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
 
@@ -117,10 +117,6 @@ brews:
     description: "A command-line tool for managing distributed APK repositories"
     homepage: "https://github.com/huanfeng/apkhub"
     license: "MIT"
-
-    # Dependencies
-    dependencies:
-      - name: aapt
 
     # Installation
     install: |
